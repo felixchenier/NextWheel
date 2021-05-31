@@ -1,0 +1,6 @@
+[submodule "arduino_nano_rp2040_connect/mbed_firmware/lib/WiFiNINA"]
+	path = arduino_nano_rp2040_connect/mbed_firmware/lib/WiFiNINA
+	url = https://github.com/arduino-libraries/WiFiNINA.git
+[submodule "arduino_nano_rp2040_connect/mbed_firmware/lib/Arduino_LSM6DSOX"]
+	path = arduino_nano_rp2040_connect/mbed_firmware/lib/Arduino_LSM6DSOX
+	url = https://github.com/arduino-libraries/Arduino_LSM6DSOX.git
