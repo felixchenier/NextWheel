@@ -200,7 +200,7 @@ class Wheel:
         """
         raise NotImplementedError()
 
-    def start_streaming(self, choice: int, send_client) -> bool:
+    def start_streaming(send_client) -> bool:
         """
         Start streaming.
 
@@ -211,10 +211,10 @@ class Wheel:
         i = 0
         for elt in data_wheel:
             i += 1
-            print(data_wheel[i][0], " ms :", data_wheel[i][choice+1])
+            print(data_wheel[i][0], " ms :", data_wheel[i][1])
             send_client.sendall(
                 bytes(str(data_wheel[i][0]), encoding="utf-8"))
-            send_client.sendall(bytes(str(data_wheel[i][choice+1]),
+            send_client.sendall(bytes(str(data_wheel[i][1]),
                                       encoding="utf-8"))
             time.sleep(2)
 

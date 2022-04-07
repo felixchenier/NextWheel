@@ -31,28 +31,37 @@ class Stream(QtWidgets.QMainWindow):
         None.
        """
         QtWidgets.QMainWindow.__init__(self)
-        self.setWindowTitle("Stream")
-        self.setGeometry(100, 100, 200, 300)
+        self.setWindowTitle("Streaming")
+        self.setGeometry(100, 100, 300, 400)
         self.flag = True
 
         self.time_stream = QLabel(self)
-        self.time_stream.setGeometry(50, 150, 100, 30)
+        self.time_stream.setGeometry(90, 150, 100, 30)
         self.time_stream.setStyleSheet("border : 4px solid black;")
         self.time_stream.setText("0.00")
         self.time_stream.setFont(QFont('Arial', 15))
         self.time_stream.setAlignment(Qt.AlignCenter)
+        self.label_time = QtWidgets.QLabel(self)
+        self.label_time.move(20, 100)
+        self.label_time.setText("Time: ")
+        self.label_time_unity = QtWidgets.QLabel(self)
+        self.label_time_unity.move(200, 100)
+        self.label_time_unity.setText(" s ")
 
-        self.data_stream = QLabel(self)
-        self.data_stream.setGeometry(50, 100, 100, 30)
-        self.data_stream.setStyleSheet("border : 4px solid black;")
-        self.data_stream.setText("0.00")
-        self.data_stream.setFont(QFont('Arial', 15))
-        self.data_stream.setAlignment(Qt.AlignCenter)
+        self.data_channel0 = QLabel(self)
+        self.data_channel0.setGeometry(90, 100, 100, 30)
+        self.data_channel0.setStyleSheet("border : 4px solid black;")
+        self.data_channel0.setText("0.00")
+        self.data_channel0.setFont(QFont('Arial', 15))
+        self.data_channel0.setAlignment(Qt.AlignCenter)
         QtCore.QCoreApplication.processEvents()
+        self.label_channel0 = QtWidgets.QLabel(self)
+        self.label_channel0.move(20, 150)
+        self.label_channel0.setText("Channel 0 : ")
 
         self.stop = QLabel(self)
         self.stop = QtWidgets.QPushButton("Stop Streaming", self)
-        self.stop.setGeometry(50, 50, 100, 30)
+        self.stop.setGeometry(90, 50, 100, 30)
         self.stop.clicked.connect(self.stop_streaming)
 
         self.show()
@@ -75,7 +84,7 @@ class Stream(QtWidgets.QMainWindow):
             QtCore.QCoreApplication.processEvents()
             data = client_stream.recv(255).decode("utf-8")
             print(data)
-            self.data_stream.setText(data)
+            self.data_channel0.setText(data)
             QtCore.QCoreApplication.processEvents()
         else:
             client_stream.send(bytes("2", encoding="utf-8"))
@@ -119,25 +128,11 @@ class Choice(QtWidgets.QMainWindow):
         self.button_streaming = QtWidgets.QPushButton('Streaming', self)
         self.button_streaming.clicked.connect(self.streaming)
         self.button_streaming.setGeometry(200, 100, 130, 30)
-        self.data = QComboBox(self)
-        data_list = ["Channel[0]", "Channel[1]", "Channel[2]", "Channel[3]",
-                     "Channel[4]", "Channel[5]", "Battery", "Forces[0]",
-                     "Forces[1]", "Forces[2]", "Forces[3]", " Moment[0]",
-                     "Forces[1]", "Forces[2]", "Forces[3]"]
-        self.data.addItems(data_list)
-        self.data.setGeometry(30, 100, 150, 30)
 
         # recording
         self.button_recording = QtWidgets.QPushButton('Reccording', self)
         self.button_recording.clicked.connect(self.reccording)
         self.button_recording.setGeometry(200, 200, 130, 34)
-        self.data1 = QComboBox(self)
-        data_list1 = ["Channel[0]", "Channel[1]", "Channel[2]", "Channel[3]",
-                      "Channel[4]", "Channel[5]", "Battery", "Forces[0]",
-                      "Forces[1]", "Forces[2]", "Forces[3]", " Moment[0]",
-                      "Forces[1]", "Forces[2]", "Forces[3]"]
-        self.data1.addItems(data_list1)
-        self.data1.setGeometry(30, 200, 150, 30)
 
     def connexion(self):
         """
@@ -163,9 +158,7 @@ class Choice(QtWidgets.QMainWindow):
         None.
 
         """
-        choice = self.data.currentText()
         self.client.send(bytes("1", encoding="utf-8"))
-        self.client.sendall(bytes(choice, encoding="utf-8"))
         self.stream_window = Stream(self.client)
         self.stream_window.show()
 

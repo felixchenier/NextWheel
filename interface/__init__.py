@@ -62,20 +62,10 @@ def instanceServeur(client: any, info_client: any, data_wheel: any):
         client_choice = client.recv(255).decode("utf-8")
 
         if client_choice == "1":
-            choice = client.recv(255).decode("utf-8")
-            list_choice = ["Channel[0]", "Channel[1]", "Channel[2]",
-                           "Channel[3]", "Channel[4]", "Channel[5]",
-                           "Battery", "Forces[0]", "Forces[1]", "Forces[2]",
-                           "Forces[3]", " Moment[0]", "Forces[1]",
-                           "Forces[2]", "Forces[3]"]
-            i = 0
-            send = 0
-            for i in range(0, 15):
-                if list_choice[i] == choice:
-                    send = i
+            print(client)
 
             t = co.thread_with_trace(target=wheel.start_streaming,
-                                     args=(send, client,))
+                                     args=(client,))
             t.start()
             print("")
 
