@@ -59,6 +59,17 @@ class Stream(QtWidgets.QMainWindow):
         self.label_channel0.move(20, 150)
         self.label_channel0.setText("Channel 0 : ")
 
+        self.data_channel1 = QLabel(self)
+        self.data_channel1.setGeometry(90, 200, 100, 30)
+        self.data_channel1.setStyleSheet("border : 4px solid black;")
+        self.data_channel1.setText("0.00")
+        self.data_channel1.setFont(QFont('Arial', 15))
+        self.data_channel1.setAlignment(Qt.AlignCenter)
+        QtCore.QCoreApplication.processEvents()
+        self.label_channel1 = QtWidgets.QLabel(self)
+        self.label_channel1.move(20, 200)
+        self.label_channel1.setText("Channel 1 : ")
+
         self.stop = QLabel(self)
         self.stop = QtWidgets.QPushButton("Stop Streaming", self)
         self.stop.setGeometry(90, 50, 100, 30)
@@ -79,12 +90,11 @@ class Stream(QtWidgets.QMainWindow):
         """
         while self.flag is True:
             time = client_stream.recv(255).decode("utf-8")
-            print(time)
-            self.time_stream.setText(time)
-            QtCore.QCoreApplication.processEvents()
             data = client_stream.recv(255).decode("utf-8")
-            print(data)
+            data1 = client_stream.recv(255).decode("utf-8")
+            self.time_stream.setText(time)
             self.data_channel0.setText(data)
+            self.data_channel1.setText(data1)
             QtCore.QCoreApplication.processEvents()
         else:
             client_stream.send(bytes("2", encoding="utf-8"))

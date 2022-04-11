@@ -30,7 +30,6 @@ data_wheel = co.average_data(data, file_data_wheel)
 print("Sucessful extraction")
 print("---------------------------------------------------")
 
-
 # socket creation
 serveur = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 print("Successful creation of the SERVER socket")
@@ -62,10 +61,8 @@ def instanceServeur(client: any, info_client: any, data_wheel: any):
         client_choice = client.recv(255).decode("utf-8")
 
         if client_choice == "1":
-            print(client)
-
             t = co.thread_with_trace(target=wheel.start_streaming,
-                                     args=(client,))
+                                     args=(1, client))
             t.start()
             print("")
 
