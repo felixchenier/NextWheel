@@ -212,10 +212,20 @@ class Wheel:
             i += 1
             send_client.sendall(
                 bytes(str(data_wheel[i][0]), encoding="utf-8"))
-            send_client.sendall(bytes(str(data_wheel[i][2]),
-                                      encoding="utf-8"))
-            send_client.sendall(bytes(str(data_wheel[i][3]),
-                                      encoding="utf-8"))
+            ack = send_client.recv(1000)
+            send_client.sendall(
+                bytes(str(data_wheel[i][1]), encoding="utf-8"))
+            ack = send_client.recv(1000)
+            send_client.sendall(
+                bytes(str(data_wheel[i][2]), encoding="utf-8"))
+            send_client.sendall(
+                bytes(str(data_wheel[i][3]), encoding="utf-8"))
+            send_client.sendall(
+                bytes(str(data_wheel[i][4]), encoding="utf-8"))
+            send_client.sendall(
+                bytes(str(data_wheel[i][5]), encoding="utf-8"))
+            send_client.sendall(
+                bytes(str(data_wheel[i][6]), encoding="utf-8"))
             time.sleep(5)
 
     def stop_streaming(self, thread: any) -> bool:
