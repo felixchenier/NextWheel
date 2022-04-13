@@ -12,19 +12,14 @@ __copyright__ = "Laboratoire de recherche en mobilité et sport adapté"
 __email__ = "chenier.felix@uqam.ca"
 __license__ = "Apache 2.0"
 
-
-import comm as co
-
-
-def main():
-    """
-    Main function.
-    This function initializes the communication with the wheel(s), the gui,
-    runs the event loop, etc.
-    This is a work in progress.
-    """
-    raise NotImplementedError()
-
+from PyQt5 import QtWidgets
+import gui as gui
+import sys
 
 if __name__ == "__main__":
-    main()
+    app = QtWidgets.QApplication(sys.argv)
+    app.setStyle('Fusion')
+    choice = gui.Choice()
+    choice.show()
+    sys.exit(app.exec_())
+    sys.exit(app.exec_())

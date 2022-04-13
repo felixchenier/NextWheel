@@ -4,110 +4,18 @@
 """
 NextWheel Interface
 ===================
-comm.py: Submodule that manages the classes and functions
+comm.py: Submodule that communicates with the instrumented wheels.
 """
-
-import threading
-import time
-import sys
-from typing import Optional, Dict, Any, Union
-import socket
-import matplotlib.pyplot as plt
-import numpy as np
-import csv
-import json
-
 
 __author__ = "Félix Chénier"
 __copyright__ = "Laboratoire de recherche en mobilité et sport adapté"
 __email__ = "chenier.felix@uqam.ca"
 __license__ = "Apache 2.0"
 
-"""
-___________________________________
-    CSV Functions
-___________________________________
-"""
-
-
-def csv_count_line(filename: any) -> int:
-    """
-    count line number in a csv file
-
-    Parameters
-    ----------
-    filename : file with csv file
-
-    Returns
-    -------
-    Return number of line
-    """
-    with open(filename, 'r') as f:
-        i = 0
-        for line in f:
-            i += 1
-    return i
-
-
-def open_add_data(filename: any) -> float:
-    """
-    Open the csv file and put data into a tab
-
-    Parameters
-    ----------
-    filename : file with csv file
-
-    Returns
-    -------
-    Return tab of data
-    """
-    with open(filename, newline='') as csvfile:
-        data_wheel1 = np.zeros((csv_count_line(filename), 16))
-        read = csv.reader(csvfile, delimiter=',')
-        data_wheel1 = list(read)
-        data_wheel = list(np.float_(data_wheel1))
-        for i in range(0, csv_count_line(file_data_wheel)):
-            for j in range(0, 15):
-                data_wheel[i][j] = round(data_wheel[i][j], 5)
-    return data_wheel
-
-
-def average_data(data: float, filename: any) -> float:
-    """
-    Averages ten data and rounds up to the nearest ms
-
-    Parameters
-    ----------
-    data : tab of data
-    filename : file with csv file
-
-    Returns
-    -------
-    Return tab of data
-    """
-    average_data = np.zeros((csv_count_line(filename), 16))
-    for i in range(0, csv_count_line(file_data_wheel)-10, 10):
-        for j in range(0, 15):
-            elt = (data[i][j]+data[i+1][j]+data[i+2][j]+data[i+3][j]
-                   + data[i+4][j] + data[i+5][j]+data[i+6][j]+data[i+7][j]
-                   + data[i+8][j] + data[i+9][j])/10
-            k = int(i/10)
-            average_data[k][j] = elt
-    for i in range(0, int(csv_count_line(file_data_wheel)/10)):
-        average_data[i][0] = round(average_data[i][0], 3)
-    return average_data
-
-
-file_data_wheel = 'kinetics.csv'
-data_wheel = open_add_data(file_data_wheel)
-# data_wheel = average_data(data, file_data_wheel)
-
-
-"""
-___________________________________
-    Class
-___________________________________
-"""
+import time
+from typing import Optional, Dict, Any, Union
+import socket
+import json
 
 
 class Wheel:
@@ -130,7 +38,6 @@ class Wheel:
         self.ip_address = ip_address
         self.port = port
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.data_wheel = data_wheel
 
     def connection(self) -> bool:  # changer en connect
         """
@@ -205,7 +112,7 @@ class Wheel:
         """
         raise NotImplementedError()
 
-    def start_streaming(self, choice: int, send_client) -> bool:
+    def start_streaming(self, choice: int, send_client, data_wheel) -> bool:
         """
         Start streaming.
         Returns
@@ -253,21 +160,7 @@ class Wheel:
         -------
         True for success, False otherwise.
         """
-        i = 0
-        x = []
-        y = []
-        for elt in data_wheel:
-            i += 1
-            print(data_wheel[i][0], " ms :", data_wheel[i][choice+1])
-            x.append(data_wheel[i][0])
-            y.append(data_wheel[i][choice+1])
-            np.linspace(0, data_wheel[i][0])
-            plt.title("Analyze")
-            plt.xlabel('Time')
-            plt.plot(x, y)
-            plt.savefig("graph.png")
-            plt.show()
-            time.sleep(2)
+        return True
 
     def stop_recording(self, thread: any) -> bool:
         """
@@ -280,143 +173,3 @@ class Wheel:
         thread.kill()
         thread.join()
         print("End of the reccording")
-
-
-# fr.acervolima.com/python-differentes-facons-de-tuer-un-fil/
-
-
-class thread_with_trace(threading.Thread):
-    """
-    A class that helps manage threads
-
-    Attributes
-    ----------
-    thread
-    """
-
-    def __init__(self, *args, **keywords):
-        threading.Thread.__init__(self, *args, **keywords)
-        self.killed = False
-
-    def start(self):
-        """
-        Launch of the thread
-       """
-        self.__run_backup = self.run
-        self.run = self.__run
-        threading.Thread.start(self)
-
-    def __run(self):
-        """
-        Create a thread trace
-       """
-        sys.settrace(self.globaltrace)
-        self.__run_backup()
-        self.run = self.__run_backup
-
-    def globaltrace(self, frame: any, event: any, arg: any) -> any:
-        """
-        Find the local thread trace
-
-        Parameters
-        ----------
-        frame, event, arg : parameter of the trace thread
-
-        Returns
-        -------
-        Return the trace or None.
-       """
-        if event == 'call':
-            return self.localtrace
-        else:
-            return None
-
-    def localtrace(self, frame: any, event: any, arg: any) -> any:
-        """
-        Stop execution of the local trace
-
-        Parameters
-        ----------
-        frame, event, arg : parameter of the trace thread
-
-        Returns
-        -------
-        Return the local trace
-       """
-        if self.killed:
-            if event == 'line':
-                raise SystemExit()
-        return self.localtrace
-
-    def kill(self):
-        """
-        Killed the thread
-       """
-        self.killed = True
-
-
-"""
-__________________________________________
-    Client (communication client/server)
-_________________________________________
-"""
-
-
-def client():
-    """
-    Client that manages the client/server communication to the wheel
-    """
-    connexion = True
-
-    wheel = Wheel()
-    wheel.__init__()
-
-    connect = wheel.connection()
-    if connect is False:
-        print("Server connection error")
-    else:
-        print("Connected to the server")
-        print("---------------------------------------------------")
-
-    client = wheel.client
-
-    connexion = True
-
-    while connexion is True:
-        print("Welcome to the NextWheel interface")
-        print("---------------------------------------------------")
-        print("What do you want to do?")
-        print("   -Start the streaming : tape 1")
-        print("   -Stop the streaming:   tape 2")
-        print("   -Start the recording:  tape 3")
-        print("   -Stop the recording:   tape 4")
-        print("   -Exit:                 tape stop")
-        print("   -Close the server:     tape close")
-        print("Your choice : ")
-        option = input()
-
-        if option == '1':
-            client.sendall(bytes(option, encoding="utf-8"))
-            print("")
-
-        if option == '2':
-            client.sendall(bytes(option, encoding="utf-8"))
-            print("")
-
-        if option == '3':
-            client.sendall(bytes(option, encoding="utf-8"))
-            print("")
-
-        if option == '4':
-            client.sendall(bytes(option, encoding="utf-8"))
-            print("")
-
-        elif option == "stop":
-            client.sendall(bytes(option, encoding="utf-8"))
-            disconnect = wheel.disconnect()
-            if disconnect is False:
-                print("Server disconnection error")
-            else:
-                print("Deconnected from the server")
-                print("-------------------------------------------------")
-                connexion = False
