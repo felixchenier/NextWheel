@@ -15,6 +15,7 @@ import socket
 import matplotlib.pyplot as plt
 import numpy as np
 import csv
+import json
 
 
 __author__ = "Félix Chénier"
@@ -65,6 +66,9 @@ def open_add_data(filename: any) -> float:
         read = csv.reader(csvfile, delimiter=',')
         data_wheel1 = list(read)
         data_wheel = list(np.float_(data_wheel1))
+        for i in range(0, csv_count_line(file_data_wheel)):
+            for j in range(0, 15):
+                data_wheel[i][j] = round(data_wheel[i][j], 5)
     return data_wheel
 
 
@@ -81,9 +85,9 @@ def average_data(data: float, filename: any) -> float:
     -------
     Return tab of data
     """
-    average_data = np.zeros((csv_count_line(filename), 15))
+    average_data = np.zeros((csv_count_line(filename), 16))
     for i in range(0, csv_count_line(file_data_wheel)-10, 10):
-        for j in range(0, 14):
+        for j in range(0, 15):
             elt = (data[i][j]+data[i+1][j]+data[i+2][j]+data[i+3][j]
                    + data[i+4][j] + data[i+5][j]+data[i+6][j]+data[i+7][j]
                    + data[i+8][j] + data[i+9][j])/10
@@ -95,8 +99,9 @@ def average_data(data: float, filename: any) -> float:
 
 
 file_data_wheel = 'kinetics.csv'
-data = open_add_data(file_data_wheel)
-data_wheel = average_data(data, file_data_wheel)
+data_wheel = open_add_data(file_data_wheel)
+# data_wheel = average_data(data, file_data_wheel)
+
 
 """
 ___________________________________
@@ -127,7 +132,7 @@ class Wheel:
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.data_wheel = data_wheel
 
-    def connection(self) -> bool:
+    def connection(self) -> bool:  # changer en connect
         """
         Initialize the connection to the wheel.
 
@@ -210,23 +215,22 @@ class Wheel:
         i = 0
         for elt in data_wheel:
             i += 1
-            send_client.sendall(
-                bytes(str(data_wheel[i][0]), encoding="utf-8"))
-            ack = send_client.recv(1000)
-            send_client.sendall(
-                bytes(str(data_wheel[i][1]), encoding="utf-8"))
-            ack = send_client.recv(1000)
-            send_client.sendall(
-                bytes(str(data_wheel[i][2]), encoding="utf-8"))
-            send_client.sendall(
-                bytes(str(data_wheel[i][3]), encoding="utf-8"))
-            send_client.sendall(
-                bytes(str(data_wheel[i][4]), encoding="utf-8"))
-            send_client.sendall(
-                bytes(str(data_wheel[i][5]), encoding="utf-8"))
-            send_client.sendall(
-                bytes(str(data_wheel[i][6]), encoding="utf-8"))
-            time.sleep(5)
+            dict_obj = {'time': data_wheel[i][0],
+
+                        'channel': [data_wheel[i][1], data_wheel[i][2],
+                                    data_wheel[i][3], data_wheel[i][4],
+                                    data_wheel[i][5], data_wheel[i][6]],
+
+                        'battery': data_wheel[i][7],
+
+                        'forces': [data_wheel[i][8], data_wheel[i][9],
+                                   data_wheel[i][10], data_wheel[i][11]],
+
+                        'moment': [data_wheel[i][12], data_wheel[i][13],
+                                   data_wheel[i][14], data_wheel[i][15]]}
+            dict_obj_json = json.dumps(dict_obj)
+            send_client.sendall(bytes(dict_obj_json, encoding="utf-8"))
+            time.sleep(0.05)
 
     def stop_streaming(self, thread: any) -> bool:
         """
@@ -393,53 +397,15 @@ def client():
 
         if option == '1':
             client.sendall(bytes(option, encoding="utf-8"))
-            print("What data do you want to analyse?")
-            print("| 0  : Channel[0] |")
-            print("| 1  : Channel[1] |")
-            print("| 2  : Channel[2] |")
-            print("| 3  : Channel[3] |")
-            print("| 4  : Channel[4] |")
-            print("| 5  : Channel[5] |")
-            print("| 6  : Battery    |")
-            print("| 7  : Forces[0]  |")
-            print("| 8  : Forces[1]  |")
-            print("| 9  : Forces[2]  |")
-            print("| 10 : Forces[3]  |")
-            print("| 11 : Moment[0]  |")
-            print("| 12 : Forces[1]  |")
-            print("| 13 : Forces[2]  |")
-            print("| 14 : Forces[3]  |")
-            print("---------------------------------------------------")
-            choice = input()
-            client.sendall(bytes(choice, encoding="utf-8"))
             print("")
 
-            if option == '2':
-                client.sendall(bytes(option, encoding="utf-8"))
-                print("")
+        if option == '2':
+            client.sendall(bytes(option, encoding="utf-8"))
+            print("")
 
-            if option == '3':
-                client.sendall(bytes(option, encoding="utf-8"))
-                print("What data do you want to analyse?")
-                print("| 0  : Channel[0] |")
-                print("| 1  : Channel[1] |")
-                print("| 2  : Channel[2] |")
-                print("| 3  : Channel[3] |")
-                print("| 4  : Channel[4] |")
-                print("| 5  : Channel[5] |")
-                print("| 6  : Battery    |")
-                print("| 7  : Forces[0]  |")
-                print("| 8  : Forces[1]  |")
-                print("| 9  : Forces[2]  |")
-                print("| 10 : Forces[3]  |")
-                print("| 11 : Moment[0]  |")
-                print("| 12 : Forces[1]  |")
-                print("| 13 : Forces[2]  |")
-                print("| 14 : Forces[3]  |")
-                print("---------------------------------------------------")
-                choice = input()
-                client.sendall(bytes(choice, encoding="utf-8"))
-                print("")
+        if option == '3':
+            client.sendall(bytes(option, encoding="utf-8"))
+            print("")
 
         if option == '4':
             client.sendall(bytes(option, encoding="utf-8"))

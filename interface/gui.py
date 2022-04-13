@@ -11,6 +11,7 @@ __license__ = "Apache 2.0"
 
 import sys
 import comm as co
+import json
 
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QLabel
@@ -19,6 +20,7 @@ from PyQt5.QtWidgets import *
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
+from sys import getsizeof
 
 
 class Stream(QtWidgets.QMainWindow):
@@ -45,12 +47,12 @@ class Stream(QtWidgets.QMainWindow):
         self.label_time.move(20, 50)
         self.label_time.setText("Time: ")
         self.label_time_unity = QtWidgets.QLabel(self)
-        self.label_time_unity.move(200, 100)
+        self.label_time_unity.move(200, 50)
         self.label_time_unity.setText(" s ")
 
         self.data_channel0 = QLabel(self)
         self.data_channel0.setGeometry(90, 100, 100, 30)
-        self.data_channel0.setStyleSheet("border : 4px solid black;")
+        self.data_channel0.setStyleSheet("border : 4px solid red;")
         self.data_channel0.setText("0.00")
         self.data_channel0.setFont(QFont('Arial', 15))
         self.data_channel0.setAlignment(Qt.AlignCenter)
@@ -61,7 +63,7 @@ class Stream(QtWidgets.QMainWindow):
 
         self.data_channel1 = QLabel(self)
         self.data_channel1.setGeometry(90, 150, 100, 30)
-        self.data_channel1.setStyleSheet("border : 4px solid black;")
+        self.data_channel1.setStyleSheet("border : 4px solid red;")
         self.data_channel1.setText("0.00")
         self.data_channel1.setFont(QFont('Arial', 15))
         self.data_channel1.setAlignment(Qt.AlignCenter)
@@ -72,7 +74,7 @@ class Stream(QtWidgets.QMainWindow):
 
         self.data_channel2 = QLabel(self)
         self.data_channel2.setGeometry(90, 200, 100, 30)
-        self.data_channel2.setStyleSheet("border : 4px solid black;")
+        self.data_channel2.setStyleSheet("border : 4px solid red;")
         self.data_channel2.setText("0.00")
         self.data_channel2.setFont(QFont('Arial', 15))
         self.data_channel2.setAlignment(Qt.AlignCenter)
@@ -83,7 +85,7 @@ class Stream(QtWidgets.QMainWindow):
 
         self.data_channel3 = QLabel(self)
         self.data_channel3.setGeometry(90, 250, 100, 30)
-        self.data_channel3.setStyleSheet("border : 4px solid black;")
+        self.data_channel3.setStyleSheet("border : 4px solid red;")
         self.data_channel3.setText("0.00")
         self.data_channel3.setFont(QFont('Arial', 15))
         self.data_channel3.setAlignment(Qt.AlignCenter)
@@ -94,7 +96,7 @@ class Stream(QtWidgets.QMainWindow):
 
         self.data_channel4 = QLabel(self)
         self.data_channel4.setGeometry(90, 300, 100, 30)
-        self.data_channel4.setStyleSheet("border : 4px solid black;")
+        self.data_channel4.setStyleSheet("border : 4px solid red;")
         self.data_channel4.setText("0.00")
         self.data_channel4.setFont(QFont('Arial', 15))
         self.data_channel4.setAlignment(Qt.AlignCenter)
@@ -105,7 +107,7 @@ class Stream(QtWidgets.QMainWindow):
 
         self.data_channel5 = QLabel(self)
         self.data_channel5.setGeometry(90, 350, 100, 30)
-        self.data_channel5.setStyleSheet("border : 4px solid black;")
+        self.data_channel5.setStyleSheet("border : 4px solid red;")
         self.data_channel5.setText("0.00")
         self.data_channel5.setFont(QFont('Arial', 15))
         self.data_channel5.setAlignment(Qt.AlignCenter)
@@ -133,29 +135,16 @@ class Stream(QtWidgets.QMainWindow):
 
         """
         while self.flag is True:
-            time = client_stream.recv(255).decode("utf-8")
-            client_stream.send(b"ACK")
-            print("time: ", time)
+
             data = client_stream.recv(255).decode("utf-8")
-            client_stream.send(b"ACK")
-            print("channel0:", data)
-            data1 = client_stream.recv(255).decode("utf-8")
-            print("channel1:", data1)
-            data2 = client_stream.recv(255).decode("utf-8")
-            print("channel2:", data2)
-            data3 = client_stream.recv(255).decode("utf-8")
-            print("channel3:", data3)
-            data4 = client_stream.recv(255).decode("utf-8")
-            print("channel4:", data4)
-            data5 = client_stream.recv(255).decode("utf-8")
-            print("channel5:", data5)
-            self.time_stream.setText(time)
-            self.data_channel0.setText(data)
-            self.data_channel1.setText(data1)
-            self.data_channel2.setText(data2)
-            self.data_channel3.setText(data3)
-            self.data_channel4.setText(data4)
-            self.data_channel4.setText(data5)
+            data_json = json.loads(data)
+            self.time_stream.setText(str(data_json['time']))
+            self.data_channel0.setText(str(data_json['channel'][0]))
+            self.data_channel1.setText(str(data_json['channel'][1]))
+            self.data_channel2.setText(str(data_json['channel'][2]))
+            self.data_channel3.setText(str(data_json['channel'][3]))
+            self.data_channel4.setText(str(data_json['channel'][4]))
+            self.data_channel4.setText(str(data_json['channel'][5]))
             QtCore.QCoreApplication.processEvents()
         else:
             client_stream.send(bytes("2", encoding="utf-8"))
@@ -184,7 +173,7 @@ class Choice(QtWidgets.QMainWindow):
         self.client = self.wheel.client
         QtWidgets.QMainWindow.__init__(self)
         self.setWindowTitle("Next Wheel")
-        self.setGeometry(450, 100, 500, 500)
+        self.setGeometry(450, 100, 300, 300)
 
         # connexion à la roue
         self.button_connexion = QtWidgets.QPushButton(
@@ -198,12 +187,12 @@ class Choice(QtWidgets.QMainWindow):
         # streaming
         self.button_streaming = QtWidgets.QPushButton('Streaming', self)
         self.button_streaming.clicked.connect(self.streaming)
-        self.button_streaming.setGeometry(200, 100, 130, 30)
+        self.button_streaming.setGeometry(80, 100, 130, 30)
 
         # recording
         self.button_recording = QtWidgets.QPushButton('Reccording', self)
         self.button_recording.clicked.connect(self.reccording)
-        self.button_recording.setGeometry(200, 200, 130, 34)
+        self.button_recording.setGeometry(80, 200, 130, 34)
 
     def connexion(self):
         """
