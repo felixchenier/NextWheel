@@ -137,7 +137,7 @@ class Wheel:
                                    data_wheel[i][14], data_wheel[i][15]]}
             dict_obj_json = json.dumps(dict_obj)
             send_client.sendall(bytes(dict_obj_json, encoding="utf-8"))
-            time.sleep(0.05)
+            time.sleep(0.5)
 
     def stop_streaming(self, thread: any) -> bool:
         """

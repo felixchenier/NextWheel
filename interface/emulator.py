@@ -3,21 +3,21 @@ NextWheel Interface
 ===================
 wheel_serveur.py: Emulator that simulates the operation of the wheel.
 """
-
-
-import socket
-import threading
-import comm as co
-import numpy as np
 import csv
+import numpy as np
+import threading
+import socket
+import comm as co
+import sys
+sys.path.append("C:/Users/moi/Documents/GitHub/NextWheel/interface")
+
+sys.path.append("C:/Users/moi/Documents/GitHub/NextWheel/interface")
 __author__ = "Clémence Starosta"
 __copyright__ = "Laboratoire de recherche en mobilité et sport adapté"
 __email__ = "clemence.starosta@etu.emse.fr"
 __license__ = "Apache 2.0"
 
-import sys
-sys.path.append("NextWheel/interface")
-
+sys.path.append("C:/Users/moi/Documents/GitHub/NextWheel/interface")
 """
 _______________________________________________________________________________
                                 CSV Functions

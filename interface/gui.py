@@ -18,6 +18,7 @@ from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QLabel
 from PyQt5 import QtCore
 from PyQt5.QtGui import QFont
+from datetime import datetime
 
 
 class Stream(QtWidgets.QMainWindow):
@@ -32,7 +33,8 @@ class Stream(QtWidgets.QMainWindow):
         QtWidgets.QMainWindow.__init__(self)
         self.setWindowTitle("Streaming")
         self.setGeometry(50, 50, 900, 800)
-        self.flag = True
+        self.flag_stop = False
+        self.flag_reccord = False
 
         self.time_stream = QLabel(self)
         self.time_stream.setGeometry(90, 50, 100, 30)
@@ -201,6 +203,11 @@ class Stream(QtWidgets.QMainWindow):
         self.stop.setGeometry(90, 5, 100, 30)
         self.stop.clicked.connect(self.stop_streaming)
 
+        self.reccord = QLabel(self)
+        self.reccord = QtWidgets.QPushButton("Reccord", self)
+        self.reccord.setGeometry(300, 5, 100, 30)
+        self.reccord.clicked.connect(self.reccord_data)
+
         self.show()
 
         self.streaming(client_stream)
@@ -214,8 +221,11 @@ class Stream(QtWidgets.QMainWindow):
         None.
 
         """
-        while self.flag is True:
-
+        file = open("reccord.json", "a")
+        file.write("\n")
+        file.write(str(datetime.now()))
+        file.write("\n")
+        while self.flag_stop is False:
             data = client_stream.recv(255).decode("utf-8")
             data_json = json.loads(data)
             self.time_stream.setText(str(data_json['time']))
@@ -238,9 +248,13 @@ class Stream(QtWidgets.QMainWindow):
             self.data_moment1.setText(str(data_json['moment'][1]))
             self.data_moment2.setText(str(data_json['moment'][2]))
             self.data_moment3.setText(str(data_json['moment'][3]))
-
+            if self.flag_reccord is True:
+                self.flag_reccord = False
+                json.dump(data_json, file)
+                file.write("\n")
             QtCore.QCoreApplication.processEvents()
-        else:
+
+        if self.flag_stop is True:
             client_stream.send(bytes("2", encoding="utf-8"))
 
     def stop_streaming(self):
@@ -253,7 +267,17 @@ class Stream(QtWidgets.QMainWindow):
 
         """
 
-        self.flag = False
+        self.flag_stop = True
+
+    def reccord_data(self):
+        """
+        Stop the streaming
+
+        Returns
+        -------
+        None.
+        """
+        self.flag_reccord = True
 
 
 class Choice(QtWidgets.QMainWindow):
