@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 """
 NextWheel Interface
 ===================
@@ -16,10 +13,18 @@ from PyQt5 import QtWidgets
 import gui as gui
 import sys
 
+
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
-    app.setStyle('Fusion')
-    choice = gui.Choice()
-    choice.show()
+    NextWheel = QtWidgets.QDialog()
+    ui = gui.Ui_NextWheel()
+    ui.setupUi(NextWheel)
+    NextWheel.show()
+    sys.exit(app.exec_())
+    ui = gui.Ui_NextWheel()
+    ui.setupUi(NextWheel)
+    NextWheel.show()
+    sys.exit(app.exec_())
+    sys.exit(app.exec_())
     sys.exit(app.exec_())
     sys.exit(app.exec_())
