@@ -1,7 +1,8 @@
 """
 NextWheel Interface
 ===================
-main.py: Control of the data from the wheel.
+main.py: Management of received data, places the data in the
+corresponding lists
 """
 
 import pickle
@@ -13,7 +14,7 @@ __email__ = "clemence.starosta@etu.emse.fr"
 __license__ = "Apache 2.0"
 
 
-# List that will be used to display in the graph
+# Lists used to enable display in gui.py
 
 graph_time = [0]
 graph_battery = [0]
@@ -37,9 +38,18 @@ def receive_streaming():
     """
     Receives data from the stream, places it in the corresponding lists
     Removes items from the list to avoid overloading the display
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    None
     """
     flag_stop = False
-    # Listening on the right socket
+
+    # Connecting main.py to the right socket
     client = co.wheel.client_name()
 
     while flag_stop is False:
@@ -49,10 +59,10 @@ def receive_streaming():
         if (buffer != "stop"):
             trame = pickle.loads(buffer)
 
-            for i in range(0, 300):
-                data = dict(trame["data"][i])
+            for i_receiving in range(0, 300):
+                data = dict(trame["data"][i_receiving])
 
-                # Placement in the corresponding lists
+                # Put data in the corresponding lists
                 graph_time.append(data['time'])
                 graph_battery.append(data['battery'])
                 graph_force0.append(data['forces'][0])
@@ -70,7 +80,7 @@ def receive_streaming():
                 graph_channel4.append(data['channel'][4])
                 graph_channel5.append(data['channel'][5])
 
-            # Management of list length
+            # lists length management
             if (len(graph_time) > 6000):
                 del graph_time[0:2000]
                 del graph_battery[0:2000]

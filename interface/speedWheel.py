@@ -1,57 +1,32 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-
-"""
-NextWheel Interface
-===================
-gui.py: A submodule that manages the gui as well as the graph displays.
-"""
-
-__author__ = "Clémence Starosta"
-__copyright__ = "Laboratoire de recherche en mobilité et sport adapté"
-__email__ = "clemence.starosta@etu.emse.fr"
-__license__ = "Apache 2.0"
+# Form implementation generated from reading ui file 'speedWheel.ui'
+#
+# Created by: PyQt5 UI code generator 5.9.2
+#
+# WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtWidgets
-import pyqtgraph as pg
-import threading
 import comm as co
-import main as m
+import json
+import pyqtgraph as pg
+import sys
 
 
 class Ui_NextWheel(object):
-    def __init__(self):
+    def setupUi(self, NextWheel):
         """
-        Iniatialises flags
-
-        Parameters
-        ----------
-        stream: flag. Streaming flag.
-        flag_stop: flag. End streaming flag.
+        Launch the streaming
 
         Returns
         -------
-        None
+        None.
+
         """
-
-        self.stream = False
-        self.flag_stop = False
-
-    def setupUi(self, NextWheel: object):
-        """
-        Iniatialises all widgets in the application
-
-        Parameters
-        ----------
-        NextWheel: object. Object that represents the gui.
-
-        Returns
-        -------
-        None
-        """
-
-        # main windows
+        self.wheel = co.Wheel()
+        self.wheel.__init__()
+        self.client = self.wheel.client
+        self.wheel.connect()
         NextWheel.setObjectName("NextWheel")
         self.centralwidget = QtWidgets.QWidget(NextWheel)
         self.centralwidget.setObjectName("centralwidget")
@@ -61,8 +36,8 @@ class Ui_NextWheel(object):
         NextWheel.setSizeGripEnabled(True)
         NextWheel.setModal(True)
 
-        # Adding a layout to the main window to allow widgets to fit
-        # in the window size
+        self.flag_stop = False
+
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout(NextWheel)
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
 
@@ -77,26 +52,25 @@ class Ui_NextWheel(object):
             QtWidgets.QSizePolicy.Minimum)
         self.verticalLayout.addItem(spacerItem)
 
-        # checkbox graph 1
-        self.battery1 = QtWidgets.QCheckBox(NextWheel)
-        self.battery1.setObjectName("Battery1")
-        self.verticalLayout.addWidget(self.battery1)
+        self.Battery1 = QtWidgets.QCheckBox(NextWheel)
+        self.Battery1.setObjectName("Battery1")
+        self.verticalLayout.addWidget(self.Battery1)
         spacerItem1 = QtWidgets.QSpacerItem(
             20, 10, QtWidgets.QSizePolicy.Minimum,
             QtWidgets.QSizePolicy.Minimum)
         self.verticalLayout.addItem(spacerItem1)
 
-        self.forces1 = QtWidgets.QCheckBox(NextWheel)
-        self.forces1.setObjectName("Forces1")
-        self.verticalLayout.addWidget(self.forces1)
+        self.Forces1 = QtWidgets.QCheckBox(NextWheel)
+        self.Forces1.setObjectName("Forces1")
+        self.verticalLayout.addWidget(self.Forces1)
         spacerItem2 = QtWidgets.QSpacerItem(
             20, 10, QtWidgets.QSizePolicy.Minimum,
             QtWidgets.QSizePolicy.Maximum)
         self.verticalLayout.addItem(spacerItem2)
 
-        self.moment1 = QtWidgets.QCheckBox(NextWheel)
-        self.moment1.setObjectName("Moment1")
-        self.verticalLayout.addWidget(self.moment1)
+        self.Moment1 = QtWidgets.QCheckBox(NextWheel)
+        self.Moment1.setObjectName("Moment1")
+        self.verticalLayout.addWidget(self.Moment1)
         spacerItem3 = QtWidgets.QSpacerItem(
             20, 10, QtWidgets.QSizePolicy.Minimum,
             QtWidgets.QSizePolicy.Minimum)
@@ -150,7 +124,6 @@ class Ui_NextWheel(object):
             QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout.addItem(spacerItem9)
 
-        # stremaing button
         self.pushButton_2 = QtWidgets.QPushButton(NextWheel)
         self.pushButton_2.setObjectName("pushButton_2")
         self.verticalLayout.addWidget(self.pushButton_2)
@@ -158,7 +131,7 @@ class Ui_NextWheel(object):
             20, 40, QtWidgets.QSizePolicy.Minimum,
             QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout.addItem(spacerItem10)
-        self.pushButton_2.clicked.connect(self.etat_streaming)
+        self.pushButton_2.clicked.connect(self.receive_streaming)
 
         self.horizontalLayout_2.addLayout(self.verticalLayout)
         self.verticalLayout_2 = QtWidgets.QVBoxLayout()
@@ -171,7 +144,6 @@ class Ui_NextWheel(object):
             QtWidgets.QSizePolicy.Minimum)
         self.verticalLayout_2.addItem(spacerItem11)
 
-        # checkbox graph 2
         self.battery2 = QtWidgets.QCheckBox(NextWheel)
         self.battery2.setObjectName("battery2")
         self.verticalLayout_2.addWidget(self.battery2)
@@ -244,7 +216,6 @@ class Ui_NextWheel(object):
             QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout_2.addItem(spacerItem20)
 
-        # button stop streaming
         self.pushButton = QtWidgets.QPushButton(NextWheel)
         self.pushButton.setObjectName("pushButton")
         self.verticalLayout_2.addWidget(self.pushButton)
@@ -263,7 +234,6 @@ class Ui_NextWheel(object):
         self.label_2.setObjectName("label_2")
         self.verticalLayout_4.addWidget(self.label_2)
 
-        # graph one
         self.graph_one = pg.PlotWidget(NextWheel)
         self.graph_one.setVerticalScrollBarPolicy(
             QtCore.Qt.ScrollBarAsNeeded)
@@ -277,19 +247,18 @@ class Ui_NextWheel(object):
         self.verticalLayout_4.addWidget(self.graph_one)
         self.doubleSpinBoxGrap1 = QtWidgets.QDoubleSpinBox(NextWheel)
         self.doubleSpinBoxGrap1.setObjectName("doubleSpinBox1")
-        self.doubleSpinBoxGrap1.setMinimum(3)
+        self.doubleSpinBoxGrap1.setMinimum(0.01)
         self.verticalLayout_4.addWidget(self.doubleSpinBoxGrap1)
         self.label = QtWidgets.QLabel(NextWheel)
         self.label.setObjectName("label")
         self.verticalLayout_4.addWidget(self.label)
 
-        # graph two
         self.graph_two = pg.PlotWidget(NextWheel)
         self.graph_two.setObjectName("graph_two")
         self.verticalLayout_4.addWidget(self.graph_two)
         self.doubleSpinBox_2Grap_2 = QtWidgets.QDoubleSpinBox(NextWheel)
         self.doubleSpinBox_2Grap_2.setObjectName("doubleSpinBox")
-        self.doubleSpinBox_2Grap_2.setMinimum(3)
+        self.doubleSpinBox_2Grap_2.setMinimum(0.01)
         self.verticalLayout_4.addWidget(self.doubleSpinBox_2Grap_2)
         self.horizontalLayout_2.addLayout(self.verticalLayout_4)
         self.graph_two.setBackground('w')
@@ -297,24 +266,13 @@ class Ui_NextWheel(object):
         self.retranslateUi(NextWheel)
         QtCore.QMetaObject.connectSlotsByName(NextWheel)
 
-    def retranslateUi(self, NextWheel: object):
-        """
-        Displaying text in the application
-
-        Parameters
-        ----------
-        NextWheel: object. Object that represents the gui.
-
-        Returns
-        -------
-        None
-        """
+    def retranslateUi(self, NextWheel):
         _translate = QtCore.QCoreApplication.translate
         NextWheel.setWindowTitle(_translate("NextWheel", "Next Wheel"))
         self.label_3.setText(_translate("NextWheel", "Graph 1"))
-        self.battery1.setText(_translate("NextWheel", "Battery"))
-        self.forces1.setText(_translate("NextWheel", "Forces"))
-        self.moment1.setText(_translate("NextWheel", "Moments"))
+        self.Battery1.setText(_translate("NextWheel", "Battery"))
+        self.Forces1.setText(_translate("NextWheel", "Forces"))
+        self.Moment1.setText(_translate("NextWheel", "Moments"))
         self.channel01.setText(_translate("NextWheel", "Channel 0"))
         self.channel11.setText(_translate("NextWheel", "Channel 1"))
         self.chanel21.setText(_translate("NextWheel", "Channel 2"))
@@ -336,176 +294,196 @@ class Ui_NextWheel(object):
         self.label_2.setText(_translate("NextWheel", "Graph 1"))
         self.label.setText(_translate("NextWheel", "Graph 2"))
 
-    def display_streaming(self):
-        """
-        Displaying graph with Data reception every 10 ms.
+    def affichage_streaming(self):
+        # Réception de données toutes les 50 ms
 
-        Parameters
-        ----------
-        self.
-
-        Returns
-        -------
-        None
-        """
-
-        if self.battery1.isChecked():
-            self.graph_one.plot(m.graph_time, m.graph_battery,
+        if self.Battery1.isChecked():
+            self.graph_one.plot(self.graph_time, self.graph_battery,
                                 pen=pg.mkPen(color="r",))
 
         if self.battery2.isChecked():
-            self.graph_two.plot(m.graph_time, m.graph_battery,
+            self.graph_two.plot(self.graph_time, self.graph_battery,
                                 pen=pg.mkPen(color="r",))
 
-        if self.forces1.isChecked():
-            self.graph_one.plot(m.graph_time, m.graph_force0,
+        if self.Forces1.isChecked():
+            self.graph_one.plot(self.graph_time, self.graph_force0,
                                 name="Force[0]", pen=pg.mkPen(color="g",))
-            self.graph_one.plot(m.graph_time, m.graph_force1,
+            self.graph_one.plot(self.graph_time, self.graph_force1,
                                 name="Force[1]", pen=pg.mkPen(color="r",))
-            self.graph_one.plot(m.graph_time, m.graph_force2,
+            self.graph_one.plot(self.graph_time, self.graph_force2,
                                 name="Force[2]", pen=pg.mkPen(color="b",))
-            self.graph_one.plot(m.graph_time, m.graph_force3,
+            self.graph_one.plot(self.graph_time, self.graph_force3,
                                 name="Force[3]", pen=pg.mkPen(color="y",))
 
         if self.forces2.isChecked():
-            self.graph_two.plot(m.graph_time, m.graph_force0,
+            self.graph_two.plot(self.graph_time, self.graph_force0,
                                 name="Force[0]", pen=pg.mkPen(color="g",))
-            self.graph_two.plot(m.graph_time, m.graph_force1,
+            self.graph_two.plot(self.graph_time, self.graph_force1,
                                 name="Force[1]", pen=pg.mkPen(color="r",))
-            self.graph_two.plot(m.graph_time, m.graph_force2,
+            self.graph_two.plot(self.graph_time, self.graph_force2,
                                 name="Force[2]", pen=pg.mkPen(color="b",))
-            self.graph_two.plot(m.graph_time, m.graph_force3,
+            self.graph_two.plot(self.graph_time, self.graph_force3,
                                 name="Force[3]", pen=pg.mkPen(color="y",))
 
-        if self.moment1.isChecked():
-            self.graph_one.plot(m.graph_time, m.graph_moment0,
+        if self.Moment1.isChecked():
+            self.graph_one.plot(self.graph_time, self.graph_moment0,
                                 name="Moment[0]", pen=pg.mkPen(color="g",))
-            self.graph_one.plot(m.graph_time, m.graph_moment1,
+            self.graph_one.plot(self.graph_time, self.graph_moment1,
                                 name="Moment[1]", pen=pg.mkPen(color="r",))
-            self.graph_one.plot(m.graph_time, m.graph_moment2,
+            self.graph_one.plot(self.graph_time, self.graph_moment2,
                                 name="Moment[2]", pen=pg.mkPen(color="b",))
-            self.graph_one.plot(m.graph_time, m.graph_moment3,
+            self.graph_one.plot(self.graph_time, self.graph_moment3,
                                 name="Moment[3]", pen=pg.mkPen(color="y",))
 
         if self.moments2.isChecked():
-            self.graph_two.plot(m.graph_time, m.graph_moment0,
+            self.graph_two.plot(self.graph_time, self.graph_moment0,
                                 name="Moment[0]", pen=pg.mkPen(color="g",))
-            self.graph_two.plot(m.graph_time, m.graph_moment1,
+            self.graph_two.plot(self.graph_time, self.graph_moment1,
                                 name="Moment[1]", pen=pg.mkPen(color="r",))
-            self.graph_two.plot(m.graph_time, m.graph_moment2,
+            self.graph_two.plot(self.graph_time, self.graph_moment2,
                                 name="Moment[2]", pen=pg.mkPen(color="b",))
-            self.graph_two.plot(m.graph_time, m.graph_moment3,
+            self.graph_two.plot(self.graph_time, self.graph_moment3,
                                 name="Moment[3]", pen=pg.mkPen(color="y",))
 
         if self.channel01.isChecked():
-            self.graph_one.plot(m.graph_time, m.graph_channel0,
+            self.graph_one.plot(self.graph_time, self.graph_channel0,
                                 pen=pg.mkPen(color="b",
                                              style=QtCore.Qt.DashLine))
 
         if self.channel02.isChecked():
-            self.graph_two.plot(m.graph_time, m.graph_channel0,
+            self.graph_two.plot(self.graph_time, self.graph_channel0,
                                 pen=pg.mkPen(color="b",
                                              style=QtCore.Qt.DashLine))
 
         if self.channel11.isChecked():
-            self.graph_one.plot(m.graph_time, m.graph_channel1,
+            self.graph_one.plot(self.graph_time, self.graph_channel1,
                                 pen=pg.mkPen(color="b",
                                              style=QtCore.Qt.DashLine))
 
         if self.channel12.isChecked():
-            self.graph_two.plot(m.graph_time, m.graph_channel1,
+            self.graph_two.plot(self.graph_time, self.graph_channel1,
                                 pen=pg.mkPen(color="b",
                                              style=QtCore.Qt.DashLine))
 
         if self.chanel21.isChecked():
-            self.graph_one.plot(m.graph_time, m.graph_channel2,
+            self.graph_one.plot(self.graph_time, self.graph_channel2,
                                 pen=pg.mkPen(color="b",
                                              style=QtCore.Qt.DashLine))
 
         if self.channel22.isChecked():
-            self.graph_two.plot(m.graph_time, m.graph_channel2,
+            self.graph_two.plot(self.graph_time, self.graph_channel2,
                                 pen=pg.mkPen(color="b",
                                              style=QtCore.Qt.DashLine))
 
         if self.channel31.isChecked():
-            self.graph_one.plot(m.graph_time, m.graph_channel3,
+            self.graph_one.plot(self.graph_time, self.graph_channel3,
                                 pen=pg.mkPen(color="b",
                                              style=QtCore.Qt.DashLine))
 
         if self.channel32.isChecked():
-            self.graph_two.plot(m.graph_time, m.graph_channel3,
+            self.graph_two.plot(self.graph_time, self.graph_channel3,
                                 pen=pg.mkPen(color="b",
                                              style=QtCore.Qt.DashLine))
 
         if self.channel41.isChecked():
-            self.graph_one.plot(m.graph_time, m.graph_channel4,
+            self.graph_one.plot(self.graph_time, self.graph_channel4,
                                 pen=pg.mkPen(color="b",
                                              style=QtCore.Qt.DashLine))
 
         if self.channel42.isChecked():
-            self.graph_two.plot(m.graph_time, m.graph_channel4,
+            self.graph_two.plot(self.graph_time, self.graph_channel4,
                                 pen=pg.mkPen(color="b",
                                              style=QtCore.Qt.DashLine))
 
         if self.channel51.isChecked():
-            self.graph_one.plot(m.graph_time, m.graph_channel5,
+            self.graph_one.plot(self.graph_time, self.graph_channel5,
                                 pen=pg.mkPen(color="b",
                                              style=QtCore.Qt.DashLine))
 
         if self.channel52.isChecked():
-            self.graph_two.plot(m.graph_time, m.graph_channel5,
+            self.graph_two.plot(self.graph_time, self.graph_channel5,
                                 pen=pg.mkPen(color="b",
                                              style=QtCore.Qt.DashLine))
 
-        self.graph_one.setXRange((m.graph_time[-1]) -
-                                 self.doubleSpinBoxGrap1.value(),
-                                 (m.graph_time[-1]), padding=0)
-
-        self.graph_two.setXRange((m.graph_time[-1]) -
-                                 self.doubleSpinBox_2Grap_2.value(),
-                                 (m.graph_time[-1]), padding=0)
-
-        QtCore.QCoreApplication.processEvents()
-
-    def etat_streaming(self):
+    def receive_streaming(self):
         """
-        Request to be in stream status
-
-        Parameters
-        ----------
-        self.
+        Connect to the wheel and launch the streaming
 
         Returns
         -------
-        None
+        None.
         """
-        # launch of the thread that sends the desired state to comm.py
-        self.stream = True
-        self.thread_stream = threading.Thread(target=co.streaming)
-        self.thread_stream.start()
+        self.client.send(bytes("1", encoding="utf-8"))
 
-        # lauch of the timer every 10 ms
+        self.graph_time = []
+        self.graph_battery = []
+        self.graph_force0 = []
+        self.graph_force1 = []
+        self.graph_force2 = []
+        self.graph_force3 = []
+        self.graph_moment0 = []
+        self.graph_moment1 = []
+        self.graph_moment2 = []
+        self.graph_moment3 = []
+        self.graph_channel0 = []
+        self.graph_channel1 = []
+        self.graph_channel2 = []
+        self.graph_channel3 = []
+        self.graph_channel4 = []
+        self.graph_channel5 = []
+
+        self.flag_stop = False
+
         self.timer1 = QtCore.QTimer()
-        self.timer1.timeout.connect(self.display_streaming)
-        self.timer1.start(10)
+        self.timer1.timeout.connect(self.affichage_streaming)
+        self.timer1.setInterval(50)
+        self.timer1.start()
+
+        while self.flag_stop is False:
+            data = self.client.recv(255).decode("utf-8")
+            data_json = json.loads(data)
+
+            self.graph_time.append(data_json['time'])
+            self.graph_battery.append(data_json['battery'])
+            self.graph_force0.append(data_json['forces'][0])
+            self.graph_force1.append(data_json['forces'][1])
+            self.graph_force2.append(data_json['forces'][2])
+            self.graph_force3.append(data_json['forces'][3])
+            self.graph_moment0.append(data_json['moment'][0])
+            self.graph_moment1.append(data_json['moment'][1])
+            self.graph_moment2.append(data_json['moment'][2])
+            self.graph_moment3.append(data_json['moment'][3])
+            self.graph_channel0.append(data_json['channel'][0])
+            self.graph_channel1.append(data_json['channel'][1])
+            self.graph_channel2.append(data_json['channel'][2])
+            self.graph_channel3.append(data_json['channel'][3])
+            self.graph_channel4.append(data_json['channel'][4])
+            self.graph_channel5.append(data_json['channel'][5])
+
+            self.graph_one.setXRange(
+                (data_json['time'])-self.doubleSpinBoxGrap1.value(),
+                (data_json['time']), padding=0)
+            self.graph_two.setXRange(
+                (data_json['time'])-self.doubleSpinBox_2Grap_2.value(),
+                (data_json['time']), padding=0)
+
+            QtCore.QCoreApplication.processEvents()
 
     def end_streaming(self):
-        """
-        Request tostop to be in stream status
-
-        Parameters
-        ----------
-        self.
-
-        Returns
-        -------
-        None
-        """
-        # end of the stream
-        self.stream = False
+        self.client.send(bytes("2", encoding="utf-8"))
         self.flag_stop = True
-
-        # launch of the thread that sends the desired state to comm.py
-        self.thread_end_stream = threading.Thread(target=co.end_streaming)
-        self.thread_end_stream.start()
         self.timer1.stop()
+
+
+if __name__ == "__main__":
+    app = QtWidgets.QApplication(sys.argv)
+    NextWheel = QtWidgets.QDialog()
+    ui = Ui_NextWheel()
+    ui.setupUi(NextWheel)
+    NextWheel.show()
+    sys.exit(app.exec_())
+    ui = Ui_NextWheel()
+    ui.setupUi(NextWheel)
+    NextWheel.show()
+    sys.exit(app.exec_())
+    sys.exit(app.exec_())

@@ -40,7 +40,11 @@ class Wheel:
 
     def connect(self) -> bool:
         """
-        Initialize the connection to the wheel.
+        Initialize the connection to the wheel
+
+        Parameters
+        ----------
+        self
 
         Returns
         -------
@@ -52,9 +56,13 @@ class Wheel:
         else:
             return True
 
-    def disconnect(self, client) -> bool:
+    def disconnect(self, client: object) -> bool:
         """
         Closes the connection to the wheel.
+
+        Parameters
+        ----------
+        self
 
         Returns
         -------
@@ -68,19 +76,34 @@ class Wheel:
 
     def _streaming(self):
         """
-        Start streaming.
+        Sends the streaming status to the emulator
+        Launching the reception management thread in main.py
 
+        Parameters
+        ----------
+        self
+
+        Returns
+        -------
+        None
         """
         # asks the wheel to go into stream mode
         self.client.send(bytes("1", encoding="utf-8"))
         # Launching the thread for receiving data from the wheel
-        self.t_streaming = threading.Thread(target=m.receive_streaming)
-        self.t_streaming.start()
+        self.thread_streaming = threading.Thread(target=m.receive_streaming)
+        self.thread_streaming.start()
 
     def _end_streaming(self):
         """
-        Stop streaming.
+        Sends the end streaming status to the emulator
 
+        Parameters
+        ----------
+        self
+
+        Returns
+        -------
+        None
         """
         # asks the wheel to go stop stream mode
         self.client.send(bytes("2", encoding="utf-8"))
@@ -89,6 +112,10 @@ class Wheel:
         """
         Returns the socket address
 
+        Parameters
+        ----------
+        self
+
         Returns
         -------
         Return socket
@@ -96,7 +123,10 @@ class Wheel:
         return self.client
 
 
+# creation of the wheel object
 wheel = Wheel()
+
+# connexion to the emulator
 wheel.connect()
 
 # management of gui threads

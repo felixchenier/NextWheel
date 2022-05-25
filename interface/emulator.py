@@ -34,10 +34,10 @@ def csv_count_line(filename: any) -> int:
     Return number of line
     """
     with open(filename, 'r') as f:
-        i = 0
+        n = 0
         for line in f:
-            i += 1
-    return i
+            n += 1
+    return n
 
 
 def open_add_data(filename: any) -> float:
@@ -53,14 +53,14 @@ def open_add_data(filename: any) -> float:
     Return tab of data
     """
     with open(filename, newline='') as csvfile:
-        data_wheel1 = np.zeros((csv_count_line(filename), 16))
+        data_wheel = np.zeros((csv_count_line(filename), 16))
         read = csv.reader(csvfile, delimiter=',')
-        data_wheel1 = list(read)
-        data_wheel = list(np.float_(data_wheel1))
+        data_wheel = list(read)
+        data_wheel_empty = list(np.float_(data_wheel))
         for i in range(0, csv_count_line(file_data_wheel)):
             for j in range(0, 15):
-                data_wheel[i][j] = round(data_wheel[i][j], 5)
-    return data_wheel
+                data_wheel_empty[i][j] = round(data_wheel_empty[i][j], 5)
+    return data_wheel_empty
 
 
 """
@@ -85,10 +85,10 @@ class emulator(object):
 
         Returns
         -------
-        Return number of line
+        None
         """
 
-        # extraction of the data
+        # extraction of the data, adding data to a table
         print("Extraction of the data wheel")
         self.data_wheel = open_add_data(file_data_wheel)
         print("Sucessful extraction")
@@ -107,8 +107,10 @@ class emulator(object):
         self.flag = True
 
         while self.flag is True:
+            # reception of the wheel status
             client_choice = self.client.recv(255).decode("utf-8")
 
+            # streaming status
             if client_choice == "1":
                 print("etat stream")
                 for j in range(0, 42000, tramme_JSON):
@@ -118,9 +120,11 @@ class emulator(object):
                     time.sleep(0.1)
                 self.client.send("stop")
 
+            # stop streaming status
             elif client_choice == "2":
                 print("etat non stream")
 
+            # end of the client connexion
             elif client_choice == "stop":
                 print("Closed connection with " + self.adress_client)
                 print("---------------------------------------------------")
