@@ -1,0 +1,27 @@
+#include "Power.h"
+
+
+Power::Power(unsigned char address)
+: m_i2c_address(address) {
+
+}
+
+void Power::begin() {
+  // Initialize the INA220
+  uint8_t availableDevices = m_ina220.begin(MAX_CUR, SHUNT_R, INA_ADC_MODE_128AVG, INA_ADC_MODE_128AVG, INA_MODE_CONTINUOUS_BOTH, &m_i2c_address, NUM_INA);
+  Serial.print("Configured "); Serial.print(availableDevices); Serial.print(" of "); Serial.print(NUM_INA); Serial.println(" INA220 current sensors");
+
+}
+
+
+void Power::update() {
+
+    float vol = m_ina220.getBusMilliVolts(0) / 1000.0;
+    float cur = m_ina220.getBusMicroAmps(0) / 1000.0;
+    float power = m_ina220.getBusMicroWatts(0) / 1000.0;
+
+    Serial.print("INA at 0x"); Serial.print(m_i2c_address, HEX); Serial.print(" measures "); Serial.print(vol); Serial.print(" V, ");
+    Serial.print(cur); Serial.print(" mA, and "); Serial.print(power); Serial.println(" mW");
+    Serial.println();
+
+}
