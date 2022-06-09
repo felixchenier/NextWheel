@@ -1,6 +1,7 @@
 #ifndef _POWER_H_
 #define _POWER_H_
 
+#include <NextWheel.h>
 #include <INA220.h>
 
 #define INA220_I2C_ADDRESS 0x40
@@ -10,6 +11,7 @@ class Power {
         Power(unsigned char address = INA220_I2C_ADDRESS);
         void begin();
         void update();
+        bool isLowPower();
 
     private:
         unsigned char m_i2c_address;

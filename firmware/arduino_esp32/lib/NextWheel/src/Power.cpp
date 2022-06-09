@@ -4,6 +4,9 @@
 Power::Power(unsigned char address)
 : m_i2c_address(address) {
 
+    //SET PIN AS INPUT
+    pinMode(PIN_EMERGENCY_STOP_LOW_POWER_N, INPUT);
+
 }
 
 void Power::begin() {
@@ -22,6 +25,11 @@ void Power::update() {
 
     Serial.print("INA at 0x"); Serial.print(m_i2c_address, HEX); Serial.print(" measures "); Serial.print(vol); Serial.print(" V, ");
     Serial.print(cur); Serial.print(" mA, and "); Serial.print(power); Serial.println(" mW");
+    Serial.print("Low power: "); Serial.println(isLowPower());
     Serial.println();
 
+}
+
+bool Power::isLowPower() {
+  return digitalRead(PIN_EMERGENCY_STOP_LOW_POWER_N) == LOW;
 }

@@ -1,10 +1,13 @@
 #include <Arduino.h>
+#include <RTC.h>
 #include <NextWheel.h>
 #include <IMU.h>
 #include <Power.h>
 
+
 IMU imu(IMU_I2C_ADDRESS);
 Power power(INA220_I2C_ADDRESS);
+RTC rtc;
 
 
 void setup() {
@@ -17,6 +20,8 @@ void setup() {
     imu.begin();
 
     power.begin();
+
+    rtc.begin();
 }
 
 void loop() {
@@ -25,6 +30,8 @@ void loop() {
   imu.update();
 
   power.update();
+
+  rtc.update();
 
   delay(1000);
 }
