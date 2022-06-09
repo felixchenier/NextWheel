@@ -12,6 +12,8 @@ class Power {
         void begin();
         void update();
         bool isLowPower();
+        bool isSensorsEnabled();
+        void enableSensors(bool enabled);
 
     private:
         unsigned char m_i2c_address;

@@ -6,6 +6,8 @@ Power::Power(unsigned char address)
 
     //SET PIN AS INPUT
     pinMode(PIN_EMERGENCY_STOP_LOW_POWER_N, INPUT);
+    pinMode(PIN_ENABLE_SENSOR_POWER, OUTPUT);
+    digitalWrite(PIN_ENABLE_SENSOR_POWER, HIGH);
 
 }
 
@@ -27,9 +29,21 @@ void Power::update() {
     Serial.print(cur); Serial.print(" mA, and "); Serial.print(power); Serial.println(" mW");
     Serial.print("Low power: "); Serial.println(isLowPower());
     Serial.println();
+    Serial.print("Sensors enabled: "); Serial.println(isSensorsEnabled());
+    Serial.println();
 
 }
 
 bool Power::isLowPower() {
   return digitalRead(PIN_EMERGENCY_STOP_LOW_POWER_N) == LOW;
+}
+
+bool Power::isSensorsEnabled()
+{
+    return digitalRead(PIN_ENABLE_SENSOR_POWER) == HIGH;
+}
+
+void Power::enableSensors(bool enabled)
+{
+    digitalWrite(PIN_ENABLE_SENSOR_POWER, enabled ? HIGH : LOW);
 }

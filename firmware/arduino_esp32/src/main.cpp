@@ -3,11 +3,13 @@
 #include <NextWheel.h>
 #include <IMU.h>
 #include <Power.h>
+//#include <SDCard.h>
 
 
 IMU imu(IMU_I2C_ADDRESS);
 Power power(INA220_I2C_ADDRESS);
 RTC rtc;
+//SDCard sdcard;
 
 
 void setup() {
@@ -22,6 +24,8 @@ void setup() {
     power.begin();
 
     rtc.begin();
+
+    //sdcard.begin();
 }
 
 void loop() {
@@ -32,6 +36,8 @@ void loop() {
   power.update();
 
   rtc.update();
+
+  //sdcard.update();
 
   delay(1000);
 }
