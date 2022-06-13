@@ -35,4 +35,6 @@ Default address : 0x68
 
 ADS8688  IDBTR
 
+### WiFi
 
+Once a WebSocket connection is established, the client and server exchange data via the WebSocket protocol: application messages are split into one or more frames, each of which adds from 2 to 14 bytes of overhead.

@@ -2,6 +2,7 @@
 
 
 WebSocketServer::WebSocketServer() :
+    Task("WebSocketServer", 2048, TASK_PRIORITY_HIGH),
     m_server(80),
     m_ws("/ws"){
 
@@ -34,4 +35,9 @@ void WebSocketServer::onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * 
     } else if(type == WS_EVT_DATA) {
         Serial.printf("Client message: %s\n", (char*)arg);
     }
+}
+
+void WebSocketServer::run(void* data)
+{
+
 }

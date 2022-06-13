@@ -1,0 +1,13 @@
+#ifndef _WIFI_CONFIG_H_
+#define _WIFI_CONFIG_H_
+
+// WIFI
+#ifndef WIFI_DEFAULT_SSID
+    #define WIFI_DEFAULT_SSID "YOUR SSID HERE"
+#endif
+
+#ifndef WIFI_DEFAULT_PASSWORD
+    #define WIFI_DEFAULT_PASSWORD "YOUR PASSWORD HERE"
+#endif
+
+#endif // _WIFI_CONFIG_H_

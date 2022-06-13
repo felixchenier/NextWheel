@@ -1,6 +1,8 @@
 #ifndef _NEXT_WHEEL_H_
 #define _NEXT_WHEEL_H_
 
+#include "WiFiConfig.h"
+
 /*
     NextWheel  - Global definitions and macros
 */
@@ -62,8 +64,16 @@
 // ENABLE SENSORS POWER
 #define PIN_ENABLE_SENSOR_POWER 32
 
-// WIFI
-#define WIFI_DEFAULT_SSID "YOUR SSID HERE"
-#define WIFI_DEFAULT_PASSWORD "YOUR PASWORD HERE"
+
+// TASKS
+#define TASK_PRIORITY_LOWEST 0
+#define TASK_PRIORITY_LOW 1
+#define TASK_PRIORITY_MEDIUM 2
+#define TASK_PRIORITY_HIGH 3
+#define TASK_PRIORITY_HIGHEST 4
+#define TASK_PRIORITY_IDLE 5
+#define TASK_PRIORITY_DEFAULT TASK_PRIORITY_MEDIUM
+
+
 
 #endif
