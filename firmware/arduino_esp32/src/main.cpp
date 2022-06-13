@@ -4,11 +4,13 @@
 #include <IMU.h>
 #include <Power.h>
 //#include <SDCard.h>
+#include <ADC.h>
 
 
 IMU imu(IMU_I2C_ADDRESS);
 Power power(INA220_I2C_ADDRESS);
 RTC rtc;
+ADC adc;
 //SDCard sdcard;
 
 
@@ -26,6 +28,8 @@ void setup() {
     rtc.begin();
 
     //sdcard.begin();
+
+    adc.begin();
 }
 
 void loop() {
@@ -38,6 +42,8 @@ void loop() {
   rtc.update();
 
   //sdcard.update();
+
+  adc.update();
 
   delay(1000);
 }

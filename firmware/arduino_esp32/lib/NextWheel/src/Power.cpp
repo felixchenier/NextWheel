@@ -7,8 +7,8 @@ Power::Power(unsigned char address)
     //SET PIN AS INPUT
     pinMode(PIN_EMERGENCY_STOP_LOW_POWER_N, INPUT);
     pinMode(PIN_ENABLE_SENSOR_POWER, OUTPUT);
-    digitalWrite(PIN_ENABLE_SENSOR_POWER, HIGH);
 
+    enableSensors(true);
 }
 
 void Power::begin() {
