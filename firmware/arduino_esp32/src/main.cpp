@@ -7,6 +7,7 @@
 #include <ADC.h>
 #include <WebSocketServer.h>
 #include "tasks/ADCTask.h"
+#include "tasks/PrintWorkerTask.h"
 
 // IMU imu(IMU_I2C_ADDRESS);
 // Power power(INA220_I2C_ADDRESS);
@@ -16,6 +17,7 @@
 // WebSocketServer server;
 
 ADCTask adcTask;
+PrintWorkerTask printWorkerTask;
 
 
 void setup() {
@@ -24,8 +26,16 @@ void setup() {
     Serial.print("NextWheel version: ");
     Serial.println(NEXT_WHEEL_VERSION);
 
+    printWorkerTask.setCore(1);
+    printWorkerTask.setPriority(TASK_PRIORITY_LOW);
+
     adcTask.setCore(0);
     adcTask.setPriority(TASK_PRIORITY_HIGH);
+
+    adcTask.registerDataQueue(printWorkerTask.getQueue());
+
+
+    printWorkerTask.start(nullptr);
     adcTask.start(nullptr);
 
     // // IMU
