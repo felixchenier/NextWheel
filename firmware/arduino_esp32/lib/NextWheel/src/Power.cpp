@@ -1,5 +1,5 @@
 #include "Power.h"
-
+#include "DataFrame.h"
 
 Power::Power(unsigned char address)
 : m_i2c_address(address) {
@@ -25,12 +25,11 @@ void Power::update() {
     float cur = m_ina220.getBusMicroAmps(0) / 1000.0;
     float power = m_ina220.getBusMicroWatts(0) / 1000.0;
 
-    Serial.print("INA at 0x"); Serial.print(m_i2c_address, HEX); Serial.print(" measures "); Serial.print(vol); Serial.print(" V, ");
-    Serial.print(cur); Serial.print(" mA, and "); Serial.print(power); Serial.println(" mW");
-    Serial.print("Low power: "); Serial.println(isLowPower());
-    Serial.println();
-    Serial.print("Sensors enabled: "); Serial.println(isSensorsEnabled());
-    Serial.println();
+    uint8_t flags = isLowPower() ? 0b00000001 : 0;
+    flags |= isSensorsEnabled() ? 0b00000010 : 0;
+
+    PowerDataFrame frame(vol, cur, power, flags);
+    frame.print();
 
 }
 

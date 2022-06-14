@@ -14,19 +14,12 @@ void ADC::begin()
 }
 
 void ADC::update() {
+    ADCDataFrame frame(nullptr, 0);
 
-    Serial.println("ADC values: ");             // print label
-    DataFrame<float> frame(DATA_FRAME_TYPE_ADC, nullptr, 8);
     for (byte i=0;i<8;i++) {
-
         uint16_t val = m_ads8688.noOp();         // trigger samples
-        frame.setDataItem(i, m_ads8688.I2V(val,R1));
-
-        //Serial.print(m_ads8688.I2V(val,R1));     // print value in Volts
-        //Serial.println(i!=7?" V | ":" V");  // print Volt label
+        frame.setChannelValue(i, m_ads8688.I2V(val,R1));
     }
-
-
 
     frame.print();
 }

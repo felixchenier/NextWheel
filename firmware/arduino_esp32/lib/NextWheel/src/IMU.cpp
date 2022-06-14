@@ -64,45 +64,12 @@ void IMU::displaySensorDetails()
 
 void IMU::update() {
     sensors_event_t aevent, gevent, mevent;
-    DataFrame<float> frame(DATA_FRAME_TYPE_IMU, nullptr, 9);
+    IMUDataFrame frame(nullptr, 0);
 
     /* Get a new sensor event */
     m_dpeng_bmx160.getEvent(&aevent, &gevent, &mevent);
-    frame.setDataItem(0, aevent.acceleration.x);
-    frame.setDataItem(1, aevent.acceleration.y);
-    frame.setDataItem(2, aevent.acceleration.z);
-    frame.setDataItem(3, gevent.gyro.x);
-    frame.setDataItem(4, gevent.gyro.y);
-    frame.setDataItem(5, gevent.gyro.z);
-    frame.setDataItem(6, mevent.magnetic.x);
-    frame.setDataItem(7, mevent.magnetic.y);
-    frame.setDataItem(8, mevent.magnetic.z);
-
-
-
-
-
-    /* Display the accel results (acceleration is measured in m/s^2) */
-    Serial.print("A ");
-    Serial.print("X: "); Serial.print(aevent.acceleration.x, 4); Serial.print("  ");
-    Serial.print("Y: "); Serial.print(aevent.acceleration.y, 4); Serial.print("  ");
-    Serial.print("Z: "); Serial.print(aevent.acceleration.z, 4); Serial.print("  ");
-    Serial.println("m/s^2");
-
-    /* Display the gyro results (gyro data is in g) */
-    Serial.print("G ");
-    Serial.print("X: "); Serial.print(gevent.gyro.x, 1); Serial.print("  ");
-    Serial.print("Y: "); Serial.print(gevent.gyro.y, 1); Serial.print("  ");
-    Serial.print("Z: "); Serial.print(gevent.gyro.z, 1); Serial.print("  ");
-    Serial.println("g");
-
-    /* Display the mag results (mag data is in uTesla) */
-    Serial.print("M ");
-    Serial.print("X: "); Serial.print(mevent.magnetic.x, 1); Serial.print("  ");
-    Serial.print("Y: "); Serial.print(mevent.magnetic.y, 1); Serial.print("  ");
-    Serial.print("Z: "); Serial.print(mevent.magnetic.z, 1); Serial.print("  ");
-    Serial.println("uT");
-
-    Serial.println("");
+    frame.setAccel(aevent.acceleration.x, aevent.acceleration.y, aevent.acceleration.z);
+    frame.setGyro(gevent.gyro.x, gevent.gyro.y, gevent.gyro.z);
+    frame.setMag(mevent.magnetic.x, mevent.magnetic.y, mevent.magnetic.z);
     frame.print();
 }
