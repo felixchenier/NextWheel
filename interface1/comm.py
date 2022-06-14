@@ -34,6 +34,7 @@ class Wheel:
         self.ip_address = ip_address
         self.port = port
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.flag_stream = False
 
     def connect(self) -> bool:
         """
@@ -91,6 +92,7 @@ class Wheel:
         self.client.send(bytes("1", encoding="utf-8"))
         # Launching the thread for receiving data from the wheel
         self.thread_streaming = threading.Thread(target=m.receive_streaming)
+        self.flag_stream = True
         self.thread_streaming.start()
 
     def _end_streaming(self):
@@ -106,7 +108,7 @@ class Wheel:
         None
         """
         # asks the wheel to go stop stream mode
-        self.client.send(bytes("2", encoding="utf-8"))
+        self.flag_stream = False
 
     def client_name(self) -> any:
         """

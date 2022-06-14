@@ -1,28 +1,35 @@
 """Mangement of the constant."""
 
+import kineticstoolkit.lab as ktk
 
-def csv_count_line(filename: str) -> int:
+
+def truncate(n, decimals=0):
     """
-    Count line number in a csv file.
+    Round up a number.
+
+    Each digit after a given position is replaced by 0.
 
     Parameters
     ----------
-    filename : file with csv file
+    n : number
+    decimals : decimal for rounding (positive or negative)
 
     Returns
     -------
-    Return number of line
+    Return the rounding number
     """
-    with open(filename, 'r') as f:
-        n = 0
-        for line in f:
-            n += 1
-    return n
+    multiplier = 10 ** decimals
+    return int(int(n * multiplier) / multiplier)
 
 
-data_wheel_file = 'kinetics.csv'
-nbr_JSON_per_framme = 10
-nbr_JSON_total = csv_count_line(data_wheel_file)
+filename = (
+    ktk.doc.download('pushrimkinetics_offsets_propulsion.csv')
+)
+
+kinetics = ktk.pushrimkinetics.read_file(filename, file_format='smartwheel')
+
+nbr_JSON_per_framme = 100
+nbr_JSON_total = 7600
 nbr_JSON_per_second = nbr_JSON_total/17
 
 print("Number of JSON per second: ", round(nbr_JSON_per_second, 1))
