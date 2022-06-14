@@ -13,13 +13,10 @@ void ADC::begin()
     m_ads8688.autoRst();                       // reset auto sequence
 }
 
-void ADC::update() {
-    ADCDataFrame frame(nullptr, 0);
-
+void ADC::update(ADCDataFrame &frame) {
     for (byte i=0;i<8;i++) {
         uint16_t val = m_ads8688.noOp();         // trigger samples
         frame.setChannelValue(i, m_ads8688.I2V(val,R1));
     }
-
-    frame.print();
+    frame.setTimestamp();
 }

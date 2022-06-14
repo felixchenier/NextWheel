@@ -6,13 +6,17 @@
 //#include <SDCard.h>
 #include <ADC.h>
 #include <WebSocketServer.h>
+#include "tasks/ADCTask.h"
 
-IMU imu(IMU_I2C_ADDRESS);
-Power power(INA220_I2C_ADDRESS);
-RTC rtc;
-ADC adc;
-//SDCard sdcard;
-WebSocketServer server;
+// IMU imu(IMU_I2C_ADDRESS);
+// Power power(INA220_I2C_ADDRESS);
+// RTC rtc;
+// ADC adc;
+// //SDCard sdcard;
+// WebSocketServer server;
+
+ADCTask adcTask;
+
 
 void setup() {
     // put your setup code here, to run once:
@@ -20,34 +24,50 @@ void setup() {
     Serial.print("NextWheel version: ");
     Serial.println(NEXT_WHEEL_VERSION);
 
-    // IMU
-    imu.begin();
+    adcTask.setCore(0);
+    adcTask.setPriority(TASK_PRIORITY_HIGH);
+    adcTask.start(nullptr);
 
-    power.begin();
+    // // IMU
+    // imu.begin();
 
-    rtc.begin();
+    // power.begin();
 
-    //sdcard.begin();
+    // rtc.begin();
 
-    adc.begin();
+    // //sdcard.begin();
 
-    server.begin();
+    // adc.begin();
+
+    // server.begin();
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
 
-  imu.update();
+//   imu.update();
 
-  power.update();
+//   power.update();
 
-  rtc.update();
+//   rtc.update();
 
-  //sdcard.update();
+//   //sdcard.update();
 
-  adc.update();
+//   adc.update();
 
-  server.update();
+//   server.update();
 
-  delay(1000);
+//   delay(1000);
+
+    TickType_t lastGeneration = xTaskGetTickCount();
+    while(1) {
+        // IDLE loop.
+        //1000 ms task
+        vTaskDelayUntil(&lastGeneration, 1000 / portTICK_RATE_MS);
+
+
+        //ADC Stats
+        Serial.print("ADC: "); Serial.println(adcTask.getDataSentCounter());
+        Serial.println();
+    }
 }

@@ -4,7 +4,7 @@
 #include "NextWheel.h"
 #include <Arduino.h>
 #include <sys/time.h>
-
+#include <memory>
 
 
 
@@ -26,6 +26,7 @@ class DataFrame {
             : m_type(type), m_timestamp(timestamp) {
 
         }
+
 
         // Copy constructor = default implementation (copy by value)
         DataFrame(const DataFrame& other) = default;
@@ -53,11 +54,17 @@ class DataFrame {
             };
         }
 
+        size_t getTotalSize() {
+            return HEADER_SIZE + getDataSize();
+        }
+
         virtual uint8_t* getData() = 0;
 
-        virtual size_t getDataSize() = 0;
+        virtual size_t getDataSize() const = 0;
 
         virtual void setData(uint8_t* data, uint8_t size) = 0;
+
+        virtual DataFrame* clone() const = 0;
 
         static uint64_t getCurrentTimeStamp() {
             // TODO Get the current time from epoch in microseconds
@@ -65,6 +72,10 @@ class DataFrame {
             gettimeofday(&tv_now, NULL);
             uint64_t time_us = (uint64_t)tv_now.tv_sec * 1000000 + (uint64_t)tv_now.tv_usec;
             return time_us;
+        }
+
+        void setTimestamp(uint64_t timestamp = DataFrame::getCurrentTimeStamp()) {
+            m_timestamp = timestamp;
         }
 
         virtual void print() {
@@ -113,6 +124,8 @@ class DataFrame {
         DataFrame() = default;
 };
 
+typedef DataFrame* DataFramePtr;
+
 class IMUDataFrame : public DataFrame {
     public:
 
@@ -123,6 +136,12 @@ class IMUDataFrame : public DataFrame {
             if (data != nullptr && size > 0) {
                setData((uint8_t*)(data), size * sizeof(float));
             }
+        }
+
+        IMUDataFrame(const IMUDataFrame& other)
+            : DataFrame(other) {
+            //Copy member data to avoid const problems
+            memcpy(m_data_raw, other.m_data_raw, IMU_DATA_FRAME_SIZE);
         }
 
         virtual void setData(uint8_t* data, uint8_t size) override {
@@ -137,8 +156,12 @@ class IMUDataFrame : public DataFrame {
             return m_data_raw;
         }
 
-        virtual size_t getDataSize() override {
+        virtual size_t getDataSize() const override {
             return IMU_DATA_FRAME_SIZE;
+        }
+
+        virtual DataFrame* clone() const override {
+            return new IMUDataFrame(*this);
         }
 
         void setAccel(float x, float y, float z) {
@@ -184,6 +207,14 @@ class ADCDataFrame : public DataFrame {
             if (data != nullptr && size > 0) {
                 setData((uint8_t*)(data), size * sizeof(float));
             }
+            else {
+                memset(m_data_raw, 0, ADC_DATA_FRAME_SIZE);
+            }
+        }
+
+        ADCDataFrame(const ADCDataFrame& other)
+            : DataFrame(other) {
+            memcpy(m_data_raw, other.m_data_raw, ADC_DATA_FRAME_SIZE);
         }
 
         virtual void setData(uint8_t* data, uint8_t size) override {
@@ -196,6 +227,10 @@ class ADCDataFrame : public DataFrame {
 
         virtual uint8_t* getData() override {
             return m_data_raw;
+        }
+
+        virtual DataFrame* clone() const override {
+            return new ADCDataFrame(*this);
         }
 
         float getChannelValue(uint8_t channel) {
@@ -211,7 +246,7 @@ class ADCDataFrame : public DataFrame {
             }
         }
 
-        virtual size_t getDataSize() override {
+        virtual size_t getDataSize() const override {
             return ADC_DATA_FRAME_SIZE;
         }
 
@@ -247,6 +282,12 @@ class PowerDataFrame : public DataFrame {
 
         }
 
+        PowerDataFrame(const PowerDataFrame& other)
+            : DataFrame(other),
+            m_voltage(other.m_voltage), m_current(other.m_current), m_power(other.m_power), m_flags(other.m_flags) {
+
+        }
+
         float getVoltage() {
             return m_voltage;
         }
@@ -275,19 +316,23 @@ class PowerDataFrame : public DataFrame {
             return m_data_raw;
         }
 
-        virtual size_t getDataSize() override {
+        virtual size_t getDataSize() const override {
             return POWER_DATA_FRAME_SIZE;
+        }
+
+        virtual DataFrame* clone() const override {
+            return new PowerDataFrame(*this);
         }
 
     protected:
         union {
-                uint8_t m_data_raw[POWER_DATA_FRAME_SIZE];
-                struct {
-                    float m_voltage;
-                    float m_current;
-                    float m_power;
-                    uint8_t m_flags;
-                };
+            uint8_t m_data_raw[POWER_DATA_FRAME_SIZE];
+            struct {
+                float m_voltage;
+                float m_current;
+                float m_power;
+                uint8_t m_flags;
+            };
 
         };
 };
