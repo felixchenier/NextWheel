@@ -3,16 +3,16 @@
 
 #include <NextWheel.h>
 #include <ESPAsyncWebServer.h>
-#include <Task.h>
-#include <freertos/queue.h>
+#include <DataFrame.h>
 
-class WebSocketServer : public Task {
+class WebSocketServer  {
     public:
         WebSocketServer();
         void begin();
-        void update();
+
+        void sendToAll(DataFrame &frame);
+
     private:
-        virtual void run(void* data);
         AsyncWebServer m_server;
         AsyncWebSocket m_ws;
         void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len);

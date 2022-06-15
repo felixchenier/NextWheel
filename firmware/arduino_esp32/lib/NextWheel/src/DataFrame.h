@@ -19,14 +19,14 @@ class DataFrame {
             DATA_FRAME_TYPE_ADC = 2,
             DATA_FRAME_TYPE_IMU = 3,
             DATA_FRAME_TYPE_POWER = 4,
-            DATA_FRAME_TYPE_RTC = 5
+            DATA_FRAME_TYPE_RTC = 5,
+            DATA_FRAME_TYPE_AUDIO = 6
         };
 
-        DataFrame(DataFrameType type, uint64_t timestamp = DataFrame::getCurrentTimeStamp())
-            : m_type(type), m_timestamp(timestamp) {
+        DataFrame(DataFrameType type, uint16_t data_size, uint64_t timestamp = DataFrame::getCurrentTimeStamp())
+            : m_type(type), m_dataSize(data_size), m_timestamp(timestamp) {
 
         }
-
 
         // Copy constructor = default implementation (copy by value)
         DataFrame(const DataFrame& other) = default;
@@ -54,15 +54,20 @@ class DataFrame {
             };
         }
 
+        size_t getHeaderSize() {
+            return HEADER_SIZE;
+        }
+
         size_t getTotalSize() {
             return HEADER_SIZE + getDataSize();
         }
 
-        virtual uint8_t* getData() = 0;
+        size_t getDataSize() {
+            return m_dataSize;
+        }
 
-        virtual size_t getDataSize() const = 0;
+        virtual size_t serializePayload(uint8_t *buffer, size_t buffer_size) const = 0;
 
-        virtual void setData(uint8_t* data, uint8_t size) = 0;
 
         virtual DataFrame* clone() const = 0;
 
@@ -79,17 +84,26 @@ class DataFrame {
         }
 
         virtual void print() {
+
+            uint8_t buffer[getTotalSize()];
+            serialize(buffer, getTotalSize());
+
+
             Serial.println();
             Serial.println("DataFrame");
             Serial.print("Type: ");Serial.print(m_type); Serial.print(" "); Serial.println(getTypeString());
             Serial.print("Timestamp: ");Serial.println(m_timestamp);
             Serial.print("Data size: ");Serial.println(getDataSize());
 
-            Serial.print("Data: ");
+            Serial.print("Header: 0x");
+            for (int i = 0; i < getHeaderSize(); i++) {
+                Serial.printf("%2.2x", buffer[i]);
+                Serial.print(" ");
+            }
 
             Serial.print("Data: 0x");
-            for (int i = 0; i < getDataSize(); i++) {
-                Serial.print(getData()[i], HEX);
+            for (int i = getHeaderSize(); i < getTotalSize(); i++) {
+                Serial.printf("%2.2x", buffer[i]);
                 Serial.print(" ");
             }
             Serial.println();
@@ -97,28 +111,36 @@ class DataFrame {
 
         virtual size_t serialize(uint8_t* buffer, size_t bufferSize) {
             // bufferSize must be at least MAX_FRAME_DATA_SIZE_BYTES + header size
-            if (bufferSize < getDataSize() + HEADER_SIZE) {
+            if (bufferSize < getTotalSize()) {
                 return 0;
             }
-
+            size_t size = HEADER_SIZE;
+            // Safety
+            memset(buffer, 0, getTotalSize());
             // Copy header data
-            memcpy(buffer, m_header_data, HEADER_SIZE);
+            buffer[0] = (uint8_t)m_type;
+
+            buffer[1] = m_timestamp >> 0 & 0xFF;
+            buffer[2] = m_timestamp >> 8 & 0xFF;
+            buffer[3] = m_timestamp >> 16 & 0xFF;
+            buffer[4] = m_timestamp >> 24 & 0xFF;
+            buffer[5] = m_timestamp >> 32 & 0xFF;
+            buffer[6] = m_timestamp >> 40 & 0xFF;
+            buffer[7] = m_timestamp >> 48 & 0xFF;
+            buffer[8] = m_timestamp >> 56 & 0xFF;
+
+            buffer[9] = m_dataSize & 0xFF;
 
             // Copy data
-            memcpy(buffer + HEADER_SIZE, getData(), getDataSize());
+            size += serializePayload(buffer + HEADER_SIZE, getDataSize());
 
-            return HEADER_SIZE + m_dataSize;
+            return size;
         }
 
     protected:
-        union {
-            uint8_t m_header_data[HEADER_SIZE];
-            struct {
-                DataFrameType m_type;
-                uint64_t m_timestamp;
-                uint8_t m_dataSize;
-            };
-        };
+        DataFrameType m_type;
+        uint64_t m_timestamp;
+        uint8_t m_dataSize;
 
     private:
         DataFrame() = default;
@@ -129,34 +151,24 @@ typedef DataFrame* DataFramePtr;
 class IMUDataFrame : public DataFrame {
     public:
 
-        const static size_t IMU_DATA_FRAME_SIZE = 9 * sizeof(float);
+        const static size_t IMU_AXIS_COUNT = 9;
+        const static size_t IMU_DATA_FRAME_SIZE = IMU_AXIS_COUNT * sizeof(float);
 
-        IMUDataFrame(float *data, uint8_t size, uint64_t timestamp = DataFrame::getCurrentTimeStamp())
-            : DataFrame(DataFrame::DATA_FRAME_TYPE_IMU, timestamp) {
-            if (data != nullptr && size > 0) {
-               setData((uint8_t*)(data), size * sizeof(float));
-            }
+        IMUDataFrame(uint64_t timestamp = DataFrame::getCurrentTimeStamp())
+            : DataFrame(DataFrame::DATA_FRAME_TYPE_IMU, IMU_DATA_FRAME_SIZE, timestamp) {
+
+            memset(m_data,0, IMU_DATA_FRAME_SIZE);
         }
 
         IMUDataFrame(const IMUDataFrame& other)
             : DataFrame(other) {
             //Copy member data to avoid const problems
-            memcpy(m_data_raw, other.m_data_raw, IMU_DATA_FRAME_SIZE);
+            memcpy(m_data, other.m_data, IMU_DATA_FRAME_SIZE);
         }
 
-        virtual void setData(uint8_t* data, uint8_t size) override {
-            if (data == nullptr || size != IMU_DATA_FRAME_SIZE) {
-                return;
-            }
+        virtual size_t serializePayload(uint8_t *buffer, size_t buffer_size) const override {
 
-            memcpy(m_data_raw, data, IMU_DATA_FRAME_SIZE);
-        }
-
-        virtual uint8_t* getData() override {
-            return m_data_raw;
-        }
-
-        virtual size_t getDataSize() const override {
+            memcpy(buffer, m_data, IMU_DATA_FRAME_SIZE);
             return IMU_DATA_FRAME_SIZE;
         }
 
@@ -186,13 +198,12 @@ class IMUDataFrame : public DataFrame {
 
         //Pre allocated memory for IMU data
         union {
-            float m_data[IMU_DATA_FRAME_SIZE];
+            float m_data[IMU_AXIS_COUNT];
             struct {
                 float m_accel[3];
                 float m_gyro[3];
                 float m_mag[3];
             };
-            uint8_t m_data_raw[IMU_DATA_FRAME_SIZE];
         };
 };
 
@@ -200,33 +211,24 @@ class IMUDataFrame : public DataFrame {
 
 class ADCDataFrame : public DataFrame {
     public:
-        const static size_t ADC_DATA_FRAME_SIZE = 8 * sizeof(float);
+        const static size_t NUM_ADC_CHANNELS = 8;
+        const static size_t ADC_DATA_FRAME_SIZE = NUM_ADC_CHANNELS * sizeof(float);
 
-        ADCDataFrame(float *data, uint8_t size, uint64_t timestamp = DataFrame::getCurrentTimeStamp())
-            : DataFrame(DataFrame::DATA_FRAME_TYPE_ADC, timestamp) {
-            if (data != nullptr && size > 0) {
-                setData((uint8_t*)(data), size * sizeof(float));
-            }
-            else {
-                memset(m_data_raw, 0, ADC_DATA_FRAME_SIZE);
-            }
+        ADCDataFrame(uint64_t timestamp = DataFrame::getCurrentTimeStamp())
+            : DataFrame(DataFrame::DATA_FRAME_TYPE_ADC, ADC_DATA_FRAME_SIZE, timestamp) {
+
+            memset(m_data, 0, ADC_DATA_FRAME_SIZE);
         }
 
         ADCDataFrame(const ADCDataFrame& other)
             : DataFrame(other) {
-            memcpy(m_data_raw, other.m_data_raw, ADC_DATA_FRAME_SIZE);
+            memcpy(m_data, other.m_data, ADC_DATA_FRAME_SIZE);
         }
 
-        virtual void setData(uint8_t* data, uint8_t size) override {
-            if (data == nullptr || size != ADC_DATA_FRAME_SIZE) {
-                return;
-            }
+        virtual size_t serializePayload(uint8_t *buffer, size_t buffer_size) const override {
 
-            memcpy(m_data_raw, data, ADC_DATA_FRAME_SIZE);
-        }
-
-        virtual uint8_t* getData() override {
-            return m_data_raw;
+            memcpy(buffer, m_data, ADC_DATA_FRAME_SIZE);
+            return ADC_DATA_FRAME_SIZE;
         }
 
         virtual DataFrame* clone() const override {
@@ -234,41 +236,31 @@ class ADCDataFrame : public DataFrame {
         }
 
         float getChannelValue(uint8_t channel) {
-            if (channel >= 0 && channel < 8) {
+            if (channel >= 0 && channel < NUM_ADC_CHANNELS) {
                 return m_data[channel];
             }
             return 0;
         }
 
         void setChannelValue(uint8_t channel, float value) {
-            if (channel >= 0 && channel < 8) {
+            if (channel >= 0 && channel < NUM_ADC_CHANNELS) {
                 m_data[channel] = value;
             }
         }
 
-        virtual size_t getDataSize() const override {
-            return ADC_DATA_FRAME_SIZE;
+        virtual void print() override {
+            DataFrame::print();
+            Serial.print("ADC Data: ");
+            for (int i = 0; i < NUM_ADC_CHANNELS; i++) {
+                Serial.print(m_data[i]);
+                Serial.print(" ");
+            }
+            Serial.println();
         }
 
     private:
 
-        //Pre allocated memory for IMU data
-        union {
-            float m_data[ADC_DATA_FRAME_SIZE / sizeof(float)];
-            struct {
-                float ch0;
-                float ch1;
-                float ch2;
-                float ch3;
-                float ch4;
-                float ch5;
-                float ch6;
-                float ch7;
-            };
-            uint8_t m_data_raw[ADC_DATA_FRAME_SIZE];
-        };
-
-
+        float m_data[NUM_ADC_CHANNELS];
 };
 
 class PowerDataFrame : public DataFrame {
@@ -277,7 +269,7 @@ class PowerDataFrame : public DataFrame {
         const static size_t POWER_DATA_FRAME_SIZE = 3 * sizeof(float) + sizeof(uint8_t);
 
         PowerDataFrame(float voltage, float current, float power, uint8_t flags = 0, uint64_t timestamp = DataFrame::getCurrentTimeStamp())
-            : DataFrame(DataFrame::DATA_FRAME_TYPE_POWER, timestamp),
+            : DataFrame(DataFrame::DATA_FRAME_TYPE_POWER, POWER_DATA_FRAME_SIZE, timestamp),
             m_voltage(voltage), m_current(current), m_power(power), m_flags(flags) {
 
         }
@@ -286,6 +278,15 @@ class PowerDataFrame : public DataFrame {
             : DataFrame(other),
             m_voltage(other.m_voltage), m_current(other.m_current), m_power(other.m_power), m_flags(other.m_flags) {
 
+        }
+
+        virtual size_t serializePayload(uint8_t *buffer, size_t buffer_size) const override {
+
+            memcpy(buffer, &m_voltage, sizeof(float));
+            memcpy(buffer + sizeof(float), &m_current, sizeof(float));
+            memcpy(buffer + 2 * sizeof(float), &m_power, sizeof(float));
+            buffer[3 * sizeof(float)] = m_flags;
+            return POWER_DATA_FRAME_SIZE;
         }
 
         float getVoltage() {
@@ -304,37 +305,16 @@ class PowerDataFrame : public DataFrame {
             return m_flags;
         }
 
-        virtual void setData(uint8_t* data, uint8_t size) override {
-            if (size != POWER_DATA_FRAME_SIZE) {
-                return;
-            }
-
-            memcpy(m_data_raw, data, POWER_DATA_FRAME_SIZE);
-        }
-
-        virtual uint8_t* getData() override {
-            return m_data_raw;
-        }
-
-        virtual size_t getDataSize() const override {
-            return POWER_DATA_FRAME_SIZE;
-        }
-
         virtual DataFrame* clone() const override {
             return new PowerDataFrame(*this);
         }
 
     protected:
-        union {
-            uint8_t m_data_raw[POWER_DATA_FRAME_SIZE];
-            struct {
-                float m_voltage;
-                float m_current;
-                float m_power;
-                uint8_t m_flags;
-            };
 
-        };
+        float m_voltage;
+        float m_current;
+        float m_power;
+        uint8_t m_flags;
 };
 
 #endif

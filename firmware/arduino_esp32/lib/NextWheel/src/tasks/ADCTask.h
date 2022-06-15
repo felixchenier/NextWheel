@@ -17,11 +17,11 @@ class ADCTask : public SensorTask {
 
         adc.begin();
         TickType_t lastGeneration = xTaskGetTickCount();
-        ADCDataFrame frame(nullptr, 0);
+        ADCDataFrame frame;
 
         while (1) {
             //10 ms task
-            vTaskDelayUntil(&lastGeneration, 100 / portTICK_RATE_MS);
+            vTaskDelayUntil(&lastGeneration, 1 / portTICK_RATE_MS);
 
             //Update values
             adc.update(frame);

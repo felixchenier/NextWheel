@@ -8,6 +8,7 @@
 #include <WebSocketServer.h>
 #include "tasks/ADCTask.h"
 #include "tasks/PrintWorkerTask.h"
+#include "tasks/WebSocketServerTask.h"
 
 // IMU imu(IMU_I2C_ADDRESS);
 // Power power(INA220_I2C_ADDRESS);
@@ -18,7 +19,7 @@
 
 ADCTask adcTask;
 PrintWorkerTask printWorkerTask;
-
+WebSocketServerTask webSocketServerTask;
 
 void setup() {
     // put your setup code here, to run once:
@@ -29,13 +30,17 @@ void setup() {
     printWorkerTask.setCore(1);
     printWorkerTask.setPriority(TASK_PRIORITY_LOW);
 
+    webSocketServerTask.setCore(1);
+    webSocketServerTask.setPriority(TASK_PRIORITY_MEDIUM);
+
     adcTask.setCore(0);
     adcTask.setPriority(TASK_PRIORITY_HIGH);
 
-    adcTask.registerDataQueue(printWorkerTask.getQueue());
-
+    // adcTask.registerDataQueue(printWorkerTask.getQueue());
+    adcTask.registerDataQueue(webSocketServerTask.getQueue());
 
     printWorkerTask.start(nullptr);
+    webSocketServerTask.start(nullptr);
     adcTask.start(nullptr);
 
     // // IMU

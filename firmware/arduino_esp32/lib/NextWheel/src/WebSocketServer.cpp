@@ -2,7 +2,6 @@
 
 
 WebSocketServer::WebSocketServer() :
-    Task("WebSocketServer", 2048, TASK_PRIORITY_HIGH),
     m_server(80),
     m_ws("/ws"){
 
@@ -21,10 +20,13 @@ void WebSocketServer::begin() {
     m_server.begin();
 }
 
-void WebSocketServer::update() {
-    m_ws.textAll("Hello World!");
+void WebSocketServer::sendToAll(DataFrame &frame)
+{
+    // Must write binary data to websocket
+    uint8_t buffer[frame.getTotalSize()];
+    frame.serialize(buffer, frame.getTotalSize());
+    m_ws.binaryAll(buffer, frame.getTotalSize());
 }
-
 
 void WebSocketServer::onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len) {
 
@@ -35,9 +37,4 @@ void WebSocketServer::onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * 
     } else if(type == WS_EVT_DATA) {
         Serial.printf("Client message: %s\n", (char*)arg);
     }
-}
-
-void WebSocketServer::run(void* data)
-{
-
 }
