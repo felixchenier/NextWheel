@@ -236,43 +236,6 @@ class Ui_NextWheel(object):
         self.verticalLayout_4.addWidget(self.doubleSpinBox)
         self.horizontalLayout_2.addLayout(self.verticalLayout_4)
 
-        self.verticalLayout_3 = QtWidgets.QVBoxLayout()
-        self.verticalLayout_3.setObjectName("verticalLayout_3")
-
-        self.X1 = QtWidgets.QLabel(NextWheel)
-        self.X1.setObjectName("X1")
-        self.verticalLayout_3.addWidget(self.X1)
-
-        self.X1display = QtWidgets.QLabel(NextWheel)
-        self.X1display.setObjectName("X1display")
-        self.verticalLayout_3.addWidget(self.X1display)
-
-        self.Y1 = QtWidgets.QLabel(NextWheel)
-        self.Y1.setObjectName("Y1")
-        self.verticalLayout_3.addWidget(self.Y1)
-
-        self.Y1display = QtWidgets.QLabel(NextWheel)
-        self.Y1display.setObjectName("Y1display")
-        self.verticalLayout_3.addWidget(self.Y1display)
-
-        self.X2 = QtWidgets.QLabel(NextWheel)
-        self.X2.setObjectName("X2")
-        self.verticalLayout_3.addWidget(self.X2)
-
-        self.X2display = QtWidgets.QLabel(NextWheel)
-        self.X2display.setObjectName("X2dipslay")
-        self.verticalLayout_3.addWidget(self.X2display)
-
-        self.Y2 = QtWidgets.QLabel(NextWheel)
-        self.Y2.setObjectName("Y2")
-        self.verticalLayout_3.addWidget(self.Y2)
-
-        self.Y2display = QtWidgets.QLabel(NextWheel)
-        self.Y2display.setObjectName("Y2display")
-        self.verticalLayout_3.addWidget(self.Y2display)
-
-        self.horizontalLayout_2.addLayout(self.verticalLayout_3)
-
         self.retranslateUi(NextWheel)
         QtCore.QMetaObject.connectSlotsByName(NextWheel)
 
@@ -318,29 +281,6 @@ class Ui_NextWheel(object):
             "NextWheel", "<html><head/><body><p><span style=\" font-weight:600;\">Forces</span></p></body></html>"))
         self.label.setText(_translate(
             "NextWheel", "<html><head/><body><p><span style=\" font-weight:600;\">Moments</span></p></body></html>"))
-        self.X1.setText(_translate("NextWheel", "X = Time (s)"))
-        self.X1.setFont(QFont('Arial', 10))
-
-        self.X1display.setText(_translate("NextWheel", "0.0"))
-        self.X1display.setFont(QFont('Arial', 12))
-
-        self.Y1.setText(_translate("NextWheel", "Y = Force (N)"))
-        self.Y1.setFont(QFont('Arial', 10))
-
-        self.Y1display.setText(_translate("NextWheel", "0.0"))
-        self.Y1display.setFont(QFont('Arial', 12))
-
-        self.X2.setText(_translate("NextWheel", "X = Times (s)"))
-        self.X2.setFont(QFont('Arial', 10))
-
-        self.X2display.setText(_translate("NextWheel", "0.0"))
-        self.X2display.setFont(QFont('Arial', 12))
-
-        self.Y2.setText(_translate("NextWheel", "Y = Moment(Nm)"))
-        self.Y2.setFont(QFont('Arial', 10))
-
-        self.Y2display.setText(_translate("NextWheel", "0.0"))
-        self.Y2display.setFont(QFont('Arial', 12))
 
     def force0_checked(self):
         """Display force0 graph every 10 ms."""
@@ -432,8 +372,8 @@ class Ui_NextWheel(object):
 
     def display_velocity(self):
         """Display velocity every 10 ms."""
-        self.display_vitesse.setText(
-            str(m.graph_velocity[len(m.graph_velocity)//2+1]))
+        vitesse = m.graph_velocity[len(m.graph_velocity)//2+1]
+        self.display_vitesse.setText(str(round(vitesse*3.6*0.35, 2)))
         self.display_vitesse.setFont(QFont('Arial', 15))
 
         QtCore.QCoreApplication.processEvents()
