@@ -28,8 +28,12 @@ void WebSocketServer::sendToAll(DataFrame &frame)
     m_ws.binaryAll(buffer, frame.getTotalSize());
 }
 
-void WebSocketServer::onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len) {
+void WebSocketServer::sendToAll(const uint8_t *data, size_t size)
+{
+    m_ws.binaryAll((const char*) data, size);
+}
 
+void WebSocketServer::onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len) {
     if(type == WS_EVT_CONNECT) {
         Serial.println("Client connected");
     } else if(type == WS_EVT_DISCONNECT) {

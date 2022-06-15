@@ -20,10 +20,10 @@ def on_message(ws, message):
     if type(message) is bytes:
         # Let's decode the header
         # uint8 type, uint64 timestamp, uint8 datasize (little endian)
-        # print('message', len(message), message[0:10].hex(), message[10:].hex())
+        print('message', len(message), message[0:10].hex(), message[10:].hex())
         (frame_type, timestamp, data_size) = struct.unpack_from('<BQB', message[0:10])
         data = message[10:]
-        # print('header: ', frame_type, timestamp, data_size, len(data))
+        print('header: ', frame_type, timestamp, data_size, len(data))
         if frame_type == 2:
             values = parse_adc_frame(data)
             # print(values)

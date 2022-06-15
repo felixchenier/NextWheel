@@ -21,9 +21,9 @@ class WorkerTask : public Task {
         }
 
 
-        DataFramePtr dequeue() {
+        DataFramePtr dequeue(unsigned long timeout = 10) {
             DataFramePtr dataPtr;
-            if (xQueueReceive(m_queue, &dataPtr, 10) != pdTRUE) {
+            if (xQueueReceive(m_queue, &dataPtr, timeout) != pdTRUE) {
                 return nullptr;
             }
             return dataPtr;

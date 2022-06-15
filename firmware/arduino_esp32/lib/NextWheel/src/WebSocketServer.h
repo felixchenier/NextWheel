@@ -11,6 +11,7 @@ class WebSocketServer  {
         void begin();
 
         void sendToAll(DataFrame &frame);
+        void sendToAll(const uint8_t *data, size_t size);
 
     private:
         AsyncWebServer m_server;
