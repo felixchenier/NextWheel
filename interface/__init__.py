@@ -1,30 +1,38 @@
 """
-NextWheel Interface
-===================
-__init__.py: The main file.
+NextWheel Interface.
+
+_init_.py: Management of received data in the corresponding lists.
 """
 
-__author__ = "Félix Chénier"
+
+__author__ = "Clémence Starosta, Félix Chénier"
 __copyright__ = "Laboratoire de recherche en mobilité et sport adapté"
-__email__ = "chenier.felix@uqam.ca"
+__email__ = "clemence.starosta@etu.emse.fr"
 __license__ = "Apache 2.0"
 
-from PyQt5 import QtWidgets
-import gui as gui
-import sys
+
+import gui
+import comm
 
 
-if __name__ == "__main__":
-    app = QtWidgets.QApplication(sys.argv)
-    NextWheel = QtWidgets.QDialog()
-    ui = gui.Ui_NextWheel()
-    ui.setupUi(NextWheel)
-    NextWheel.show()
-    sys.exit(app.exec_())
-    ui = gui.Ui_NextWheel()
-    ui.setupUi(NextWheel)
-    NextWheel.show()
-    sys.exit(app.exec_())
-    sys.exit(app.exec_())
-    sys.exit(app.exec_())
-    sys.exit(app.exec_())
+# Lists used to enable display in gui.py
+lists = {
+    'graph_time': [0],
+    'graph_force0': [0],
+    'graph_force1': [0],
+    'graph_force2': [0],
+    'graph_force3': [0],
+    'graph_moment0': [0],
+    'graph_moment1': [0],
+    'graph_moment2': [0],
+    'graph_moment3': [0],
+    'graph_velocity': [0, 0, 0],
+    'graph_power': [0, 0, 0],
+}
+
+
+wheel = comm.Wheel(lists=lists)
+wheel.connect()
+
+ui = gui.Ui_NextWheel(lists=lists, wheel=wheel)
+ui.run()
