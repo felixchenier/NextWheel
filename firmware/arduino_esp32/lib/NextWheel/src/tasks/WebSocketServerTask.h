@@ -24,7 +24,7 @@ class WebSocketServerTask : public WorkerTask {
 
             while (1) {
                 //10 ms task
-                vTaskDelayUntil(&lastGeneration, 20 / portTICK_RATE_MS);
+                vTaskDelayUntil(&lastGeneration, 10 / portTICK_RATE_MS);
 
                 unsigned int count = 0;
                 size_t total_payload_size = 0;
