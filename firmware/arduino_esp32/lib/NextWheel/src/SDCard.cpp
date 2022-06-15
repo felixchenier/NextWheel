@@ -15,10 +15,17 @@ void SDCard::begin()
         #define PIN_SD_DAT1 4
         #define PIN_SD_DAT2 12
         #define PIN_SD_DAT3 13
-        #define PIN_SD_CMD 25 //Not on default pin, should be 15
+        #define PIN_SD_CMD 15
         #define PIN_SD_CLK 14
     */
-    SD_MMC.setPins(PIN_SD_CLK, PIN_SD_CMD, PIN_SD_DAT0, PIN_SD_DAT1, PIN_SD_DAT2, PIN_SD_DAT3); //CLK, CMD, D0, D1, D2, D3
+    gpio_pullup_en(GPIO_NUM_2);
+    gpio_pullup_en(GPIO_NUM_4);
+    gpio_pullup_en(GPIO_NUM_12);
+    gpio_pullup_en(GPIO_NUM_13);
+    gpio_pullup_en(GPIO_NUM_15);
+    gpio_pullup_en(GPIO_NUM_14);
+
+    //SD_MMC.setPins(PIN_SD_CLK, PIN_SD_CMD, PIN_SD_DAT0, PIN_SD_DAT1, PIN_SD_DAT2, PIN_SD_DAT3); //CLK, CMD, D0, D1, D2, D3
     if (!SD_MMC.begin()) {
         Serial.println("SD_MMC.begin() failed");
         delay(10000);

@@ -3,7 +3,7 @@
 #include <NextWheel.h>
 #include <IMU.h>
 #include <Power.h>
-//#include <SDCard.h>
+#include <SDCard.h>
 #include <ADC.h>
 #include <WebSocketServer.h>
 #include "tasks/ADCTask.h"
@@ -14,7 +14,7 @@
 // Power power(INA220_I2C_ADDRESS);
 // RTC rtc;
 // ADC adc;
-// //SDCard sdcard;
+SDCard sdcard;
 // WebSocketServer server;
 
 ADCTask adcTask;
@@ -50,7 +50,7 @@ void setup() {
 
     // rtc.begin();
 
-    // //sdcard.begin();
+    sdcard.begin();
 
     // adc.begin();
 
@@ -66,7 +66,7 @@ void loop() {
 
 //   rtc.update();
 
-//   //sdcard.update();
+
 
 //   adc.update();
 
@@ -76,6 +76,9 @@ void loop() {
 
     TickType_t lastGeneration = xTaskGetTickCount();
     while(1) {
+
+        sdcard.update();
+
         // IDLE loop.
         //1000 ms task
         vTaskDelayUntil(&lastGeneration, 1000 / portTICK_RATE_MS);

@@ -23,7 +23,7 @@
 #define PIN_SPI_MISO 19
 #define PIN_SPI_CLK 18
 #define PIN_SPI_CS1 5
-#define PIN_SPI_CS2 15 //WARNING - this should be 25
+#define PIN_SPI_CS2 25 //WARNING - patch on prototype PCB
 
 // SD Card 4 bits not on all default pins, SDMMC (SLOT1)
 // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/sdmmc_host.html
@@ -31,7 +31,7 @@
 #define PIN_SD_DAT1 4
 #define PIN_SD_DAT2 12
 #define PIN_SD_DAT3 13
-#define PIN_SD_CMD 25 //Not on default pin, should be 15
+#define PIN_SD_CMD 15 //Patch on prototype PCB
 #define PIN_SD_CLK 14
 
 
