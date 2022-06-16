@@ -16,7 +16,13 @@ class WebSocketServer  {
     private:
         AsyncWebServer m_server;
         AsyncWebSocket m_ws;
+
+        void setupWebSocket();
+        void setupStaticRoutes();
+        void setupNotFound();
+        void setupPostForm();
         void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len);
+
 };
 
 #endif // _WEBSOCKET_SERVER_H_
