@@ -10,6 +10,9 @@ class SDCard {
     SDCard();
     void begin();
     void update();
+
+    void listDir(const char * dirname, uint8_t levels);
+
 };
 
 #endif // _SDCARD_H_

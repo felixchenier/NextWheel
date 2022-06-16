@@ -77,7 +77,7 @@ void loop() {
     TickType_t lastGeneration = xTaskGetTickCount();
     while(1) {
 
-        sdcard.update();
+        //sdcard.update();
 
         // IDLE loop.
         //1000 ms task

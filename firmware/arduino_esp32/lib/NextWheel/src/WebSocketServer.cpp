@@ -1,5 +1,5 @@
 #include "WebSocketServer.h"
-
+#include <SPIFFS.h>
 
 WebSocketServer::WebSocketServer() :
     m_server(80),
@@ -9,6 +9,11 @@ WebSocketServer::WebSocketServer() :
 }
 
 void WebSocketServer::begin() {
+
+    //Files are stored in SPIFFS
+    //Must be uploaded to the ESP32 before running this code
+    SPIFFS.begin();
+
     WiFi.begin(WIFI_DEFAULT_SSID, WIFI_DEFAULT_PASSWORD);
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
@@ -17,6 +22,11 @@ void WebSocketServer::begin() {
     Serial.println(WiFi.localIP());
     m_ws.onEvent(std::bind(&WebSocketServer::onWsEvent, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6));
     m_server.addHandler(&m_ws);
+
+    //Setup static routes
+    m_server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.htm");
+
+
     m_server.begin();
 }
 

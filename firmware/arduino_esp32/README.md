@@ -17,6 +17,13 @@ Welcome to NextWheel, the SmartWheel PCB/Firmware replacement for existing Smart
 > J14 and J15 jumpers must be removed before programming. This is required for the UART0 to work.
 > Put back J14 and J15 jumpers when the firmware is uploaded.
 
+Steps:
+
+1. Go to the PlatformIO menu (left toolbar with alien icon)
+2. Click on *Build the Filesystem Image* (static files that are stored in the flash memory)
+3. Click on *Upload Filesystem Image*
+4. Click on *General/Upload*
+
 ## Running
 
 > Make sure J14 and J15 jumpers are installed.
