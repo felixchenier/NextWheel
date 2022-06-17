@@ -33,6 +33,10 @@ void SDCard::begin()
     }
 }
 
+void SDCard::end() {
+    SD_MMC.end();
+}
+
 void SDCard::update()
 {
     Serial.println();
@@ -43,6 +47,10 @@ void SDCard::update()
 
     //listDir("/", 0);
     Serial.println();
+}
+
+void SDCard::listFiles() {
+    listDir("/", 0);
 }
 
 void SDCard::listDir(const char * dirname, uint8_t levels)
@@ -75,4 +83,34 @@ void SDCard::listDir(const char * dirname, uint8_t levels)
         }
         file = root.openNextFile();
     }
+}
+
+File SDCard::openNewLogFile(const char *filename)
+{
+    File file = SD_MMC.open(filename, FILE_WRITE);
+    if(!file){
+        Serial.println("Failed to create file");
+        return file;
+    }
+    return file;
+}
+
+size_t SDCard::writeToLogFile(File file, const DataFrame &frame)
+{
+    if (!file) {
+        Serial.println("Failed to open file for writing");
+        return 0;
+    }
+
+    //Write to buffer
+    uint8_t buffer[frame.getTotalSize()];
+    frame.serialize(buffer, frame.getTotalSize());
+
+    //Write to file
+    size_t written = file.write(buffer, frame.getTotalSize());
+    if (written != frame.getTotalSize()) {
+        Serial.println("Failed to write to file");
+    }
+
+    return written;
 }

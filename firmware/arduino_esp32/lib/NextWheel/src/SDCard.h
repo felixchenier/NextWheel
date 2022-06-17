@@ -4,14 +4,18 @@
 #include <NextWheel.h>
 #include "FS.h"
 #include "SD_MMC.h"
+#include "DataFrame.h"
 
 class SDCard {
     public:
     SDCard();
     void begin();
     void update();
-
+    void end();
+    void listFiles();
     void listDir(const char * dirname, uint8_t levels);
+    File openNewLogFile(const char *filename);
+    size_t writeToLogFile(File file, const DataFrame &frame);
 
 };
 

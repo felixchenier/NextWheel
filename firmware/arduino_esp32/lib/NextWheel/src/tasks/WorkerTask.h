@@ -10,20 +10,20 @@
 class WorkerTask : public Task {
     public:
         WorkerTask(const char* name, uint32_t stackSize=TASK_STACK_SIZE_DEFAULT, uint8_t priority=TASK_PRIORITY_DEFAULT)
-            : Task(name, stackSize, priority), m_queue(nullptr) {
+            : Task(name, stackSize, priority), m_dataQueue(nullptr) {
 
-            m_queue = xQueueCreate(100, sizeof(DataFramePtr));
+            m_dataQueue = xQueueCreate(100, sizeof(DataFramePtr));
 
         }
 
         QueueHandle_t* getQueue() {
-            return &m_queue;
+            return &m_dataQueue;
         }
 
 
         DataFramePtr dequeue(unsigned long timeout = 10) {
             DataFramePtr dataPtr;
-            if (xQueueReceive(m_queue, &dataPtr, timeout) != pdTRUE) {
+            if (xQueueReceive(m_dataQueue, &dataPtr, timeout) != pdTRUE) {
                 return nullptr;
             }
             return dataPtr;
@@ -33,7 +33,7 @@ class WorkerTask : public Task {
 
     protected:
 
-    QueueHandle_t m_queue;
+    QueueHandle_t m_dataQueue;
 
 };
 #endif  // _WORKER_TASK_H_

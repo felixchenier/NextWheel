@@ -2,6 +2,7 @@
 #define _WEBSOCKET_SERVER_TASK_H_
 
 #include "tasks/WorkerTask.h"
+#include "tasks/SDCardWorkerTask.h"
 #include "WebSocketServer.h"
 #include <string.h>
 #include <list>
@@ -11,12 +12,32 @@ class WebSocketServerTask : public WorkerTask {
     static const size_t WEBSOCKET_SERVER_STACK_SIZE = 8000;
 
     public:
-        WebSocketServerTask() : WorkerTask("WebSocketServerTask", WEBSOCKET_SERVER_STACK_SIZE) {
+        WebSocketServerTask(SDCardWorkerTask *sdcardTask)
+        : WorkerTask("WebSocketServerTask", WEBSOCKET_SERVER_STACK_SIZE),
+            m_sdCardWorkerTask(sdcardTask) {
 
         }
 
 
         virtual void run(void *) override {
+            Serial.printf("WebSocketServerTask::run Priority: %li Core: %li \n", uxTaskPriorityGet(NULL), xPortGetCoreID());
+
+            //Setup WebSocketServer callbacks
+            m_server.onMessage([this](String param, String message) {
+                // Serial.println("WebSocketServerTask::onMessage");
+                // Serial.print("Param: ");Serial.print(param);Serial.print(" Message: ");Serial.println(message);
+                if (param == "recording")
+                {
+                    if (message == "start_recording")
+                    {
+                        m_sdCardWorkerTask->sendCommandEvent(SDCardWorkerTask::SDCARD_WORKER_TASK_COMMAND_START_RECORDING);
+                    }
+                    else if (message == "stop_recording")
+                    {
+                        m_sdCardWorkerTask->sendCommandEvent(SDCardWorkerTask::SDCARD_WORKER_TASK_COMMAND_STOP_RECORDING);
+                    }
+                }
+            });
 
             m_server.begin();
 
@@ -64,7 +85,13 @@ class WebSocketServerTask : public WorkerTask {
 
     protected:
 
+        void onMessage(String param, String message) {
+            Serial.println("WebSocketServerTask::onMessage");
+            Serial.print("Param: ");Serial.print(param);Serial.print(" Message: ");Serial.println(message);
+        }
+
         WebSocketServer m_server;
+        SDCardWorkerTask* m_sdCardWorkerTask;
 };
 
 #endif // _WEBSOCKET_SERVER_TASK_H_

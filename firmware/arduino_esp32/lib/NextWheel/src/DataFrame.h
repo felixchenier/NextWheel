@@ -58,11 +58,11 @@ class DataFrame {
             return HEADER_SIZE;
         }
 
-        size_t getTotalSize() {
+        size_t getTotalSize() const {
             return HEADER_SIZE + getDataSize();
         }
 
-        size_t getDataSize() {
+        size_t getDataSize() const {
             return m_dataSize;
         }
 
@@ -109,29 +109,23 @@ class DataFrame {
             Serial.println();
         }
 
-        virtual size_t serialize(uint8_t* buffer, size_t bufferSize) {
+        virtual size_t serialize(uint8_t* buffer, size_t bufferSize) const {
             // bufferSize must be at least MAX_FRAME_DATA_SIZE_BYTES + header size
             if (bufferSize < getTotalSize()) {
                 return 0;
             }
             size_t size = HEADER_SIZE;
-            // Safety
+            // Safety, set everything to 0
             memset(buffer, 0, getTotalSize());
-            // Copy header data
+
+            // Set header data (make sure it is only one byte)
             buffer[0] = (uint8_t)m_type;
-
-            buffer[1] = m_timestamp >> 0 & 0xFF;
-            buffer[2] = m_timestamp >> 8 & 0xFF;
-            buffer[3] = m_timestamp >> 16 & 0xFF;
-            buffer[4] = m_timestamp >> 24 & 0xFF;
-            buffer[5] = m_timestamp >> 32 & 0xFF;
-            buffer[6] = m_timestamp >> 40 & 0xFF;
-            buffer[7] = m_timestamp >> 48 & 0xFF;
-            buffer[8] = m_timestamp >> 56 & 0xFF;
-
+            // Copy timestamp
+            memcpy(buffer + 1, &m_timestamp, sizeof(m_timestamp));
+            // Set data size (make sure it is only one byte)
             buffer[9] = m_dataSize & 0xFF;
 
-            // Copy data
+            // Copy payload data
             size += serializePayload(buffer + HEADER_SIZE, getDataSize());
 
             return size;

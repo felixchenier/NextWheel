@@ -9,17 +9,27 @@
 #include "tasks/ADCTask.h"
 #include "tasks/PrintWorkerTask.h"
 #include "tasks/WebSocketServerTask.h"
+#include "tasks/SDCardWorkerTask.h"
 
 // IMU imu(IMU_I2C_ADDRESS);
 // Power power(INA220_I2C_ADDRESS);
 // RTC rtc;
 // ADC adc;
-SDCard sdcard;
+// SDCard sdcard;
 // WebSocketServer server;
 
 ADCTask adcTask;
 PrintWorkerTask printWorkerTask;
-WebSocketServerTask webSocketServerTask;
+SDCardWorkerTask sdCardWorkerTask;
+WebSocketServerTask webSocketServerTask(&sdCardWorkerTask);
+
+
+void registerSensorTaskToQueues(SensorTask &task) {
+    //task.registerDataQueue(printWorkerTask.getQueue());
+    task.registerDataQueue(sdCardWorkerTask.getQueue());
+    task.registerDataQueue(webSocketServerTask.getQueue());
+}
+
 
 void setup() {
     // put your setup code here, to run once:
@@ -27,18 +37,27 @@ void setup() {
     Serial.print("NextWheel version: ");
     Serial.println(NEXT_WHEEL_VERSION);
 
-    printWorkerTask.setCore(1);
-    printWorkerTask.setPriority(TASK_PRIORITY_LOW);
+    //Note Arduino (loop) runs on core 1
+    //WiFi, BLE runs on core 0
 
-    webSocketServerTask.setCore(1);
+
+    // Must be first
+    sdCardWorkerTask.setCore(1);
+    sdCardWorkerTask.setPriority(TASK_PRIORITY_HIGH);
+
+    printWorkerTask.setCore(0);
+    printWorkerTask.setPriority(TASK_PRIORITY_IDLE);
+
+    webSocketServerTask.setCore(0);
     webSocketServerTask.setPriority(TASK_PRIORITY_MEDIUM);
 
-    adcTask.setCore(0);
-    adcTask.setPriority(TASK_PRIORITY_HIGH);
+    adcTask.setCore(1);
+    adcTask.setPriority(TASK_PRIORITY_HIGHEST);
 
-    // adcTask.registerDataQueue(printWorkerTask.getQueue());
-    adcTask.registerDataQueue(webSocketServerTask.getQueue());
+    //Register to queues
+    registerSensorTaskToQueues(adcTask);
 
+    sdCardWorkerTask.start(nullptr);
     printWorkerTask.start(nullptr);
     webSocketServerTask.start(nullptr);
     adcTask.start(nullptr);
@@ -50,7 +69,7 @@ void setup() {
 
     // rtc.begin();
 
-    sdcard.begin();
+    //sdcard.begin();
 
     // adc.begin();
 
@@ -58,6 +77,13 @@ void setup() {
 }
 
 void loop() {
+
+    //Default loop priority is TASK_PRIORITY_LOWEST (1)
+    Serial.print("Main Loop: priority = ");
+    Serial.println(uxTaskPriorityGet(NULL));
+
+    Serial.print("Main Loop: Executing on core ");
+    Serial.println(xPortGetCoreID());
   // put your main code here, to run repeatedly:
 
 //   imu.update();
@@ -65,8 +91,6 @@ void loop() {
 //   power.update();
 
 //   rtc.update();
-
-
 
 //   adc.update();
 
@@ -77,7 +101,6 @@ void loop() {
     TickType_t lastGeneration = xTaskGetTickCount();
     while(1) {
 
-        //sdcard.update();
 
         // IDLE loop.
         //1000 ms task
@@ -85,7 +108,7 @@ void loop() {
 
 
         //ADC Stats
-        Serial.print("ADC: "); Serial.println(adcTask.getDataSentCounter());
-        Serial.println();
+        // Serial.print("ADC: "); Serial.println(adcTask.getDataSentCounter());
+        //Serial.println();
     }
 }

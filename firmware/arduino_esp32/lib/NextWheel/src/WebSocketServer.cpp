@@ -43,6 +43,10 @@ void WebSocketServer::setupWebSocket()
 
 }
 
+void WebSocketServer::onMessage(WebSocketServerMessageEventHandler handler) {
+    m_messageHandler = handler;
+}
+
 void WebSocketServer::setupStaticRoutes()
 {
     m_server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.htm");
@@ -55,8 +59,9 @@ void WebSocketServer::setupPostForm()
 
         if (request->hasParam("recording")) {
             message = request->getParam("recording")->value();
-            Serial.print("Recording received :");
-            Serial.println(message);
+            sendMessageEvent(String("recording"), String(message));
+            // Serial.print("Recording received :");
+            // Serial.println(message);
         }
         else {
             message = "No message";
@@ -128,6 +133,12 @@ void WebSocketServer::sendToAll(DataFrame &frame)
 void WebSocketServer::sendToAll(const uint8_t *data, size_t size)
 {
     m_ws.binaryAll((const char*) data, size);
+}
+
+void WebSocketServer::sendMessageEvent(String param, String message) {
+    if (m_messageHandler) {
+        m_messageHandler(param, message);
+    }
 }
 
 void WebSocketServer::onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len) {
