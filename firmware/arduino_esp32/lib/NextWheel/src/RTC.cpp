@@ -14,8 +14,30 @@ void RTC::begin() {
 
     if (now.year() < 2022) {
         // RTC has not been set yet, so use the current time
-        m_mcp7940.adjust(DateTime(2022, 1, 1, 0, 0, 0));
-    }
+        m_mcp7940.adjust(DateTime(2022, 6, 17, 12, 24, 0));
+   }
+
+    // Re-Update time
+    now = m_mcp7940.now();
+
+    // Set the system time
+    setenv("TZ", "EST+5EDT,M3.2.0/2,M11.1.0/2", 1);
+    tzset();
+
+    struct tm tm;
+    tm.tm_year = now.year() - 1900;
+    tm.tm_mon = now.month() - 1;
+    tm.tm_mday = now.day();
+    tm.tm_hour = now.hour();
+    tm.tm_min = now.minute();
+    tm.tm_sec = now.second();
+    time_t t = mktime(&tm);
+
+    Serial.printf("Setting system time: %s \n", asctime(&tm));
+    struct timeval my_time;
+    my_time.tv_sec = t;
+    my_time.tv_usec = 0;
+    settimeofday(&my_time, NULL);
 
 }
 

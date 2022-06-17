@@ -132,7 +132,14 @@ void WebSocketServer::sendToAll(DataFrame &frame)
 
 void WebSocketServer::sendToAll(const uint8_t *data, size_t size)
 {
-    m_ws.binaryAll((const char*) data, size);
+    if (size > 0 && data != nullptr && m_ws.availableForWriteAll()) {
+        if (m_ws.count() > 0) {
+            m_ws.binaryAll((const char*) data, size);
+        }
+    }
+    else {
+        Serial.println("WebSocketServer::sendToAll: No available websocket for writing");
+    }
 }
 
 void WebSocketServer::sendMessageEvent(String param, String message) {

@@ -75,7 +75,7 @@ class DataFrame {
             // TODO Get the current time from epoch in microseconds
             struct timeval tv_now;
             gettimeofday(&tv_now, NULL);
-            uint64_t time_us = (uint64_t)tv_now.tv_sec * 1000000 + (uint64_t)tv_now.tv_usec;
+            uint64_t time_us = (uint64_t)tv_now.tv_sec * 1000000L + (uint64_t)tv_now.tv_usec;
             return time_us;
         }
 

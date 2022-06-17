@@ -13,7 +13,7 @@
 
 // IMU imu(IMU_I2C_ADDRESS);
 // Power power(INA220_I2C_ADDRESS);
-// RTC rtc;
+RTC rtc;
 // ADC adc;
 // SDCard sdcard;
 // WebSocketServer server;
@@ -32,8 +32,14 @@ void registerSensorTaskToQueues(SensorTask &task) {
 
 
 void setup() {
+
     // put your setup code here, to run once:
     Serial.begin(115200);
+
+    //First thing we set the system to current time
+    rtc.begin();
+
+
     Serial.print("NextWheel version: ");
     Serial.println(NEXT_WHEEL_VERSION);
 
@@ -67,7 +73,7 @@ void setup() {
 
     // power.begin();
 
-    // rtc.begin();
+
 
     //sdcard.begin();
 
@@ -100,6 +106,9 @@ void loop() {
 
     TickType_t lastGeneration = xTaskGetTickCount();
     while(1) {
+
+        struct timeval timeval_now;
+        gettimeofday(&timeval_now, NULL);
 
 
         // IDLE loop.
