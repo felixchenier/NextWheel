@@ -138,7 +138,7 @@ namespace DPEng {
     bool DPEng_BMX160::begin(bmx160AccelRange_t rngAccel, bmx160GyroRange_t rngGyro)
     {
     /* Enable I2C */
-    Wire.begin();
+    //Wire.begin();
 
     /* Set the range the an appropriate value */
     _rangeAccel = rngAccel;

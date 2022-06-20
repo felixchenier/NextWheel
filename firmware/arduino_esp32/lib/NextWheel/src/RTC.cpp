@@ -8,7 +8,7 @@ RTC::RTC() {
 
 void RTC::begin() {
     // Initialize the RTC
-    m_mcp7940.begin();
+    m_mcp7940.begin(I2C_FAST_MODE);
 
     DateTime now = m_mcp7940.now();  // get the current time
 

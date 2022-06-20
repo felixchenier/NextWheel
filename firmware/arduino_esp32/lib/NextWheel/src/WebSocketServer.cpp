@@ -1,5 +1,9 @@
 #include "WebSocketServer.h"
 #include <SPIFFS.h>
+#include <SD_MMC.h>
+#include "SDCard.h"
+#include "download.h"
+
 
 WebSocketServer::WebSocketServer() :
     m_server(80),
@@ -50,7 +54,44 @@ void WebSocketServer::onMessage(WebSocketServerMessageEventHandler handler) {
 void WebSocketServer::setupStaticRoutes()
 {
     m_server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.htm");
+
+
+    m_server.on("/files", HTTP_GET, [this](AsyncWebServerRequest * request) {
+        request->send_P(200, PSTR("text/html"), DOWNLOAD_HTML_TEMPLATE, std::bind(&WebSocketServer::onFileDownloadProcessor, this, std::placeholders::_1));
+    });
+
+    m_server.on("/download", HTTP_GET, [this](AsyncWebServerRequest * request) {
+
+        SDCard sdCard;
+
+        sdCard.begin();
+
+        //Get the file name from the full url
+
+        String originalUrl = request->urlDecode(request->url());
+        String fileName = request->urlDecode(request->url());
+
+        //Remove the leading /download from the file name
+        fileName.replace("/download", "");
+
+        Serial.printf("Downloading file: %s\n", fileName.c_str());
+
+        //Get the file
+        File file = SD_MMC.open(fileName, "r");
+
+        //Send the file
+        if (file) {
+            //void AsyncWebServerRequest::send(File content, const String& path, const String& contentType, bool download, AwsTemplateProcessor callback)
+            request->send(file, originalUrl, "application/octet-stream", false, nullptr);
+            file.close();
+        } else {
+            request->send(404, "text/plain", "File not found");
+        }
+
+        sdCard.end();
+    });
 }
+
 
 void WebSocketServer::setupPostForm()
 {
@@ -157,3 +198,56 @@ void WebSocketServer::onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * 
         Serial.printf("Client message: %s\n", (char*)arg);
     }
 }
+
+
+ String WebSocketServer::onFileDownloadProcessor(const String& var)
+ {
+
+    //index2.h
+    SDCard sd;
+
+    sd.begin();
+
+    String str;
+
+    File root = SD_MMC.open("/");
+
+    root.rewindDirectory();
+    File file = root.openNextFile();
+
+    while (file) {
+        std::string filename(file.name());
+        if (filename.find(".dat") < filename.size() ) {
+            str += "<a href=\"/download/";
+            str += file.name();
+            str += "\">";
+            str += file.name();
+            str += "</a>";
+            str += "    ";
+            str += file.size();
+            str += "<br>\r\n";
+        }
+
+        file = root.openNextFile();
+    }
+
+    root.close();
+
+    root.rewindDirectory();
+
+    if (var == F("URLLINK"))
+        return  str;
+
+    if (var == F("LINK"))
+        return "";
+
+    if (var == F("FILENAME"))
+        return  file.name();
+
+    sd.end();
+
+    return String();
+
+
+
+ }

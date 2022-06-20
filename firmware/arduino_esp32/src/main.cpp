@@ -1,8 +1,6 @@
 #include <Arduino.h>
 
 #include <NextWheel.h>
-#include <IMU.h>
-#include <Power.h>
 #include <RTC.h>
 #include "NextWheelApp.h"
 
