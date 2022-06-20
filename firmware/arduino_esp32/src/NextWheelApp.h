@@ -6,6 +6,7 @@
 #include "tasks/WorkerTask.h"
 #include "tasks/ADCSensorTask.h"
 #include "tasks/IMUSensorTask.h"
+#include "tasks/PowerSensorTask.h"
 #include "tasks/PrintWorkerTask.h"
 #include "tasks/WebSocketServerTask.h"
 #include "tasks/SDCardWorkerTask.h"
@@ -37,9 +38,14 @@ class NextWheelApp {
         m_imuTask.setCore(1);
         m_imuTask.setPriority(TASK_PRIORITY_HIGHEST);
 
+        m_powerTask.setCore(1);
+        m_powerTask.setPriority(TASK_PRIORITY_HIGH);
+
+
         //Register to queues
         registerSensorTaskToQueues(m_adcTask);
         registerSensorTaskToQueues(m_imuTask);
+        registerSensorTaskToQueues(m_powerTask);
 
     }
 
@@ -51,9 +57,12 @@ class NextWheelApp {
         m_imuTask.start(this);
     }
 
-
+    //Sensors
     ADCSensorTask m_adcTask;
     IMUSensorTask m_imuTask;
+    PowerSensorTask m_powerTask;
+
+    //Workers
     //PrintWorkerTask m_printWorkerTask;
     SDCardWorkerTask m_sdCardWorkerTask;
     WebSocketServerTask m_webSocketServerTask;

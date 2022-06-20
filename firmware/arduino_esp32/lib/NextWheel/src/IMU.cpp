@@ -70,4 +70,7 @@ void IMU::update(IMUDataFrame &frame) {
     frame.setAccel(aevent.acceleration.x, aevent.acceleration.y, aevent.acceleration.z);
     frame.setGyro(gevent.gyro.x, gevent.gyro.y, gevent.gyro.z);
     frame.setMag(mevent.magnetic.x, mevent.magnetic.y, mevent.magnetic.z);
+
+    //Update timestamp to now
+    frame.setTimestamp(DataFrame::getCurrentTimeStamp());
 }

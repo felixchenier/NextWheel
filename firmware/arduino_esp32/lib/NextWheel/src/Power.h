@@ -3,6 +3,7 @@
 
 #include <NextWheel.h>
 #include <INA220.h>
+#include <DataFrame.h>
 
 #define INA220_I2C_ADDRESS 0x40
 
@@ -10,7 +11,7 @@ class Power {
     public:
         Power(unsigned char address = INA220_I2C_ADDRESS);
         void begin();
-        void update();
+        void update(PowerDataFrame &frame);
         bool isLowPower();
         bool isSensorsEnabled();
         void enableSensors(bool enabled);

@@ -18,5 +18,5 @@ void ADC::update(ADCDataFrame &frame) {
         uint16_t val = m_ads8688.noOp();         // trigger samples
         frame.setChannelValue(i, m_ads8688.I2V(val,R1));
     }
-    frame.setTimestamp();
+    frame.setTimestamp(DataFrame::getCurrentTimeStamp());
 }

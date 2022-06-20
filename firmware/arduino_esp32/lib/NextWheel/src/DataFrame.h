@@ -268,6 +268,11 @@ class PowerDataFrame : public DataFrame {
 
         }
 
+        PowerDataFrame(uint64_t timestamp = DataFrame::getCurrentTimeStamp())
+        : DataFrame(DataFrame::DATA_FRAME_TYPE_POWER, POWER_DATA_FRAME_SIZE, timestamp) {
+
+        }
+
         PowerDataFrame(const PowerDataFrame& other)
             : DataFrame(other),
             m_voltage(other.m_voltage), m_current(other.m_current), m_power(other.m_power), m_flags(other.m_flags) {
@@ -281,6 +286,29 @@ class PowerDataFrame : public DataFrame {
             memcpy(buffer + 2 * sizeof(float), &m_power, sizeof(float));
             buffer[3 * sizeof(float)] = m_flags;
             return POWER_DATA_FRAME_SIZE;
+        }
+
+        void setVoltage(float voltage) {
+            m_voltage = voltage;
+        }
+
+        void setCurrent(float current) {
+            m_current = current;
+        }
+
+        void setPower(float power) {
+            m_power = power;
+        }
+
+        void setFlags(uint8_t flags) {
+            m_flags = flags;
+        }
+
+        void setAll(float voltage, float current, float power, uint8_t flags) {
+            m_voltage = voltage;
+            m_current = current;
+            m_power = power;
+            m_flags = flags;
         }
 
         float getVoltage() {
