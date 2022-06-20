@@ -12,7 +12,7 @@ class ADCTask : public SensorTask {
 
     }
 
-    virtual void run(void *) override {
+    virtual void run(void *app) override {
         Serial.printf("ADCTask::run Priority: %li Core: %li \n", uxTaskPriorityGet(NULL), xPortGetCoreID());
 
         ADC adc;

@@ -10,7 +10,7 @@ class PrintWorkerTask : public WorkerTask {
 
         }
 
-        virtual void run(void *) override {
+        virtual void run(void *app) override {
             Serial.printf("PrintWorkerTask::run Priority: %li Core: %li \n", uxTaskPriorityGet(NULL), xPortGetCoreID());
             while (1) {
                 DataFramePtr dataPtr = dequeue();

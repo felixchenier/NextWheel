@@ -20,7 +20,7 @@ class WebSocketServerTask : public WorkerTask {
         }
 
 
-        virtual void run(void *) override {
+        virtual void run(void *app) override {
             Serial.printf("WebSocketServerTask::run Priority: %li Core: %li \n", uxTaskPriorityGet(NULL), xPortGetCoreID());
 
             //Setup WebSocketServer callbacks

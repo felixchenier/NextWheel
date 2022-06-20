@@ -39,7 +39,7 @@ class SDCardWorkerTask : public WorkerTask {
             return m_filename;
         }
 
-        virtual void run(void *) override {
+        virtual void run(void *app) override {
             Serial.printf("SDCardWorkerTask::run Priority: %li Core: %li \n", uxTaskPriorityGet(NULL), xPortGetCoreID());
 
             TickType_t lastGeneration = xTaskGetTickCount();
