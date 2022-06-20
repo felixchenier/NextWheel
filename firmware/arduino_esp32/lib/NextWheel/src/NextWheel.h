@@ -1,8 +1,6 @@
 #ifndef _NEXT_WHEEL_H_
 #define _NEXT_WHEEL_H_
 
-#include "WiFiConfig.h"
-
 /*
     NextWheel  - Global definitions and macros
 */

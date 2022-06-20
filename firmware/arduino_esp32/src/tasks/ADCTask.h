@@ -1,7 +1,7 @@
 #ifndef _ADC_TASK_H_
 #define _ADC_TASK_H_
 
-#include "SensorTask.h"
+#include "tasks/SensorTask.h"
 #include "ADC.h"
 
 class ADCTask : public SensorTask {

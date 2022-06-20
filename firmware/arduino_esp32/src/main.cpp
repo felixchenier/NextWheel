@@ -48,13 +48,13 @@ void setup() {
 
 
     // Must be first
-    sdCardWorkerTask.setCore(1);
+    sdCardWorkerTask.setCore(0);
     sdCardWorkerTask.setPriority(TASK_PRIORITY_HIGH);
 
     printWorkerTask.setCore(0);
     printWorkerTask.setPriority(TASK_PRIORITY_IDLE);
 
-    webSocketServerTask.setCore(0);
+    webSocketServerTask.setCore(1);
     webSocketServerTask.setPriority(TASK_PRIORITY_MEDIUM);
 
     adcTask.setCore(1);

@@ -1,6 +1,7 @@
 #ifndef _WEBSOCKET_SERVER_H_
 #define _WEBSOCKET_SERVER_H_
 
+#include "config/WiFiConfig.h"
 #include <NextWheel.h>
 #include <ESPAsyncWebServer.h>
 #include <DataFrame.h>

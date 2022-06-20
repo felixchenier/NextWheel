@@ -1,6 +1,7 @@
 #ifndef _WEBSOCKET_SERVER_TASK_H_
 #define _WEBSOCKET_SERVER_TASK_H_
 
+#include "config/WiFiConfig.h"
 #include "tasks/WorkerTask.h"
 #include "tasks/SDCardWorkerTask.h"
 #include "WebSocketServer.h"
@@ -9,7 +10,7 @@
 
 class WebSocketServerTask : public WorkerTask {
 
-    static const size_t WEBSOCKET_SERVER_STACK_SIZE = 8000;
+    static const size_t WEBSOCKET_SERVER_STACK_SIZE = 16000;
 
     public:
         WebSocketServerTask(SDCardWorkerTask *sdcardTask)
@@ -44,8 +45,8 @@ class WebSocketServerTask : public WorkerTask {
             TickType_t lastGeneration = xTaskGetTickCount();
 
             while (1) {
-                //10 ms task
-                vTaskDelayUntil(&lastGeneration, 10 / portTICK_RATE_MS);
+                //20 ms task
+                vTaskDelayUntil(&lastGeneration, 20 / portTICK_RATE_MS);
 
                 unsigned int count = 0;
                 size_t total_payload_size = 0;

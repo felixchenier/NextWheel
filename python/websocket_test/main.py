@@ -27,7 +27,7 @@ def parse_superframe(message: bytes, count: int):
     while offset < len(message):
         sub_count += 1
         (frame_type, timestamp, data_size) = struct.unpack_from('<BQB', message[offset:offset+header_size])
-        print(f'sub header: {sub_count}/{count}', frame_type, timestamp, data_size)
+        # print(f'sub header: {sub_count}/{count}', frame_type, timestamp, data_size)
 
         if frame_type == 2:
             adc_values.append((timestamp, parse_adc_frame(message[offset+header_size:offset+header_size+data_size])))
@@ -76,7 +76,7 @@ def on_open(ws):
 
 if __name__ == "__main__":
     websocket.enableTrace(True)
-    ws = websocket.WebSocketApp("ws://192.168.1.137/ws",
+    ws = websocket.WebSocketApp("ws://10.0.1.23/ws",
                                 on_open=on_open,
                                 on_message=on_message,
                                 on_error=on_error,
