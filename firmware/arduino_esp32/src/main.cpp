@@ -49,9 +49,5 @@ void loop() {
         // IDLE loop.
         //1000 ms task
         vTaskDelayUntil(&lastGeneration, 1000 / portTICK_RATE_MS);
-
-        //ADC Stats
-        // Serial.print("ADC: "); Serial.println(adcTask.getDataSentCounter());
-        //Serial.println();
     }
 }

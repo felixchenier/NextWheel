@@ -62,14 +62,12 @@ void IMU::displaySensorDetails()
     delay(500);
 }
 
-void IMU::update() {
+void IMU::update(IMUDataFrame &frame) {
     sensors_event_t aevent, gevent, mevent;
-    IMUDataFrame frame();
 
     /* Get a new sensor event */
     m_dpeng_bmx160.getEvent(&aevent, &gevent, &mevent);
-    //frame.setAccel(aevent.acceleration.x, aevent.acceleration.y, aevent.acceleration.z);
-    //frame.setGyro(gevent.gyro.x, gevent.gyro.y, gevent.gyro.z);
-    //frame.setMag(mevent.magnetic.x, mevent.magnetic.y, mevent.magnetic.z);
-    //frame.print();
+    frame.setAccel(aevent.acceleration.x, aevent.acceleration.y, aevent.acceleration.z);
+    frame.setGyro(gevent.gyro.x, gevent.gyro.y, gevent.gyro.z);
+    frame.setMag(mevent.magnetic.x, mevent.magnetic.y, mevent.magnetic.z);
 }

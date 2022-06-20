@@ -13,8 +13,10 @@ void RTC::begin() {
     DateTime now = m_mcp7940.now();  // get the current time
 
     if (now.year() < 2022) {
+        Serial.print("RTC has not been set yet. Doing so now.");
         // RTC has not been set yet, so use the current time
-        m_mcp7940.adjust(DateTime(2022, 6, 17, 12, 24, 0));
+        m_mcp7940.adjust(DateTime(2022, 6, 20, 8, 50, 0));
+        m_mcp7940.setBattery(true); //enable battery
    }
 
     // Re-Update time
