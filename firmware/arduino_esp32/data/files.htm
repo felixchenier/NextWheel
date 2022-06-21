@@ -3,8 +3,27 @@
     <head>
         <title>NextWheel - File</title>
         <link rel="stylesheet" href="css/bootstrap.min.css">
+        <script src="js/bootstrap.min.js"></script>
     </head>
     <body>
-        <p>Available files</p>
+        <div class="container-fluid bg-light">
+            <a href=/index.htm >Main Menu</a></h2><br>
+            <div class="row text-center">
+                <h1>Available files</h1>
+                <table class="table table-hover table-stiped">
+                <thead>
+                    <tr>
+                        <th>File</th>
+                        <th>Size</th>
+                        <th>Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Template will be filled by ESP SERVER-->
+                    %URLLINK%
+                </tbody>
+                </table>
+            </div>
+        </div>
     </body>
 </html>
