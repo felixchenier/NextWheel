@@ -22,6 +22,7 @@ class WebSocketServer  {
         AsyncWebServer m_server;
         AsyncWebSocket m_ws;
         WebSocketServerMessageEventHandler m_messageHandler;
+        String m_currentRecordingFileName;
 
         void setupWebSocket();
         void setupStaticRoutes();

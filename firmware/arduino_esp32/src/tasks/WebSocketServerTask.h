@@ -45,8 +45,8 @@ class WebSocketServerTask : public WorkerTask {
             TickType_t lastGeneration = xTaskGetTickCount();
 
             while (1) {
-                //20 ms task
-                vTaskDelayUntil(&lastGeneration, 20 / portTICK_RATE_MS);
+                //40 ms task
+                vTaskDelayUntil(&lastGeneration, 40 / portTICK_RATE_MS);
 
                 unsigned int count = 0;
                 size_t total_payload_size = 0;

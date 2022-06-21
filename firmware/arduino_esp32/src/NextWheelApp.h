@@ -55,6 +55,7 @@ class NextWheelApp {
         m_webSocketServerTask.start(this);
         m_adcTask.start(this);
         m_imuTask.start(this);
+        m_powerTask.start(this);
     }
 
     //Sensors

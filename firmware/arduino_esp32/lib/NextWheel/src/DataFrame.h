@@ -20,7 +20,8 @@ class DataFrame {
             DATA_FRAME_TYPE_IMU = 3,
             DATA_FRAME_TYPE_POWER = 4,
             DATA_FRAME_TYPE_RTC = 5,
-            DATA_FRAME_TYPE_AUDIO = 6
+            DATA_FRAME_TYPE_AUDIO = 6,
+            DATA_FRAME_TYPE_SUPERFRAME = 255
         };
 
         DataFrame(DataFrameType type, uint16_t data_size, uint64_t timestamp = DataFrame::getCurrentTimeStamp())

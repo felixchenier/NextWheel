@@ -15,8 +15,6 @@ void WebSocketServer::begin() {
     //Files are stored in SPIFFS
     //Must be uploaded to the ESP32 before running this code
     SPIFFS.begin();
-    SDCard sd;
-    sd.begin();
 
     WiFi.begin(WIFI_DEFAULT_SSID, WIFI_DEFAULT_PASSWORD);
     while (WiFi.status() != WL_CONNECTED) {
@@ -58,6 +56,9 @@ void WebSocketServer::setupStaticRoutes()
 
     // File listing route
     m_server.on("/files", HTTP_GET, [this](AsyncWebServerRequest * request) {
+
+        SDCard sd;
+        sd.begin();
 
         File html_file = SPIFFS.open("/files.htm", "r");
         if (!html_file) {
@@ -108,7 +109,7 @@ void WebSocketServer::setupPostForm()
             message = "No message";
         }
 
-        request->send(200, "text/plain", "Received " + message);
+        request->redirect("/");
     });
 }
 

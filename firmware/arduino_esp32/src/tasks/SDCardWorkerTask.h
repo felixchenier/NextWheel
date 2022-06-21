@@ -61,6 +61,11 @@ class SDCardWorkerTask : public WorkerTask {
                     delete dataPtr;
                 }
 
+                // Make sure write is complete
+                if (m_file) {
+                    m_file.flush();
+                }
+
                 //Dequeue commands
                 while (SDCardWorkerTaskCommand command = dequeueCommand(0)) {
                     switch (command) {
@@ -94,7 +99,6 @@ class SDCardWorkerTask : public WorkerTask {
                                 Serial.print("SDCardWorkerTask::run: File size: "); Serial.println(m_bytesWritten);
                             }
                             resetLog();
-                            m_sdCard.end();
                             break;
                         default:
                             Serial.println("SDCardWorkerTask::run: Unknown command");
