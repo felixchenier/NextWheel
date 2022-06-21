@@ -2,23 +2,35 @@
 <html>
     <head>
         <title>NextWheel</title>
+        <link rel="stylesheet" href="css/bootstrap.min.css">
     </head>
     <body>
-        <h1>Welcome to NextWheel</h1>
 
-        <div>
-            <a href="config.htm">Configuration</a> | <a href="live.htm">Live</a> | <a href="/files">Files</a>
+        <div class="container-fluid bg-light">
+            <div class="row text-center">
+            <div class="col-md-12">
+
+                <h1 class="bg-light"> Welcome to NextWheel</h1>
+
+                <nav class="navbar navbar-light bg-light">
+                    <a class="navbar-brand" href="config.htm">Configuration</a>
+                    <a class="navbar-brand" href="live.htm">Live</a>
+                    <a class="navbar-brand" href="/files">Files</a>
+                </nav>
+
+                <div class="bg-info col-12 mx-4">
+                    <h2 class="bg-light"> Recording Control </h2>
+
+                    <form action="/recording" method="get">
+                        <div class="btn-group"></div>
+                        <button class="btn btn-secondary" name="recording" value="start_recording">Start Recording</button>
+                        <button class="btn btn-secondary" name="recording" value="stop_recording">Stop Recording</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            </div>
+
         </div>
-
-
-        <h2> Recording Control </h2>
-
-        <div>
-            <form action="/recording" method="get">
-                <button name="recording" value="start_recording">Start Recording</button>
-                <button name="recording" value="stop_recording">Stop Recording</button>
-            </form>
-        </div>
-
     </body>
 </html>
