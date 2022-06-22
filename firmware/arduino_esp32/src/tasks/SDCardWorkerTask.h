@@ -39,6 +39,14 @@ class SDCardWorkerTask : public WorkerTask {
             return m_filename;
         }
 
+        bool isRecording() {
+            if (m_file) {
+                return true;
+            }
+
+            return false;
+        }
+
         virtual void run(void *app) override {
             Serial.printf("SDCardWorkerTask::run Priority: %li Core: %li \n", uxTaskPriorityGet(NULL), xPortGetCoreID());
 

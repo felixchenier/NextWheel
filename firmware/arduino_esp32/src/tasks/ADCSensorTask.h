@@ -15,9 +15,7 @@ class ADCSensorTask : public SensorTask {
     virtual void run(void *app) override {
         Serial.printf("ADCTask::run Priority: %li Core: %li \n", uxTaskPriorityGet(NULL), xPortGetCoreID());
 
-        ADC adc;
-
-        adc.begin();
+        m_adc.begin();
         TickType_t lastGeneration = xTaskGetTickCount();
         ADCDataFrame frame;
 
@@ -26,11 +24,15 @@ class ADCSensorTask : public SensorTask {
             vTaskDelayUntil(&lastGeneration, 1 / portTICK_RATE_MS);
 
             //Update values
-            adc.update(frame);
+            m_adc.update(frame);
 
             //Send data to registered queues
             sendData(frame);
         }
     }
+
+    private:
+
+    ADC m_adc;
 };
 #endif  // _ADC_TASK_H_

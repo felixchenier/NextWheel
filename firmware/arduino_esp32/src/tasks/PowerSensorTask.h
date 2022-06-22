@@ -18,9 +18,7 @@ class PowerSensorTask : public SensorTask {
     virtual void run(void *app) override {
         Serial.printf("PowerSensorTask::run Priority: %li Core: %li \n", uxTaskPriorityGet(NULL), xPortGetCoreID());
 
-        Power power;
-
-        power.begin();
+        m_power.begin();
         TickType_t lastGeneration = xTaskGetTickCount();
         PowerDataFrame frame;
 
@@ -29,12 +27,16 @@ class PowerSensorTask : public SensorTask {
             vTaskDelayUntil(&lastGeneration, 1000 / portTICK_RATE_MS);
 
             //Update values
-            power.update(frame);
+            m_power.update(frame);
 
             //Send data to registered queues
             sendData(frame);
         }
     }
+
+    private:
+
+    Power m_power;
 };
 
 #endif // _POWER_SENSOR_TASK_H_

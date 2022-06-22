@@ -8,10 +8,13 @@ Power::Power(unsigned char address)
     pinMode(PIN_EMERGENCY_STOP_LOW_POWER_N, INPUT);
     pinMode(PIN_ENABLE_SENSOR_POWER, OUTPUT);
 
-    enableSensors(true);
+    enableSensors(false);
 }
 
 void Power::begin() {
+
+  enableSensors(true);
+
   // Initialize the INA220
   uint8_t availableDevices = m_ina220.begin(MAX_CUR, SHUNT_R, INA_ADC_MODE_128AVG, INA_ADC_MODE_128AVG, INA_MODE_CONTINUOUS_BOTH, &m_i2c_address, NUM_INA);
   Serial.print("Configured "); Serial.print(availableDevices); Serial.print(" of "); Serial.print(NUM_INA); Serial.println(" INA220 current sensors");
@@ -43,5 +46,6 @@ bool Power::isSensorsEnabled()
 
 void Power::enableSensors(bool enabled)
 {
+    Serial.print("Enabling sensors: ");Serial.println(enabled);
     digitalWrite(PIN_ENABLE_SENSOR_POWER, enabled ? HIGH : LOW);
 }

@@ -2,9 +2,11 @@
 
 #include <NextWheel.h>
 #include <RTC.h>
+#include <LEDS.h>
 #include "NextWheelApp.h"
 
 RTC rtc;
+LEDS leds;
 NextWheelApp app;
 
 void setup() {
@@ -12,6 +14,8 @@ void setup() {
     // put your setup code here, to run once:
     // Serial must be initialized for prints
     Serial.begin(115200);
+
+    leds.begin();
 
     //First thing we set the system to current time
     rtc.begin();
@@ -37,12 +41,18 @@ void loop() {
     Serial.print("Main Loop: Executing on core ");
     Serial.println(xPortGetCoreID());
 
-
     TickType_t lastGeneration = xTaskGetTickCount();
     while(1) {
 
         struct timeval timeval_now;
         gettimeofday(&timeval_now, NULL);
+
+        if (app.isRecording()) {
+            leds.toggleLED1();
+        }
+        else {
+            leds.setLED1(false);
+        }
 
         // IDLE loop.
         //1000 ms task

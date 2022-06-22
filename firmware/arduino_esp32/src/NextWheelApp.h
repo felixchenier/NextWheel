@@ -22,6 +22,7 @@ class NextWheelApp {
 
     void begin() {
 
+        // Sensors must be enabled
         // Must be first
         m_sdCardWorkerTask.setCore(0);
         m_sdCardWorkerTask.setPriority(TASK_PRIORITY_HIGH);
@@ -56,6 +57,10 @@ class NextWheelApp {
         m_adcTask.start(this);
         m_imuTask.start(this);
         m_powerTask.start(this);
+    }
+
+    bool isRecording() {
+        return m_sdCardWorkerTask.isRecording();
     }
 
     //Sensors
