@@ -1,29 +1,11 @@
 #include <Arduino.h>
-
 #include <NextWheel.h>
-#include <RTC.h>
-#include <LEDS.h>
 #include "NextWheelApp.h"
 
-RTC rtc;
-LEDS leds;
+//Global app object
 NextWheelApp app;
 
 void setup() {
-
-    // put your setup code here, to run once:
-    // Serial must be initialized for prints
-    Serial.begin(115200);
-
-    leds.begin();
-
-    //First thing we set the system to current time
-    rtc.begin();
-
-
-    Serial.print("NextWheel version: ");
-    Serial.println(NEXT_WHEEL_VERSION);
-
     // Setup app
     app.begin();
 
@@ -48,10 +30,10 @@ void loop() {
         gettimeofday(&timeval_now, NULL);
 
         if (app.isRecording()) {
-            leds.toggleLED1();
+            app.getLEDS().toggleLED1();
         }
         else {
-            leds.setLED1(false);
+            app.getLEDS().setLED1(false);
         }
 
         // IDLE loop.

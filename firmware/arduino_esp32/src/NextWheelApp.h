@@ -2,6 +2,10 @@
 #define _NEXT_WHEEL_APP_H_
 
 #include "NextWheel.h"
+
+#include <RTC.h>
+#include <LEDS.h>
+
 #include "tasks/SensorTask.h"
 #include "tasks/WorkerTask.h"
 #include "tasks/ADCSensorTask.h"
@@ -17,7 +21,17 @@ class NextWheelApp {
 
     NextWheelApp() : m_webSocketServerTask(&m_sdCardWorkerTask)
     {
+        // put your setup code here, to run once:
+        // Serial must be initialized for prints
+        Serial.begin(115200);
 
+        m_leds.begin();
+
+        //First thing we set the system to current time
+        m_rtc.begin();
+
+        Serial.print("NextWheel version: ");
+        Serial.println(NEXT_WHEEL_VERSION);
     }
 
     void begin() {
@@ -62,6 +76,18 @@ class NextWheelApp {
     bool isRecording() {
         return m_sdCardWorkerTask.isRecording();
     }
+
+    LEDS& getLEDS() {
+        return m_leds;
+    }
+
+    RTC& getRTC() {
+        return m_rtc;
+    }
+
+    //Drivers
+    RTC m_rtc;
+    LEDS m_leds;
 
     //Sensors
     ADCSensorTask m_adcTask;
