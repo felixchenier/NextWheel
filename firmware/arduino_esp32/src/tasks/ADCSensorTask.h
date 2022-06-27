@@ -4,35 +4,33 @@
 #include "tasks/SensorTask.h"
 #include "ADC.h"
 
-class ADCSensorTask : public SensorTask {
+class ADCSensorTask : public SensorTask
+{
+public:
+    ADCSensorTask() : SensorTask("ADCSensorTask") {}
 
-    public:
-
-    ADCSensorTask() : SensorTask("ADCSensorTask") {
-
-    }
-
-    virtual void run(void *app) override {
+    virtual void run(void* app) override
+    {
         Serial.printf("ADCTask::run Priority: %li Core: %li \n", uxTaskPriorityGet(NULL), xPortGetCoreID());
 
         m_adc.begin();
         TickType_t lastGeneration = xTaskGetTickCount();
         ADCDataFrame frame;
 
-        while (1) {
-            //1 ms task
+        while (1)
+        {
+            // 1 ms task
             vTaskDelayUntil(&lastGeneration, 1 / portTICK_RATE_MS);
 
-            //Update values
+            // Update values
             m_adc.update(frame);
 
-            //Send data to registered queues
+            // Send data to registered queues
             sendData(frame);
         }
     }
 
-    private:
-
+private:
     ADC m_adc;
 };
 #endif  // _ADC_TASK_H_

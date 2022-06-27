@@ -1,15 +1,10 @@
 #include "SDCard.h"
 
 
-SDCard::SDCard()
-{
-
-}
+SDCard::SDCard() {}
 
 void SDCard::begin()
 {
-
-
     /*
         #define PIN_SD_DAT0 2
         #define PIN_SD_DAT1 4
@@ -25,57 +20,70 @@ void SDCard::begin()
     gpio_pullup_en(GPIO_NUM_15);
     gpio_pullup_en(GPIO_NUM_14);
 
-    //SD_MMC.setPins(PIN_SD_CLK, PIN_SD_CMD, PIN_SD_DAT0, PIN_SD_DAT1, PIN_SD_DAT2, PIN_SD_DAT3); //CLK, CMD, D0, D1, D2, D3
-    if (!SD_MMC.begin()) {
+    // SD_MMC.setPins(PIN_SD_CLK, PIN_SD_CMD, PIN_SD_DAT0, PIN_SD_DAT1, PIN_SD_DAT2, PIN_SD_DAT3); //CLK, CMD, D0, D1,
+    // D2, D3
+    if (!SD_MMC.begin())
+    {
         Serial.println("SD_MMC.begin() failed");
         delay(10000);
         return;
     }
 }
 
-void SDCard::end() {
+void SDCard::end()
+{
     SD_MMC.end();
 }
 
 void SDCard::update()
 {
     Serial.println();
-    Serial.print("SDCard type: "); Serial.println(SD_MMC.cardType());
-    Serial.print("SDCard size: "); Serial.println(SD_MMC.cardSize());
+    Serial.print("SDCard type: ");
+    Serial.println(SD_MMC.cardType());
+    Serial.print("SDCard size: ");
+    Serial.println(SD_MMC.cardSize());
     Serial.printf("Total space: %lluMB\n", SD_MMC.totalBytes() / (1024 * 1024));
     Serial.printf("Used space: %lluMB\n", SD_MMC.usedBytes() / (1024 * 1024));
 
-    //listDir("/", 0);
+    // listDir("/", 0);
     Serial.println();
 }
 
-void SDCard::listFiles() {
+void SDCard::listFiles()
+{
     listDir("/", 0);
 }
 
-void SDCard::listDir(const char * dirname, uint8_t levels)
+void SDCard::listDir(const char* dirname, uint8_t levels)
 {
     Serial.printf("Listing directory: %s\n", dirname);
 
     File root = SD_MMC.open(dirname);
-    if(!root){
+    if (!root)
+    {
         Serial.println("Failed to open directory");
         return;
     }
-    if(!root.isDirectory()){
+    if (!root.isDirectory())
+    {
         Serial.println("Not a directory");
         return;
     }
 
     File file = root.openNextFile();
-    while(file){
-        if(file.isDirectory()){
+    while (file)
+    {
+        if (file.isDirectory())
+        {
             Serial.print("  DIR : ");
             Serial.println(file.name());
-            if(levels){
-                listDir(file.path(), levels -1);
+            if (levels)
+            {
+                listDir(file.path(), levels - 1);
             }
-        } else {
+        }
+        else
+        {
             Serial.print("  FILE: ");
             Serial.print(file.name());
             Serial.print("  SIZE: ");
@@ -85,30 +93,33 @@ void SDCard::listDir(const char * dirname, uint8_t levels)
     }
 }
 
-File SDCard::openNewLogFile(const char *filename)
+File SDCard::openNewLogFile(const char* filename)
 {
     File file = SD_MMC.open(filename, FILE_WRITE);
-    if(!file){
+    if (!file)
+    {
         Serial.println("Failed to create file");
         return file;
     }
     return file;
 }
 
-size_t SDCard::writeToLogFile(File file, const DataFrame &frame)
+size_t SDCard::writeToLogFile(File file, const DataFrame& frame)
 {
-    if (!file) {
+    if (!file)
+    {
         Serial.println("Failed to open file for writing");
         return 0;
     }
 
-    //Write to buffer
+    // Write to buffer
     uint8_t buffer[frame.getTotalSize()];
     frame.serialize(buffer, frame.getTotalSize());
 
-    //Write to file
+    // Write to file
     size_t written = file.write(buffer, frame.getTotalSize());
-    if (written != frame.getTotalSize()) {
+    if (written != frame.getTotalSize())
+    {
         Serial.println("Failed to write to file");
     }
 

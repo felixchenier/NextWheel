@@ -16,9 +16,9 @@
 #include "tasks/SDCardWorkerTask.h"
 
 
-class NextWheelApp {
-    public:
-
+class NextWheelApp
+{
+public:
     NextWheelApp() : m_webSocketServerTask(&m_sdCardWorkerTask)
     {
         // put your setup code here, to run once:
@@ -27,22 +27,22 @@ class NextWheelApp {
 
         m_leds.begin();
 
-        //First thing we set the system to current time
+        // First thing we set the system to current time
         m_rtc.begin();
 
         Serial.print("NextWheel version: ");
         Serial.println(NEXT_WHEEL_VERSION);
     }
 
-    void begin() {
-
+    void begin()
+    {
         // Sensors must be enabled
         // Must be first
         m_sdCardWorkerTask.setCore(0);
         m_sdCardWorkerTask.setPriority(TASK_PRIORITY_HIGH);
 
-        //m_printWorkerTask.setCore(0);
-        //m_printWorkerTask.setPriority(TASK_PRIORITY_IDLE);
+        // m_printWorkerTask.setCore(0);
+        // m_printWorkerTask.setPriority(TASK_PRIORITY_IDLE);
 
         m_webSocketServerTask.setCore(1);
         m_webSocketServerTask.setPriority(TASK_PRIORITY_MEDIUM);
@@ -57,55 +57,48 @@ class NextWheelApp {
         m_powerTask.setPriority(TASK_PRIORITY_HIGH);
 
 
-        //Register to queues
+        // Register to queues
         registerSensorTaskToQueues(m_adcTask);
         registerSensorTaskToQueues(m_imuTask);
         registerSensorTaskToQueues(m_powerTask);
-
     }
 
-    void start() {
+    void start()
+    {
         m_sdCardWorkerTask.start(this);
-        //m_printWorkerTask.start(nullptr);
+        // m_printWorkerTask.start(nullptr);
         m_webSocketServerTask.start(this);
         m_adcTask.start(this);
         m_imuTask.start(this);
         m_powerTask.start(this);
     }
 
-    bool isRecording() {
-        return m_sdCardWorkerTask.isRecording();
-    }
+    bool isRecording() { return m_sdCardWorkerTask.isRecording(); }
 
-    LEDS& getLEDS() {
-        return m_leds;
-    }
+    LEDS& getLEDS() { return m_leds; }
 
-    RTC& getRTC() {
-        return m_rtc;
-    }
+    RTC& getRTC() { return m_rtc; }
 
-    //Drivers
+    // Drivers
     RTC m_rtc;
     LEDS m_leds;
 
-    //Sensors
+    // Sensors
     ADCSensorTask m_adcTask;
     IMUSensorTask m_imuTask;
     PowerSensorTask m_powerTask;
 
-    //Workers
-    //PrintWorkerTask m_printWorkerTask;
+    // Workers
+    // PrintWorkerTask m_printWorkerTask;
     SDCardWorkerTask m_sdCardWorkerTask;
     WebSocketServerTask m_webSocketServerTask;
 
-    private:
-
-    void registerSensorTaskToQueues(SensorTask &task) {
-        //task.registerDataQueue(m_printWorkerTask.getQueue());
+private:
+    void registerSensorTaskToQueues(SensorTask& task)
+    {
+        // task.registerDataQueue(m_printWorkerTask.getQueue());
         task.registerDataQueue(m_sdCardWorkerTask.getQueue());
         task.registerDataQueue(m_webSocketServerTask.getQueue());
     }
-
 };
 #endif

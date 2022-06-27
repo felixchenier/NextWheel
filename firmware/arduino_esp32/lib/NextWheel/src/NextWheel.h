@@ -4,7 +4,7 @@
 /*
     NextWheel  - Global definitions and macros
 */
-#define NEXT_WHEEL_VERSION "0.1.0"
+#define NEXT_WHEEL_VERSION     "0.1.0"
 #define NEXT_WHEEL_DEBUG_LEVEL 0
 
 
@@ -19,9 +19,9 @@
 // SPI on default pins
 #define PIN_SPI_MOSI 23
 #define PIN_SPI_MISO 19
-#define PIN_SPI_CLK 18
-#define PIN_SPI_CS1 5
-#define PIN_SPI_CS2 25 //WARNING - patch on prototype PCB
+#define PIN_SPI_CLK  18
+#define PIN_SPI_CS1  5
+#define PIN_SPI_CS2  25  // WARNING - patch on prototype PCB
 
 // SD Card 4 bits not on all default pins, SDMMC (SLOT1)
 // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/sdmmc_host.html
@@ -29,14 +29,14 @@
 #define PIN_SD_DAT1 4
 #define PIN_SD_DAT2 12
 #define PIN_SD_DAT3 13
-#define PIN_SD_CMD 15 //Patch on prototype PCB
-#define PIN_SD_CLK 14
+#define PIN_SD_CMD  15  // Patch on prototype PCB
+#define PIN_SD_CLK  14
 
 
 // WARNING: Jumper must be removed to use the IMU's interrupt pins.
 // WARNING: If jumper is removed, programming will be disabled.
-#define PIN_IMU_INT1 1 //TXD0
-#define PIN_IMU_INT2 3 //RXD0
+#define PIN_IMU_INT1 1  // TXD0
+#define PIN_IMU_INT2 3  // RXD0
 
 
 // BUTTONS
@@ -52,8 +52,8 @@
 #define PIN_QUAD_ENCODER_B 0
 
 // I2S
-#define PIN_I2S_SDATA 33
-#define PIN_I2S_SCLK 26
+#define PIN_I2S_SDATA    33
+#define PIN_I2S_SCLK     26
 #define PIN_I2S_LRCLK_WS 27
 
 // EMERGENCY STOP / LOW POWER
@@ -64,16 +64,15 @@
 
 
 // TASKS
-#define TASK_PRIORITY_IDLE 0
-#define TASK_PRIORITY_LOWEST 1
-#define TASK_PRIORITY_LOW 2
-#define TASK_PRIORITY_MEDIUM 3
-#define TASK_PRIORITY_HIGH 4
+#define TASK_PRIORITY_IDLE    0
+#define TASK_PRIORITY_LOWEST  1
+#define TASK_PRIORITY_LOW     2
+#define TASK_PRIORITY_MEDIUM  3
+#define TASK_PRIORITY_HIGH    4
 #define TASK_PRIORITY_HIGHEST 5
 
-#define TASK_PRIORITY_DEFAULT TASK_PRIORITY_MEDIUM
+#define TASK_PRIORITY_DEFAULT   TASK_PRIORITY_MEDIUM
 #define TASK_STACK_SIZE_DEFAULT 2048
-
 
 
 #endif

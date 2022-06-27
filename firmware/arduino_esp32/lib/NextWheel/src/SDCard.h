@@ -6,17 +6,17 @@
 #include "SD_MMC.h"
 #include "DataFrame.h"
 
-class SDCard {
-    public:
+class SDCard
+{
+public:
     SDCard();
     void begin();
     void update();
     void end();
     void listFiles();
-    void listDir(const char * dirname, uint8_t levels);
-    File openNewLogFile(const char *filename);
-    size_t writeToLogFile(File file, const DataFrame &frame);
-
+    void listDir(const char* dirname, uint8_t levels);
+    File openNewLogFile(const char* filename);
+    size_t writeToLogFile(File file, const DataFrame& frame);
 };
 
-#endif // _SDCARD_H_
+#endif  // _SDCARD_H_

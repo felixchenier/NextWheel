@@ -2,22 +2,22 @@
 
 #define SPRINTF_BUFFER_SIZE 32
 
-RTC::RTC() {
+RTC::RTC() {}
 
-}
-
-void RTC::begin() {
+void RTC::begin()
+{
     // Initialize the RTC
     m_mcp7940.begin(I2C_FAST_MODE);
 
     DateTime now = m_mcp7940.now();  // get the current time
 
-    if (now.year() < 2022) {
+    if (now.year() < 2022)
+    {
         Serial.print("RTC has not been set yet. Doing so now.");
         // RTC has not been set yet, so use the current time
         m_mcp7940.adjust(DateTime(2022, 6, 20, 8, 50, 0));
-        m_mcp7940.setBattery(true); //enable battery
-   }
+        m_mcp7940.setBattery(true);  // enable battery
+    }
 
     // Re-Update time
     now = m_mcp7940.now();
@@ -40,19 +40,23 @@ void RTC::begin() {
     my_time.tv_sec = t;
     my_time.tv_usec = 0;
     settimeofday(&my_time, NULL);
-
 }
 
-void RTC::update() {
+void RTC::update()
+{
     // Update the RTC
-    //m_rtc.update();
+    // m_rtc.update();
     char inputBuffer[SPRINTF_BUFFER_SIZE];  // Buffer for sprintf()/sscanf()
     DateTime now = m_mcp7940.now();  // get the current time
 
-    sprintf(inputBuffer, "%04d-%02d-%02d %02d:%02d:%02d",
-            now.year(),  // Use sprintf() to pretty print
-            now.month(), now.day(), now.hour(), now.minute(),
-            now.second());                         // date/time with leading zeros
-    Serial.print(inputBuffer);                     // Display the current date/time
-
+    sprintf(
+        inputBuffer,
+        "%04d-%02d-%02d %02d:%02d:%02d",
+        now.year(),  // Use sprintf() to pretty print
+        now.month(),
+        now.day(),
+        now.hour(),
+        now.minute(),
+        now.second());  // date/time with leading zeros
+    Serial.print(inputBuffer);  // Display the current date/time
 }
