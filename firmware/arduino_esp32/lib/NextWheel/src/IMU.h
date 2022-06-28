@@ -3,7 +3,7 @@
 
 #include <NextWheel.h>
 #include <drivers/DPEng_BMX160.h>
-#include "data/DataFrame.h"
+#include "data/IMUDataFrame.h"
 
 #define IMU_I2C_ADDRESS 0x68
 

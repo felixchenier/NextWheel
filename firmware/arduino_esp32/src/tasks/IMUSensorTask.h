@@ -2,6 +2,7 @@
 #define _IMU_SENSOR_TASK_H_
 
 #include "tasks/SensorTask.h"
+#include "data/IMUDataFrame.h"
 #include "IMU.h"
 
 class IMUSensorTask : public SensorTask

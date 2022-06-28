@@ -3,7 +3,7 @@
 
 #include <NextWheel.h>
 #include <drivers/INA220.h>
-#include <data/DataFrame.h>
+#include <data/PowerDataFrame.h>
 
 #define INA220_I2C_ADDRESS 0x40
 

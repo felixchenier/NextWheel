@@ -3,7 +3,7 @@
 
 
 #include "tasks/SensorTask.h"
-#include "data/DataFrame.h"
+#include "data/PowerDataFrame.h"
 #include "Power.h"
 
 

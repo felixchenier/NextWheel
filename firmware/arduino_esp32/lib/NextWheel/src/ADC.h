@@ -3,7 +3,7 @@
 
 #include <NextWheel.h>
 #include <drivers/ADS8688.h>
-#include "data/DataFrame.h"
+#include "data/ADCDataFrame.h"
 
 class ADC
 {

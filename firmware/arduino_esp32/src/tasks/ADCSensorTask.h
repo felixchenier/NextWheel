@@ -2,6 +2,7 @@
 #define _ADC_SENSR_TASK_H_
 
 #include "tasks/SensorTask.h"
+#include "data/ADCDataFrame.h"
 #include "ADC.h"
 
 class ADCSensorTask : public SensorTask
