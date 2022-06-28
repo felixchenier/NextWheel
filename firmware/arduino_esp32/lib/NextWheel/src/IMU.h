@@ -2,8 +2,8 @@
 #define _IMU_H_
 
 #include <NextWheel.h>
-#include <DPEng_BMX160.h>
-#include "DataFrame.h"
+#include <drivers/DPEng_BMX160.h>
+#include "data/DataFrame.h"
 
 #define IMU_I2C_ADDRESS 0x68
 

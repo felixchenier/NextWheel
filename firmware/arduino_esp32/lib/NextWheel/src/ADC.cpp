@@ -1,5 +1,4 @@
 #include "ADC.h"
-#include "DataFrame.h"
 
 ADC::ADC() : m_ads8688(PIN_SPI_CS1) {}
 

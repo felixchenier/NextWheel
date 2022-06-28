@@ -1,5 +1,4 @@
 #include "Power.h"
-#include "DataFrame.h"
 
 Power::Power(unsigned char address) : m_i2c_address(address)
 {

@@ -1,5 +1,4 @@
 #include "IMU.h"
-#include "DataFrame.h"
 
 IMU::IMU(unsigned char address) : m_i2c_address(address), m_dpeng_bmx160(0x160A, 0x160B, 0x160C) {}
 

@@ -2,8 +2,8 @@
 #define _ADC_H_
 
 #include <NextWheel.h>
-#include <ADS8688.h>
-#include "DataFrame.h"
+#include <drivers/ADS8688.h>
+#include "data/DataFrame.h"
 
 class ADC
 {

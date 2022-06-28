@@ -2,8 +2,8 @@
 #define _POWER_H_
 
 #include <NextWheel.h>
-#include <INA220.h>
-#include <DataFrame.h>
+#include <drivers/INA220.h>
+#include <data/DataFrame.h>
 
 #define INA220_I2C_ADDRESS 0x40
 

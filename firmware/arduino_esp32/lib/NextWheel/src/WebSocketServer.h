@@ -4,7 +4,7 @@
 #include "config/WiFiConfig.h"
 #include <NextWheel.h>
 #include <ESPAsyncWebServer.h>
-#include <DataFrame.h>
+#include <data/DataFrame.h>
 
 class WebSocketServer
 {

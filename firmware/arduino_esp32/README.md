@@ -10,7 +10,11 @@ Welcome to NextWheel, the SmartWheel PCB/Firmware replacement for existing Smart
 
 ## License
 
-* [BSD](https://opensource.org/licenses/BSD-3-Clause#:~:text=3.,without%20specific%20prior%20written%20permission.)
+* [GPLv3](https://www.gnu.org/licenses/gpl-3.0.txt)
+
+## Coding style
+
+* Use the clang-format Visual Studio Extension to follow coding style defined in the [.clang-format](.clang-format) file.
 
 ## Programming
 
