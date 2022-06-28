@@ -28,9 +28,9 @@ public:
     {
         // Setup interrupt arduino
         pinMode(PIN_BUTTON_1, INPUT_PULLDOWN);
-        attachInterrupt(digitalPinToInterrupt(PIN_BUTTON_1), NextWheelInterrupts::button1_interrupt, RISING);
+        attachInterrupt(PIN_BUTTON_1, NextWheelInterrupts::button1_interrupt, RISING);
         pinMode(PIN_BUTTON_2, INPUT_PULLDOWN);
-        attachInterrupt(digitalPinToInterrupt(PIN_BUTTON_2), NextWheelInterrupts::button2_interrupt, RISING);
+        attachInterrupt(PIN_BUTTON_2, NextWheelInterrupts::button2_interrupt, RISING);
     }
 };
 
