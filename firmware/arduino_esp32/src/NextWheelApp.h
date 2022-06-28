@@ -5,6 +5,7 @@
 
 #include <RTC.h>
 #include <LEDS.h>
+#include <Buttons.h>
 
 #include "tasks/SensorTask.h"
 #include "tasks/WorkerTask.h"
@@ -19,19 +20,9 @@
 class NextWheelApp
 {
 public:
-    NextWheelApp() : m_webSocketServerTask(&m_sdCardWorkerTask)
-    {
-        Serial.print("NextWheel version: ");
-        Serial.println(NEXT_WHEEL_VERSION);
 
-        // WARNING -  Make sure Arduino is initialized before creating an instance of NextWheelApp
 
-        // Initialize leds
-        m_leds.begin();
-
-        // First thing we set the system to current time
-        m_rtc.begin();
-    }
+    static NextWheelApp* instance();
 
     void begin()
     {
@@ -78,9 +69,48 @@ public:
 
     RTC& getRTC() { return m_rtc; }
 
+    bool startRecording(bool from_isr = false) {
+        return m_sdCardWorkerTask.sendCommandEvent(SDCardWorkerTask::SDCARD_WORKER_TASK_COMMAND_START_RECORDING, from_isr);
+    }
+
+    bool stopRecording(bool from_isr = false) {
+        return m_sdCardWorkerTask.sendCommandEvent(SDCardWorkerTask::SDCARD_WORKER_TASK_COMMAND_STOP_RECORDING, from_isr);
+    }
+
+private:
+
+    NextWheelApp() : m_webSocketServerTask(&m_sdCardWorkerTask)
+    {
+        Serial.print("NextWheel version: ");
+        Serial.println(NEXT_WHEEL_VERSION);
+
+        // WARNING -  Make sure Arduino is initialized before creating an instance of NextWheelApp
+
+        // Initialize leds
+        m_leds.begin();
+
+        // First thing we set the system to current time
+        m_rtc.begin();
+
+        // Initialize buttons
+        m_buttons.begin();
+    }
+
+    void registerSensorTaskToQueues(SensorTask& task)
+    {
+        // task.registerDataQueue(m_printWorkerTask.getQueue());
+        task.registerDataQueue(m_sdCardWorkerTask.getQueue());
+        task.registerDataQueue(m_webSocketServerTask.getQueue());
+    }
+
+    // Singleton instance
+    static NextWheelApp* m_instance;
+
+
     // Drivers
     RTC m_rtc;
     LEDS m_leds;
+    Buttons m_buttons;
 
     // Sensors
     ADCSensorTask m_adcTask;
@@ -91,13 +121,5 @@ public:
     // PrintWorkerTask m_printWorkerTask;
     SDCardWorkerTask m_sdCardWorkerTask;
     WebSocketServerTask m_webSocketServerTask;
-
-private:
-    void registerSensorTaskToQueues(SensorTask& task)
-    {
-        // task.registerDataQueue(m_printWorkerTask.getQueue());
-        task.registerDataQueue(m_sdCardWorkerTask.getQueue());
-        task.registerDataQueue(m_webSocketServerTask.getQueue());
-    }
 };
 #endif

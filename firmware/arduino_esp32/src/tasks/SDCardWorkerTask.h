@@ -25,16 +25,18 @@ public:
         m_commandQueue = xQueueCreate(100, sizeof(SDCardWorkerTaskCommand));
     }
 
-    bool sendCommandEvent(SDCardWorkerTaskCommand command)
+    bool sendCommandEvent(SDCardWorkerTaskCommand command, bool from_isr = false)
     {
-        // WARNING this can be called from another task
-        if (xQueueSend(m_commandQueue, &command, 0) != pdTRUE)
+        if (from_isr)
         {
-            Serial.println("SDCardWorkerTask::sendCommandEvent: Failed to send command");
-            return false;
+            return xQueueSendFromISR(m_commandQueue, &command, nullptr) == pdTRUE;
         }
-        return true;
+        else
+        {
+            return xQueueSend(m_commandQueue, &command, 0) == pdTRUE;
+        }
     }
+
 
     String currentFileName() { return m_filename; }
 
