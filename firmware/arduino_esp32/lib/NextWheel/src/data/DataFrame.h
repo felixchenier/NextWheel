@@ -15,7 +15,7 @@ public:
     enum DataFrameType
     {
         DATA_FRAME_TYPE_UNKNOWN = 0,
-        DATA_FRAME_TYPE_WIFI_CONFIG = 1,
+        DATA_FRAME_TYPE_CONFIG = 1,
         DATA_FRAME_TYPE_ADC = 2,
         DATA_FRAME_TYPE_IMU = 3,
         DATA_FRAME_TYPE_POWER = 4,
@@ -42,8 +42,8 @@ public:
         {
             case DATA_FRAME_TYPE_UNKNOWN:
                 return "UNKNOWN";
-            case DATA_FRAME_TYPE_WIFI_CONFIG:
-                return "WIFI_CONFIG";
+            case DATA_FRAME_TYPE_CONFIG:
+                return "CONFIG";
             case DATA_FRAME_TYPE_ADC:
                 return "ADC";
             case DATA_FRAME_TYPE_IMU:

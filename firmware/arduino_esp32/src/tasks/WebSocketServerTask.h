@@ -51,8 +51,8 @@ public:
 
         while (1)
         {
-            // 40 ms task
-            vTaskDelayUntil(&lastGeneration, 40 / portTICK_RATE_MS);
+            // 50 ms task
+            vTaskDelayUntil(&lastGeneration, 50 / portTICK_RATE_MS);
 
             unsigned int count = 0;
             size_t total_payload_size = 0;
