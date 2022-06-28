@@ -3,15 +3,22 @@
 #include "NextWheelApp.h"
 
 // Global app object
-NextWheelApp app;
+// Needs to be initialized after Arduino objects are created and ready.
+// We allocate the app in the setup function to make sure it is initialized.
+NextWheelApp *app=nullptr;
 
 void setup()
 {
+    // Serial must be initialized for prints to work
+    Serial.begin(115200);
+
+    app = new NextWheelApp();
+
     // Setup app
-    app.begin();
+    app->begin();
 
     // Start tasks
-    app.start();
+    app->start();
 }
 
 void loop()
@@ -31,13 +38,13 @@ void loop()
         struct timeval timeval_now;
         gettimeofday(&timeval_now, NULL);
 
-        if (app.isRecording())
+        if (app->isRecording())
         {
-            app.getLEDS().toggleLED1();
+            app->getLEDS().toggleLED1();
         }
         else
         {
-            app.getLEDS().setLED1(false);
+            app->getLEDS().setLED1(false);
         }
 
         // IDLE loop.

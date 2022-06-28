@@ -21,17 +21,16 @@ class NextWheelApp
 public:
     NextWheelApp() : m_webSocketServerTask(&m_sdCardWorkerTask)
     {
-        // put your setup code here, to run once:
-        // Serial must be initialized for prints
-        Serial.begin(115200);
+        Serial.print("NextWheel version: ");
+        Serial.println(NEXT_WHEEL_VERSION);
 
+        // WARNING -  Make sure Arduino is initialized before creating an instance of NextWheelApp
+
+        // Initialize leds
         m_leds.begin();
 
         // First thing we set the system to current time
         m_rtc.begin();
-
-        Serial.print("NextWheel version: ");
-        Serial.println(NEXT_WHEEL_VERSION);
     }
 
     void begin()
