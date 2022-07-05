@@ -550,9 +550,36 @@ namespace DPEng {
     gyroSensor->sensor_id   = _gyroSensorID;
     gyroSensor->type        = SENSOR_TYPE_GYROSCOPE;
     gyroSensor->min_delay   = 0;
-    gyroSensor->max_value   = (float)this->_rangeGyro;
-    gyroSensor->min_value   = (this->_rangeGyro * -1.0);
-    gyroSensor->resolution  = 0.0F; // TBD
+
+
+    switch(_rangeGyro)
+    {
+        case GYRO_RANGE_125DPS:
+            gyroSensor->max_value   = 125.0F;
+            gyroSensor->min_value   = -124.0F;
+            gyroSensor->resolution  = GYRO_SENSITIVITY_125DPS;
+        break;
+        case GYRO_RANGE_250DPS:
+            gyroSensor->max_value   = 250.0F;
+            gyroSensor->min_value   = -248.0F;
+            gyroSensor->resolution  = GYRO_SENSITIVITY_250DPS;
+        break;
+        case GYRO_RANGE_500DPS:
+            gyroSensor->max_value   = 500.0F;
+            gyroSensor->min_value   = -498.0F;
+            gyroSensor->resolution  = GYRO_SENSITIVITY_500DPS;
+        break;
+        case GYRO_RANGE_1000DPS:
+            gyroSensor->max_value   = 1000.0F;
+            gyroSensor->min_value   = -998.0F;
+            gyroSensor->resolution  = GYRO_SENSITIVITY_1000DPS;
+        break;
+        case GYRO_RANGE_2000DPS:
+            gyroSensor->max_value   = 2000.0F;
+            gyroSensor->min_value   = -1998.0F;
+            gyroSensor->resolution  = GYRO_SENSITIVITY_2000DPS;
+        break;
+    }
 
     strncpy (magSensor->name, "BMX160", sizeof(magSensor->name) - 1);
     magSensor->name[sizeof(magSensor->name)- 1] = 0;
@@ -562,7 +589,7 @@ namespace DPEng {
     magSensor->min_delay   = 0.01F;
     magSensor->max_value   = 2500.0F;
     magSensor->min_value   = -2500.0F;
-    magSensor->resolution  = 0.1F; // TBD
+    magSensor->resolution  = MAG_UT_LSB; // TBD
     }
 
     /**************************************************************************/

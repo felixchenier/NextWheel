@@ -16,6 +16,7 @@
 #include "tasks/WebSocketServerTask.h"
 #include "tasks/SDCardWorkerTask.h"
 
+#include "config/GlobalConfig.h"
 
 class NextWheelApp
 {
@@ -86,6 +87,9 @@ private:
 
         // WARNING -  Make sure Arduino is initialized before creating an instance of NextWheelApp
 
+        //Load config
+        m_config.begin();
+
         // Initialize leds
         m_leds.begin();
 
@@ -93,7 +97,8 @@ private:
         m_rtc.begin();
 
         // Initialize buttons
-        m_buttons.begin();
+        // TODO disable buttons for now, interrupts are randomly generated because of noisy power suply.
+        // m_buttons.begin();
     }
 
     void registerSensorTaskToQueues(SensorTask& task)
@@ -121,5 +126,8 @@ private:
     // PrintWorkerTask m_printWorkerTask;
     SDCardWorkerTask m_sdCardWorkerTask;
     WebSocketServerTask m_webSocketServerTask;
+
+    //Config
+    GlobalConfig m_config;
 };
 #endif

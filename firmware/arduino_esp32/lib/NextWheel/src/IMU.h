@@ -16,6 +16,7 @@ public:
     void displaySensorDetails();
 
 private:
+    void displaySensorDetails(const sensor_t &sensor);
     unsigned char m_i2c_address;
     DPEng::DPEng_BMX160 m_dpeng_bmx160;
 };
