@@ -2,8 +2,79 @@
 <html>
     <head>
         <title>NextWheel - Configuration</title>
+        <link rel="stylesheet" href="css/bootstrap.min.css">
+        <link rel="stylesheet" href="css/bootstrap-theme.min.css">
+        <script src="js/jquery-3.6.0.slim.min.js"></script>
+        <script src="js/bootstrap.min.js"></script>
+        <script src="js/nextwheel.js"></script>
     </head>
     <body>
-        <p>Config!</p>
+        <div class="container-fluid ">
+            <div class="row text-center">
+                <h1>NextWheel Configuration</h1>
+                <div class="col-6">
+                    <h2>IMU Configuration</h2>
+                    <div class="mt-5 mb-5">
+                        <h3 class="bg-primary">Accelerometers Precision G (m/s^2)</h3>
+                        <div class="btn-group" role="group" aria-label="Accelerometers">
+                            <button id="2g_accel" type="button" class="btn btn-primary">2</button>
+                            <button id="4g_accel" type="button" class="btn btn-primary">4</button>
+                            <button id="8g_accel" type="button" class="btn btn-primary">8</button>
+                            <button id="16g_accel" type="button" class="btn btn-primary">16</button>
+                        </div>
+                    </div>
+
+                    <div class="mt-5 mb-5">
+                        <h3 class="bg-primary">Gyrometers Precision DPS (deg/s)</h3>
+                        <div class="btn-group" role="group" aria-label="Gyrometers">
+                            <button id="250dps_gyro" type="button" class="btn btn-primary">250</button>
+                            <button id="500dps_gyro" type="button" class="btn btn-primary">500</button>
+                            <button id="1000dps_gyro" type="button" class="btn btn-primary">1000</button>
+                            <button id="2000dps_gyrp" type="button" class="btn btn-primary">2000</button>
+                        </div>
+                    </div>
+
+                    <div class="mt-5 mb-5">
+                        <h3 class="bg-primary">Sampling Rate (Hz)</h3>
+                        <div class="btn-group" role="group" aria-label="Sampling Rate">
+                            <button id="imu_sampling_rate_25" type="button" class="btn btn-primary">25</button>
+                            <button id="imu_sampling_rate_50" type="button" class="btn btn-primary">50</button>
+                            <button id="imu_sampling_rate_100" type="button" class="btn btn-primary">100</button>
+                            <button id="imu_sampling_rate_200" type="button" class="btn btn-primary">200</button>
+                            <button id="imu_sampling_rate_400" type="button" class="btn btn-primary">400</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <h2>ADC Configuration</h2>
+                    <div class="mt-5 mb-5">
+                        <h3 class="bg-primary">ADC Sampling Rate (Hz)</h3>
+                        <div class="btn-group" role="group" aria-label="ADC Sampling Rate">
+                            <button id="adc_sampling_rate_25" type="button" class="btn btn-primary">25</button>
+                            <button id="adc_sampling_rate_50" type="button" class="btn btn-primary">50</button>
+                            <button id="adc_sampling_rate_100" type="button" class="btn btn-primary">100</button>
+                            <button id="adc_sampling_rate_200" type="button" class="btn btn-primary">200</button>
+                            <button id="adc_sampling_rate_400" type="button" class="btn btn-primary">400</button>
+                            <button id="adc_sampling_rate_800" type="button" class="btn btn-primary">800</button>
+                            <button id="adc_sampling_rate_1000" type="button" class="btn btn-primary">1000</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <h2>Current System Time</h2>
+                    %SYSTEMTIME%
+
+                    <h2>Time Set</h2>
+                    <div class="mt-5 mb-5">
+                        <button id="time_set_button" type="button" class="btn btn-primary" onclick="config_set_time_to_computer_time()">Set Time To Computer Time</button>
+                    </div>
+                </div>
+
+            <!-- row -->
+            </div>
+        <!-- Container fluid-->
+        </div>
     </body>
 </html>

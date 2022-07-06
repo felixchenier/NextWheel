@@ -5,8 +5,8 @@
 const std::vector<unsigned int> GlobalConfig::m_accel_ranges = {2, 4, 8, 16};
 const std::vector<unsigned int> GlobalConfig::m_gyro_ranges = {250, 500, 1000, 2000};
 const std::vector<unsigned int> GlobalConfig::m_mag_ranges = {2500};
-const std::vector<unsigned int> GlobalConfig::m_imu_sampling_rate_ranges = {10, 50, 100, 200};
-const std::vector<unsigned int> GlobalConfig::m_adc_sampling_rate_ranges = {10, 50, 100, 200, 400, 800, 1000};
+const std::vector<unsigned int> GlobalConfig::m_imu_sampling_rate_ranges = {25, 50, 100, 200, 400 /*, 800, 1600*/};
+const std::vector<unsigned int> GlobalConfig::m_adc_sampling_rate_ranges = {25, 50, 100, 200, 400, 800, 1000};
 
 
 bool GlobalConfig::validate()

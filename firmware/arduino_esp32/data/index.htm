@@ -1,37 +1,33 @@
 <!DOCTYPE html>
 <html>
+
     <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title>NextWheel</title>
         <link rel="stylesheet" href="css/bootstrap.min.css">
+        <script src="js/jquery-3.6.0.slim.min.js"></script>
         <script src="js/bootstrap.min.js"></script>
+        <script src="js/nextwheel.js"></script>
     </head>
     <body>
 
-        <div class="container-fluid bg-light">
-            <div class="row text-center">
+
+
+        <div class="row text-center">
             <div class="col-md-12">
+                <h1 class="bg-primary"> Welcome to NextWheel</h1>
 
-                <h1 class="bg-light"> Welcome to NextWheel</h1>
-
-                <nav class="navbar navbar-light bg-light">
-                    <a class="navbar-brand" href="config.htm">Configuration</a>
-                    <a class="navbar-brand" href="live.htm">Live</a>
-                    <a class="navbar-brand" href="/files">Files</a>
+                <nav class="navbar navbar-light bg-secondary">
+                    <a class="navbar-brand" href="/main" target="main">Home</a>
+                    <a class="navbar-brand" href="/config" target="main">Configuration</a>
+                    <a class="navbar-brand" href="/live" target="main">Live</a>
+                    <a class="navbar-brand" href="/files" target="main">Files</a>
                 </nav>
-
-                <div class="bg-info col-12 mx-4">
-                    <h2 class="bg-light"> Recording Control </h2>
-
-                    <form action="/recording" method="get">
-                        <div class="btn-group"></div>
-                        <button class="btn btn-secondary" name="recording" value="start_recording">Start Recording</button>
-                        <button class="btn btn-secondary" name="recording" value="stop_recording">Stop Recording</button>
-                        </div>
-                    </form>
-                </div>
             </div>
-            </div>
+        </div>
 
+        <div class="h-100 w-100">
+            <iframe class="h-100 w-100 position-absolute" name="main" src="/main"></iframe>
         </div>
     </body>
 </html>

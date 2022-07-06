@@ -2,6 +2,7 @@
 #include <SPIFFS.h>
 #include <SD_MMC.h>
 #include "SDCard.h"
+#include <sys/time.h>
 
 WebSocketServer::WebSocketServer() : m_server(80), m_ws("/ws") {}
 
@@ -58,6 +59,33 @@ void WebSocketServer::setupStaticRoutes()
     // Default static route
     m_server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.htm");
 
+    // Main route
+    m_server.on(
+        "/main",
+        HTTP_GET,
+        [this](AsyncWebServerRequest* request)
+        {
+            SDCard sd;
+            sd.begin();
+
+            File html_file = SPIFFS.open("/main.htm", "r");
+            if (!html_file)
+            {
+                Serial.println("Failed to open main.htm");
+                request->send(404);
+                return;
+            }
+            uint8_t html_buffer[html_file.size()];
+            html_file.readBytes((char*)html_buffer, html_file.size());
+            request->send_P(
+                200,
+                PSTR("text/html"),
+                html_buffer,
+                html_file.size(),
+                std::bind(&WebSocketServer::onGlobalProcessor, this, std::placeholders::_1));
+            html_file.close();
+        });
+
     // File listing route
     m_server.on(
         "/files",
@@ -81,7 +109,55 @@ void WebSocketServer::setupStaticRoutes()
                 PSTR("text/html"),
                 html_buffer,
                 html_file.size(),
-                std::bind(&WebSocketServer::onFileDownloadProcessor, this, std::placeholders::_1));
+                std::bind(&WebSocketServer::onFileProcessor, this, std::placeholders::_1));
+            html_file.close();
+        });
+
+    // Configuration route
+    m_server.on(
+        "/config",
+        HTTP_GET,
+        [this](AsyncWebServerRequest* request)
+        {
+            File html_file = SPIFFS.open("/config.htm", "r");
+            if (!html_file)
+            {
+                Serial.println("Failed to open config.htm");
+                request->send(404);
+                return;
+            }
+            uint8_t html_buffer[html_file.size()];
+            html_file.readBytes((char*)html_buffer, html_file.size());
+            request->send_P(
+                200,
+                PSTR("text/html"),
+                html_buffer,
+                html_file.size(),
+                std::bind(&WebSocketServer::onConfigProcessor, this, std::placeholders::_1));
+            html_file.close();
+        });
+
+    // Data route
+    m_server.on(
+        "/live",
+        HTTP_GET,
+        [this](AsyncWebServerRequest* request)
+        {
+            File html_file = SPIFFS.open("/live.htm", "r");
+            if (!html_file)
+            {
+                Serial.println("Failed to open live.htm");
+                request->send(404);
+                return;
+            }
+            uint8_t html_buffer[html_file.size()];
+            html_file.readBytes((char*)html_buffer, html_file.size());
+            request->send_P(
+                200,
+                PSTR("text/html"),
+                html_buffer,
+                html_file.size(),
+                std::bind(&WebSocketServer::onLiveProcessor, this, std::placeholders::_1));
             html_file.close();
         });
 
@@ -133,7 +209,7 @@ void WebSocketServer::setupPostForm()
                 message = "No message";
             }
 
-            request->redirect("/");
+            request->redirect("/main");
         });
 }
 
@@ -252,8 +328,20 @@ void WebSocketServer::onWsEvent(
     }
 }
 
+String WebSocketServer::onGlobalProcessor(const String &var)
+{
+    if (var == F("SYSTEMTIME"))
+    {
+        struct timeval current_time;
+        gettimeofday(&current_time, NULL);
+        struct tm* time_info = localtime(&current_time.tv_sec);
+        return String(asctime(time_info));
+    }
 
-String WebSocketServer::onFileDownloadProcessor(const String& var)
+    return String();
+}
+
+String WebSocketServer::onFileProcessor(const String& var)
 {
     if (var == F("URLLINK"))
     {
@@ -303,5 +391,15 @@ String WebSocketServer::onFileDownloadProcessor(const String& var)
         return str;
     }
 
-    return String();
+    return onGlobalProcessor(var);
+}
+
+String WebSocketServer::onConfigProcessor(const String& var)
+{
+    return onGlobalProcessor(var);
+}
+
+String WebSocketServer::onLiveProcessor(const String& var)
+{
+    return onGlobalProcessor(var);
 }

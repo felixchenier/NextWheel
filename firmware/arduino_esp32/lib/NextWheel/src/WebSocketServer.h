@@ -36,7 +36,11 @@ private:
         void* arg,
         uint8_t* data,
         size_t len);
-    String onFileDownloadProcessor(const String& var);
+
+    String onGlobalProcessor(const String &var);
+    String onFileProcessor(const String& var);
+    String onConfigProcessor(const String& var);
+    String onLiveProcessor(const String& var);
 };
 
 #endif  // _WEBSOCKET_SERVER_H_
