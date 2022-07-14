@@ -5,6 +5,7 @@
 #include <NextWheel.h>
 #include <ESPAsyncWebServer.h>
 #include <data/DataFrame.h>
+#include <data/ConfigDataFrame.h>
 
 class WebSocketServer
 {
@@ -12,7 +13,7 @@ public:
     typedef std::function<void(String param, String message)> WebSocketServerMessageEventHandler;
 
     WebSocketServer();
-    void begin();
+    void begin(const GlobalConfig::ConfigData &configData);
 
     void sendToAll(DataFrame& frame);
     void sendToAll(const uint8_t* data, size_t size);
@@ -41,6 +42,7 @@ private:
     String onFileProcessor(const String& var);
     String onConfigProcessor(const String& var);
     String onLiveProcessor(const String& var);
+    GlobalConfig::ConfigData m_configData;
 };
 
 #endif  // _WEBSOCKET_SERVER_H_

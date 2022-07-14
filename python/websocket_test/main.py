@@ -51,6 +51,16 @@ def parse_adc_frame(message: bytes):
         return vals
 
 
+def parse_config_frame(message: bytes):
+    if len(message) != 20:
+        return []
+    else:
+        vals = struct.unpack_from('<5I', message)
+        print(f'Config accel_range:{vals[0]}, gyro_range:{vals[1]}, '
+              f'mag_range:{vals[2]}, imu_sample_rate:{vals[3]}, adc_sample_rate:{vals[4]}')
+        return vals
+
+
 def parse_superframe(message: bytes, count: int):
     offset = 0
     header_size = 10
@@ -94,6 +104,12 @@ def on_message(ws, message):
         data = message[10:]
         # print('header: ', frame_type, timestamp, data_size, len(data))
 
+        # Config frame (should always be first)
+        if frame_type == 1:
+            print('ConfigFrame detected')
+            print('header: ', frame_type, timestamp, data_size, len(data))
+            parse_config_frame(data)
+
         if frame_type == 255:
             # data_size contains the number of frames
             parse_superframe(message[10:], data_size)
@@ -134,7 +150,7 @@ def my_function(i):
 
 if __name__ == "__main__":
     websocket.enableTrace(True)
-    ws = websocket.WebSocketApp("ws://10.0.1.23/ws",
+    ws = websocket.WebSocketApp("ws://192.168.1.138/ws",
                                 on_open=on_open,
                                 on_message=on_message,
                                 on_error=on_error,

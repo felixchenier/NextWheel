@@ -62,7 +62,7 @@ class GlobalConfig
         EEPROM.commit();
     }
 
-    ConfigData get() {
+    ConfigData get() const {
         return m_config;
     }
 

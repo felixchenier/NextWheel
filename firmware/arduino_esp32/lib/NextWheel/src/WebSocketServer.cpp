@@ -6,8 +6,11 @@
 
 WebSocketServer::WebSocketServer() : m_server(80), m_ws("/ws") {}
 
-void WebSocketServer::begin()
+void WebSocketServer::begin(const GlobalConfig::ConfigData &configData)
 {
+    //Copy config data
+    m_configData = configData;
+
     // Files are stored in SPIFFS
     // Must be uploaded to the ESP32 before running this code
     SPIFFS.begin();
@@ -317,6 +320,9 @@ void WebSocketServer::onWsEvent(
     if (type == WS_EVT_CONNECT)
     {
         Serial.println("Client connected");
+        //Send config
+        ConfigDataFrame frame(m_configData);
+        sendToAll(frame);
     }
     else if (type == WS_EVT_DISCONNECT)
     {

@@ -12,6 +12,12 @@ Welcome to NextWheel, the SmartWheel PCB/Firmware replacement for existing Smart
 
 * [GPLv3](https://www.gnu.org/licenses/gpl-3.0.txt)
 
+## Requirements for building the firmware
+
+* [Visual Studio Code](https://code.visualstudio.com/download) (latest version)
+* [PlatformIO extension](https://platformio.org/)
+  * Install Espressif 32 Platform @ 5.x.x
+
 ## Coding style
 
 * Use the clang-format Visual Studio Extension to follow coding style defined in the [.clang-format](.clang-format) file.

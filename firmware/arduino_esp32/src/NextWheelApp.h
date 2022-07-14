@@ -78,6 +78,9 @@ public:
         return m_sdCardWorkerTask.sendCommandEvent(SDCardWorkerTask::SDCARD_WORKER_TASK_COMMAND_STOP_RECORDING, from_isr);
     }
 
+    GlobalConfig getConfig() const { return m_config; }
+
+
 private:
 
     NextWheelApp() : m_webSocketServerTask(&m_sdCardWorkerTask)
