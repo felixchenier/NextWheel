@@ -1,5 +1,5 @@
 #include "WebSocketServerTask.h"
-#include "NextWheelApp.h"
+#include "config/GlobalConfig.h"
 
 void WebSocketServerTask::run(void* app)
 {
@@ -24,7 +24,7 @@ void WebSocketServerTask::run(void* app)
             }
         });
 
-    m_server.begin(NextWheelApp::instance()->getConfig().get());
+    m_server.begin(GlobalConfig::instance().get());
 
     TickType_t lastGeneration = xTaskGetTickCount();
 

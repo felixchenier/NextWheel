@@ -78,8 +78,6 @@ public:
         return m_sdCardWorkerTask.sendCommandEvent(SDCardWorkerTask::SDCARD_WORKER_TASK_COMMAND_STOP_RECORDING, from_isr);
     }
 
-    GlobalConfig getConfig() const { return m_config; }
-
 
 private:
 
@@ -91,7 +89,7 @@ private:
         // WARNING -  Make sure Arduino is initialized before creating an instance of NextWheelApp
 
         //Load config
-        m_config.begin();
+        GlobalConfig::instance().begin();
 
         // Initialize leds
         m_leds.begin();
@@ -129,8 +127,5 @@ private:
     // PrintWorkerTask m_printWorkerTask;
     SDCardWorkerTask m_sdCardWorkerTask;
     WebSocketServerTask m_webSocketServerTask;
-
-    //Config
-    GlobalConfig m_config;
 };
 #endif

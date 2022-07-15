@@ -2,10 +2,10 @@
 
 IMU::IMU(unsigned char address) : m_i2c_address(address), m_dpeng_bmx160(0x160A, 0x160B, 0x160C) {}
 
-void IMU::begin()
+void IMU::begin(IMU_ACCEL_RANGE acc_range, IMU_GYRO_RANGE gyr_range)
 {
     // Initialize the IMU
-    if (!m_dpeng_bmx160.begin(DPEng::BMX160_ACCELRANGE_4G, DPEng::GYRO_RANGE_250DPS))
+    if (!m_dpeng_bmx160.begin(convert_acc_range(acc_range), convert_gyr_range(gyr_range)))
     {
         /* There was a problem detecting the BMX160 ... check your connections */
         Serial.println("Ooops, no BMX160 detected ... Check your wiring!");
@@ -25,62 +25,63 @@ void IMU::displaySensorDetails()
     displaySensorDetails(mag);
 }
 
-void IMU::displaySensorDetails(const sensor_t &sensor)
+void IMU::displaySensorDetails(const sensor_t& sensor)
 {
     // This is a copy of the printSensorDetails() function in the Adafruit Sensor library
     Serial.println(F("------------------------------------"));
     Serial.print(F("Sensor:       "));
     Serial.println(sensor.name);
     Serial.print(F("Type:         "));
-    switch ((sensors_type_t)sensor.type) {
-    case SENSOR_TYPE_ACCELEROMETER:
-        Serial.print(F("Acceleration (m/s2)"));
-        break;
-    case SENSOR_TYPE_MAGNETIC_FIELD:
-        Serial.print(F("Magnetic (uT)"));
-        break;
-    case SENSOR_TYPE_ORIENTATION:
-        Serial.print(F("Orientation (degrees)"));
-        break;
-    case SENSOR_TYPE_GYROSCOPE:
-        Serial.print(F("Gyroscopic (deg/s)"));
-        break;
-    case SENSOR_TYPE_LIGHT:
-        Serial.print(F("Light (lux)"));
-        break;
-    case SENSOR_TYPE_PRESSURE:
-        Serial.print(F("Pressure (hPa)"));
-        break;
-    case SENSOR_TYPE_PROXIMITY:
-        Serial.print(F("Distance (cm)"));
-        break;
-    case SENSOR_TYPE_GRAVITY:
-        Serial.print(F("Gravity (m/s2)"));
-        break;
-    case SENSOR_TYPE_LINEAR_ACCELERATION:
-        Serial.print(F("Linear Acceleration (m/s2)"));
-        break;
-    case SENSOR_TYPE_ROTATION_VECTOR:
-        Serial.print(F("Rotation vector"));
-        break;
-    case SENSOR_TYPE_RELATIVE_HUMIDITY:
-        Serial.print(F("Relative Humidity (%)"));
-        break;
-    case SENSOR_TYPE_AMBIENT_TEMPERATURE:
-        Serial.print(F("Ambient Temp (C)"));
-        break;
-    case SENSOR_TYPE_OBJECT_TEMPERATURE:
-        Serial.print(F("Object Temp (C)"));
-        break;
-    case SENSOR_TYPE_VOLTAGE:
-        Serial.print(F("Voltage (V)"));
-        break;
-    case SENSOR_TYPE_CURRENT:
-        Serial.print(F("Current (mA)"));
-        break;
-    case SENSOR_TYPE_COLOR:
-        Serial.print(F("Color (RGBA)"));
-        break;
+    switch ((sensors_type_t)sensor.type)
+    {
+        case SENSOR_TYPE_ACCELEROMETER:
+            Serial.print(F("Acceleration (m/s2)"));
+            break;
+        case SENSOR_TYPE_MAGNETIC_FIELD:
+            Serial.print(F("Magnetic (uT)"));
+            break;
+        case SENSOR_TYPE_ORIENTATION:
+            Serial.print(F("Orientation (degrees)"));
+            break;
+        case SENSOR_TYPE_GYROSCOPE:
+            Serial.print(F("Gyroscopic (deg/s)"));
+            break;
+        case SENSOR_TYPE_LIGHT:
+            Serial.print(F("Light (lux)"));
+            break;
+        case SENSOR_TYPE_PRESSURE:
+            Serial.print(F("Pressure (hPa)"));
+            break;
+        case SENSOR_TYPE_PROXIMITY:
+            Serial.print(F("Distance (cm)"));
+            break;
+        case SENSOR_TYPE_GRAVITY:
+            Serial.print(F("Gravity (m/s2)"));
+            break;
+        case SENSOR_TYPE_LINEAR_ACCELERATION:
+            Serial.print(F("Linear Acceleration (m/s2)"));
+            break;
+        case SENSOR_TYPE_ROTATION_VECTOR:
+            Serial.print(F("Rotation vector"));
+            break;
+        case SENSOR_TYPE_RELATIVE_HUMIDITY:
+            Serial.print(F("Relative Humidity (%)"));
+            break;
+        case SENSOR_TYPE_AMBIENT_TEMPERATURE:
+            Serial.print(F("Ambient Temp (C)"));
+            break;
+        case SENSOR_TYPE_OBJECT_TEMPERATURE:
+            Serial.print(F("Object Temp (C)"));
+            break;
+        case SENSOR_TYPE_VOLTAGE:
+            Serial.print(F("Voltage (V)"));
+            break;
+        case SENSOR_TYPE_CURRENT:
+            Serial.print(F("Current (mA)"));
+            break;
+        case SENSOR_TYPE_COLOR:
+            Serial.print(F("Color (RGBA)"));
+            break;
     }
 
     Serial.println();
@@ -109,4 +110,47 @@ void IMU::update(IMUDataFrame& frame)
 
     // Update timestamp to now
     frame.setTimestamp(DataFrame::getCurrentTimeStamp());
+}
+
+
+DPEng::bmx160AccelRange_t IMU::convert_acc_range(IMU_ACCEL_RANGE acc_range)
+{
+    switch (acc_range)
+    {
+        case IMU::IMU_ACC_RANGE_2G:
+            return DPEng::BMX160_ACCELRANGE_2G;
+            break;
+        case IMU::IMU_ACC_RANGE_4G:
+            return DPEng::BMX160_ACCELRANGE_4G;
+            break;
+        case IMU::IMU_ACC_RANGE_8G:
+            return DPEng::BMX160_ACCELRANGE_8G;
+            break;
+        case IMU::IMU_ACC_RANGE_16G:
+            return DPEng::BMX160_ACCELRANGE_16G;
+            break;
+    }
+    // Default value
+    return DPEng::BMX160_ACCELRANGE_2G;
+}
+
+DPEng::bmx160GyroRange_t IMU::convert_gyr_range(IMU_GYRO_RANGE gyr_range)
+{
+    switch (gyr_range)
+    {
+        case IMU_GYR_RANGE_250DPS:
+            return DPEng::GYRO_RANGE_250DPS;
+            break;
+        case IMU_GYR_RANGE_500DPS:
+            return DPEng::GYRO_RANGE_500DPS;
+            break;
+        case IMU_GYR_RANGE_1000DPS:
+            return DPEng::GYRO_RANGE_1000DPS;
+            break;
+        case IMU_GYR_RANGE_2000DPS:
+            return DPEng::GYRO_RANGE_2000DPS;
+            break;
+    }
+    // Default value
+    return DPEng::GYRO_RANGE_250DPS;
 }

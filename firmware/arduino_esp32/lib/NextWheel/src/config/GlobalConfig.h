@@ -11,23 +11,16 @@ class GlobalConfig
 {
  public:
 
-    static const std::vector<unsigned int> m_accel_ranges;
-    static const std::vector<unsigned int> m_gyro_ranges;
-    static const std::vector<unsigned int> m_mag_ranges;
-    static const std::vector<unsigned int> m_imu_sampling_rate_ranges;
-    static const std::vector<unsigned int> m_adc_sampling_rate_ranges;
 
     typedef struct {
-        unsigned int accel_range;
-        unsigned int gyro_range;
-        unsigned int mag_range;
-        unsigned int imu_sample_rate;
-        unsigned int adc_sample_rate;
+        uint32_t accel_range;
+        uint32_t gyro_range;
+        uint32_t mag_range;
+        uint32_t imu_sample_rate;
+        uint32_t adc_sample_rate;
     } ConfigData;
 
 
-    GlobalConfig() = default;
-    ~GlobalConfig() = default;
 
     void begin() {
         EEPROM.begin(sizeof(ConfigData));
@@ -78,14 +71,44 @@ class GlobalConfig
         save();
     }
 
+    uint32_t get_accel_range() const {
+        return m_config.accel_range;
+    }
+
     void set_gyro_range(unsigned int range) {
         m_config.gyro_range = range;
         save();
     }
 
+    uint32_t get_gyro_range() const {
+        return m_config.gyro_range;
+    }
+
     void set_mag_range(unsigned int range) {
         m_config.mag_range = range;
         save();
+    }
+
+    uint32_t get_mag_range() const {
+        return m_config.mag_range;
+    }
+
+    void set_imu_sample_rate(unsigned int rate) {
+        m_config.imu_sample_rate = rate;
+        save();
+    }
+
+    uint32_t get_imu_sample_rate() const {
+        return m_config.imu_sample_rate;
+    }
+
+    void set_adc_sample_rate(unsigned int rate) {
+        m_config.adc_sample_rate = rate;
+        save();
+    }
+
+    uint32_t get_adc_sample_rate() const {
+        return m_config.adc_sample_rate;
     }
 
     void setDefault() {
@@ -98,8 +121,23 @@ class GlobalConfig
         save();
     }
 
+    // Singleton instance
+    static GlobalConfig& instance() {
+        static GlobalConfig instance;
+        return instance;
+    }
+
     private:
         ConfigData m_config;
+        GlobalConfig() = default;
+        ~GlobalConfig() = default;
+
+        //Vectors containing valid configuration values
+        static const std::vector<uint32_t> m_accel_ranges;
+        static const std::vector<uint32_t> m_gyro_ranges;
+        static const std::vector<uint32_t> m_mag_ranges;
+        static const std::vector<uint32_t> m_imu_sampling_rate_ranges;
+        static const std::vector<uint32_t> m_adc_sampling_rate_ranges;
 
 
 };

@@ -1,6 +1,7 @@
 #include "SDCardWorkerTask.h"
 #include "NextWheelApp.h"
 #include "data/ConfigDataFrame.h"
+#include "config/GlobalConfig.h"
 
 void SDCardWorkerTask::run(void* app)
 {
@@ -62,7 +63,7 @@ void SDCardWorkerTask::run(void* app)
                         Serial.println(m_file.name());
 
                         // Write config (first data object in the file)
-                        ConfigDataFrame configDataFrame(NextWheelApp::instance()->getConfig());
+                        ConfigDataFrame configDataFrame(GlobalConfig::instance().get());
                         m_sdCard.writeToLogFile(m_file, configDataFrame);
                     }
                     break;
