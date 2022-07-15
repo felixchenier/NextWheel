@@ -10,50 +10,19 @@ public:
     const static size_t NUM_ADC_CHANNELS = 8;
     const static size_t ADC_DATA_FRAME_SIZE = NUM_ADC_CHANNELS * sizeof(float);
 
-    ADCDataFrame(uint64_t timestamp = DataFrame::getCurrentTimeStamp())
-        : DataFrame(DataFrame::DATA_FRAME_TYPE_ADC, ADC_DATA_FRAME_SIZE, timestamp)
-    {
-        memset(m_data, 0, ADC_DATA_FRAME_SIZE);
-    }
+    ADCDataFrame(uint64_t timestamp = DataFrame::getCurrentTimeStamp());
 
-    ADCDataFrame(const ADCDataFrame& other) : DataFrame(other) { memcpy(m_data, other.m_data, ADC_DATA_FRAME_SIZE); }
+    ADCDataFrame(const ADCDataFrame& other);
 
-    virtual size_t serializePayload(uint8_t* buffer, size_t buffer_size) const override
-    {
-        memcpy(buffer, m_data, ADC_DATA_FRAME_SIZE);
-        return ADC_DATA_FRAME_SIZE;
-    }
+    virtual size_t serializePayload(uint8_t* buffer, size_t buffer_size) const override;
 
-    virtual DataFrame* clone() const override { return new ADCDataFrame(*this); }
+    virtual DataFrame* clone() const override;
 
-    float getChannelValue(uint8_t channel)
-    {
-        if (channel >= 0 && channel < NUM_ADC_CHANNELS)
-        {
-            return m_data[channel];
-        }
-        return 0;
-    }
+    float getChannelValue(uint8_t channel);
 
-    void setChannelValue(uint8_t channel, float value)
-    {
-        if (channel >= 0 && channel < NUM_ADC_CHANNELS)
-        {
-            m_data[channel] = value;
-        }
-    }
+    void setChannelValue(uint8_t channel, float value);
 
-    virtual void print() override
-    {
-        DataFrame::print();
-        Serial.print("ADC Data: ");
-        for (int i = 0; i < NUM_ADC_CHANNELS; i++)
-        {
-            Serial.print(m_data[i]);
-            Serial.print(" ");
-        }
-        Serial.println();
-    }
+    virtual void print() override;
 
 private:
     float m_data[NUM_ADC_CHANNELS];

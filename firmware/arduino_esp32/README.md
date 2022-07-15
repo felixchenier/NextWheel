@@ -1,4 +1,4 @@
-# NEXT WHEEL
+# NEXT WHEEL v0.1.0
 
 Welcome to NextWheel, the SmartWheel PCB/Firmware replacement for existing Smart Wheels, now discontinued from [Out-Front](https://out-front.com). This project uses the [PlatformIO](https://platformio.org/) extension for Visual Studio Code for compilation.
 
@@ -25,7 +25,7 @@ Welcome to NextWheel, the SmartWheel PCB/Firmware replacement for existing Smart
 ## Programming
 
 > J14 and J15 jumpers must be removed before programming. This is required for the UART0 to work.
-> Put back J14 and J15 jumpers when the firmware is uploaded.
+> It is recommended that you leave J14 and J15 jumpers unconnected to get the console output (serial monitor).
 
 Steps:
 
@@ -37,7 +37,6 @@ Steps:
 
 ## Running
 
-> Make sure J14 and J15 jumpers are installed.
 > Make sure J11 jumper is in the 2-3 position.
 
 ## Hardware
@@ -55,7 +54,7 @@ ADS8688  IDBTR
 
 ### WiFi / WebSocket Protocol
 
-Once a WebSocket connection is established, the client and server exchange data via the WebSocket protocol in binary format : application messages, using the HTTP protocol, are split into one or more frames, each of which adds from 2 to 14 bytes of overhead.
+Once a WebSocket connection is established, the client and server exchange data via the WebSocket protocol in binary format : application messages, using the HTTP protocol, are split into one or more frames, adding a little overhead that needs to be considered, especially if we send small amount of data at once.
 
 ### WebSocket Binary Message Format
 
@@ -64,12 +63,12 @@ Once a WebSocket connection is established, the client and server exchange data 
 | TYPE (uint8)   | TIMESTAMP (uint64)   | DATA SIZE (uint8)   | DATA (variable byte(s)) |
 |----------------|----------------------|---------------------|-------------------------|
 | 0=UNKNOWN      | INVALID              | 0 BYTE              | NONE                    |
-| 1=CONFIG       | UNIX MICROSECONDS    | NOT IMPLEMENTED YET | NONE                    |
-| 2=ADC          | UNIX MICROSECONDS    | 32 BYTES            | 8 CH x FLOAT32          |
+| 1=CONFIG       | UNIX MICROSECONDS    | 20 BYTES            | 5x UINT32 (See [ConfigData](lib/NextWheel/src/config/GlobalConfig.h)) |
+| 2=ADC          | UNIX MICROSECONDS    | 32 BYTES            | 8 CH x FLOAT32 (See [ADCDataFrame](lib/NextWheel/src/data/ADCDataFrame.h))|
 | 3=IMU          | UNIX MICROSECONDS    | 36 BYTES            | 9 FLOAT32 (AX,AY,AZ, GX,GY,GZ, MX,MY,MZ) |
 | 4=POWER        | UNIX MICROSECONDS    | 13 BYTES            | 3 FLOAT32 (V,I,P) + FLAGS (uint8) |
 | 5=RTC          | UNIX MICROSECONDS    | NOT IMPLEMENTED YET | NONE                    |
 | 6=AUDIO        | UNIX MICROSECONDS    | NOT IMPLEMENTED YET | NONE                    |
 | 255=SUPERFRAME | UNIX MICROSECONDS    | NB INCLUDED FRAMES  | VARIABLE NUMBER OF FULL FRAMES |
 
-> Note 2: To avoid sending small packets with high overhead, the [WebSocketServerTask](src/tasks/WebSocketServerTask.h) sends periodic superframes of type 255 at a rate of 20Hz, wich is the aggregation of all accumulated frames in a 50ms period. This allows to maximize the bandwidth and minimize the TCP/IP embedded stack overhead.
+> Note 2: To avoid sending small packets with high overhead ratio (data size small vs websocket overhead), the [WebSocketServerTask](src/tasks/WebSocketServerTask.h) sends periodic superframes of type 255 at a rate of 20Hz, wich is the aggregation of all accumulated frames in a 50ms period. This allows to maximize the bandwidth and minimize the TCP/IP embedded stack overhead. Every data frame is timstamped, so we can recover all data chronologically.

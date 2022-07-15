@@ -1,18 +1,22 @@
 #include "IMUSensorTask.h"
 #include "config/GlobalConfig.h"
 
+IMUSensorTask::IMUSensorTask() : SensorTask("IMUSensorTask") {}
+
 void IMUSensorTask::run(void* app)
 {
     Serial.printf("IMUSensorTask::run Priority: %li Core: %li \n", uxTaskPriorityGet(NULL), xPortGetCoreID());
 
     IMU imu;
 
-    imu.begin((IMU::IMU_ACCEL_RANGE)GlobalConfig::instance().get_accel_range(), (IMU::IMU_GYRO_RANGE)GlobalConfig::instance().get_gyro_range());
+    imu.begin(
+        (IMU::IMU_ACCEL_RANGE)GlobalConfig::instance().get_accel_range(),
+        (IMU::IMU_GYRO_RANGE)GlobalConfig::instance().get_gyro_range());
 
     TickType_t lastGeneration = xTaskGetTickCount();
     IMUDataFrame frame;
 
-    uint32_t tick_increment =  1000 / (portTICK_RATE_MS * GlobalConfig::instance().get_imu_sample_rate());
+    uint32_t tick_increment = 1000 / (portTICK_RATE_MS * GlobalConfig::instance().get_imu_sample_rate());
 
     Serial.print("IMUSensorTask sample_rate: ");
     Serial.println(GlobalConfig::instance().get_imu_sample_rate());

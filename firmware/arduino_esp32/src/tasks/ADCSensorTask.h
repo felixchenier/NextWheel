@@ -8,8 +8,7 @@
 class ADCSensorTask : public SensorTask
 {
 public:
-    ADCSensorTask() : SensorTask("ADCSensorTask") {}
-
+    ADCSensorTask();
     virtual void run(void* app) override;
 
 private:

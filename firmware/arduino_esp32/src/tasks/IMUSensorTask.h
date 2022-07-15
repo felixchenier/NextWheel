@@ -8,8 +8,7 @@
 class IMUSensorTask : public SensorTask
 {
 public:
-    IMUSensorTask() : SensorTask("IMUSensorTask") {}
-
+    IMUSensorTask();
     virtual void run(void* app) override;
 };
 

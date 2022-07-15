@@ -3,6 +3,43 @@
 #include "data/ConfigDataFrame.h"
 #include "config/GlobalConfig.h"
 
+
+SDCardWorkerTask::SDCardWorkerTask()
+    : WorkerTask("SDCardWorkerTask", SDCARD_WORKER_TASK_STACK_SIZE),
+      m_file(nullptr),
+      m_bytesWritten(0)
+{
+    m_commandQueue = xQueueCreate(100, sizeof(SDCardWorkerTaskCommand));
+}
+
+bool SDCardWorkerTask::sendCommandEvent(SDCardWorkerTaskCommand command, bool from_isr)
+{
+    if (from_isr)
+    {
+        return xQueueSendFromISR(m_commandQueue, &command, nullptr) == pdTRUE;
+    }
+    else
+    {
+        return xQueueSend(m_commandQueue, &command, 0) == pdTRUE;
+    }
+}
+
+
+String SDCardWorkerTask::currentFileName()
+{
+    return m_filename;
+}
+
+bool SDCardWorkerTask::isRecording()
+{
+    if (m_file)
+    {
+        return true;
+    }
+
+    return false;
+}
+
 void SDCardWorkerTask::run(void* app)
 {
     Serial.printf("SDCardWorkerTask::run Priority: %li Core: %li \n", uxTaskPriorityGet(NULL), xPortGetCoreID());
@@ -84,4 +121,44 @@ void SDCardWorkerTask::run(void* app)
             }
         }  // end while (SDCardWorkerTaskCommand command = dequeueCommand(0))
     }
+}
+
+SDCardWorkerTask::SDCardWorkerTaskCommand SDCardWorkerTask::dequeueCommand(unsigned long timeout)
+{
+    SDCardWorkerTaskCommand command = SDCARD_WORKER_TASK_COMMAND_NONE;
+    if (xQueueReceive(m_commandQueue, &command, timeout) != pdTRUE)
+    {
+        return SDCARD_WORKER_TASK_COMMAND_NONE;
+    }
+    return command;
+}
+
+String SDCardWorkerTask::generateFileName()
+{
+    time_t now;
+    struct tm* timeInfo;
+    time(&now);
+    timeInfo = localtime(&now);
+    char fileName[64];
+    sprintf(
+        fileName,
+        "/log_%04d-%02d-%02d_%02d-%02d-%02d.dat",
+        timeInfo->tm_year + 1900,
+        timeInfo->tm_mon + 1,
+        timeInfo->tm_mday,
+        timeInfo->tm_hour,
+        timeInfo->tm_min,
+        timeInfo->tm_sec);
+    return String(fileName);
+}
+
+void SDCardWorkerTask::resetLog()
+{
+    if (m_file)
+    {
+        m_file.close();
+    }
+    m_file = File(nullptr);
+    m_filename = String();
+    m_bytesWritten = 0;
 }

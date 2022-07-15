@@ -6,22 +6,9 @@
 class PrintWorkerTask : public WorkerTask
 {
 public:
-    PrintWorkerTask() : WorkerTask("PrintWorkerTask") {}
+    PrintWorkerTask();
 
-    virtual void run(void* app) override
-    {
-        Serial.printf("PrintWorkerTask::run Priority: %li Core: %li \n", uxTaskPriorityGet(NULL), xPortGetCoreID());
-        while (1)
-        {
-            DataFramePtr dataPtr = dequeue();
-            if (dataPtr == nullptr)
-            {
-                continue;
-            }
-            dataPtr->print();
-            delete dataPtr;
-        }
-    }
+    virtual void run(void* app) override;
 };
 
 #endif  // _PRINT_WORKER_TASK_H_

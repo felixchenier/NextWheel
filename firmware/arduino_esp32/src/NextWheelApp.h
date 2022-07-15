@@ -21,93 +21,27 @@
 class NextWheelApp
 {
 public:
-
-
     static NextWheelApp* instance();
 
-    void begin()
-    {
-        // Sensors must be enabled
-        // Must be first
-        m_sdCardWorkerTask.setCore(0);
-        m_sdCardWorkerTask.setPriority(TASK_PRIORITY_HIGH);
+    void begin();
 
-        // m_printWorkerTask.setCore(0);
-        // m_printWorkerTask.setPriority(TASK_PRIORITY_IDLE);
+    void start();
 
-        m_webSocketServerTask.setCore(1);
-        m_webSocketServerTask.setPriority(TASK_PRIORITY_MEDIUM);
+    bool isRecording();
 
-        m_adcTask.setCore(1);
-        m_adcTask.setPriority(TASK_PRIORITY_HIGHEST);
+    LEDS& getLEDS();
 
-        m_imuTask.setCore(1);
-        m_imuTask.setPriority(TASK_PRIORITY_HIGHEST);
+    RTC& getRTC();
 
-        m_powerTask.setCore(1);
-        m_powerTask.setPriority(TASK_PRIORITY_HIGH);
+    bool startRecording(bool from_isr = false);
 
-
-        // Register to queues
-        registerSensorTaskToQueues(m_adcTask);
-        registerSensorTaskToQueues(m_imuTask);
-        registerSensorTaskToQueues(m_powerTask);
-    }
-
-    void start()
-    {
-        m_sdCardWorkerTask.start(this);
-        // m_printWorkerTask.start(nullptr);
-        m_webSocketServerTask.start(this);
-        m_adcTask.start(this);
-        m_imuTask.start(this);
-        m_powerTask.start(this);
-    }
-
-    bool isRecording() { return m_sdCardWorkerTask.isRecording(); }
-
-    LEDS& getLEDS() { return m_leds; }
-
-    RTC& getRTC() { return m_rtc; }
-
-    bool startRecording(bool from_isr = false) {
-        return m_sdCardWorkerTask.sendCommandEvent(SDCardWorkerTask::SDCARD_WORKER_TASK_COMMAND_START_RECORDING, from_isr);
-    }
-
-    bool stopRecording(bool from_isr = false) {
-        return m_sdCardWorkerTask.sendCommandEvent(SDCardWorkerTask::SDCARD_WORKER_TASK_COMMAND_STOP_RECORDING, from_isr);
-    }
+    bool stopRecording(bool from_isr = false);
 
 
 private:
+    NextWheelApp();
 
-    NextWheelApp() : m_webSocketServerTask(&m_sdCardWorkerTask)
-    {
-        Serial.print("NextWheel version: ");
-        Serial.println(NEXT_WHEEL_VERSION);
-
-        // WARNING -  Make sure Arduino is initialized before creating an instance of NextWheelApp
-
-        //Load config
-        GlobalConfig::instance().begin();
-
-        // Initialize leds
-        m_leds.begin();
-
-        // First thing we set the system to current time
-        m_rtc.begin();
-
-        // Initialize buttons
-        // TODO disable buttons for now, interrupts are randomly generated because of noisy power suply.
-        // m_buttons.begin();
-    }
-
-    void registerSensorTaskToQueues(SensorTask& task)
-    {
-        // task.registerDataQueue(m_printWorkerTask.getQueue());
-        task.registerDataQueue(m_sdCardWorkerTask.getQueue());
-        task.registerDataQueue(m_webSocketServerTask.getQueue());
-    }
+    void registerSensorTaskToQueues(SensorTask& task);
 
     // Singleton instance
     static NextWheelApp* m_instance;

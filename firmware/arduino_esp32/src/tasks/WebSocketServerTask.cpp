@@ -1,5 +1,12 @@
 #include "WebSocketServerTask.h"
 #include "config/GlobalConfig.h"
+#include "NextWheelApp.h"
+
+WebSocketServerTask::WebSocketServerTask()
+    : WorkerTask("WebSocketServerTask", WEBSOCKET_SERVER_STACK_SIZE)
+{
+}
+
 
 void WebSocketServerTask::run(void* app)
 {
@@ -15,11 +22,11 @@ void WebSocketServerTask::run(void* app)
             {
                 if (message == "start_recording")
                 {
-                    m_sdCardWorkerTask->sendCommandEvent(SDCardWorkerTask::SDCARD_WORKER_TASK_COMMAND_START_RECORDING);
+                    NextWheelApp::instance()->startRecording();
                 }
                 else if (message == "stop_recording")
                 {
-                    m_sdCardWorkerTask->sendCommandEvent(SDCardWorkerTask::SDCARD_WORKER_TASK_COMMAND_STOP_RECORDING);
+                    NextWheelApp::instance()->stopRecording();
                 }
             }
         });
@@ -69,4 +76,13 @@ void WebSocketServerTask::run(void* app)
         m_server.sendToAll(super_frame, total_payload_size + DataFrame::HEADER_SIZE);
         delete[] super_frame;
     }
+}
+
+void WebSocketServerTask::onMessage(String param, String message)
+{
+    Serial.println("WebSocketServerTask::onMessage");
+    Serial.print("Param: ");
+    Serial.print(param);
+    Serial.print(" Message: ");
+    Serial.println(message);
 }

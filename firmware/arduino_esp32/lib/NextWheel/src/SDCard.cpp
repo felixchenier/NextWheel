@@ -13,6 +13,7 @@ void SDCard::begin()
         #define PIN_SD_CMD 15
         #define PIN_SD_CLK 14
     */
+    // This is required for SDCARD to work
     gpio_pullup_en(GPIO_NUM_2);
     gpio_pullup_en(GPIO_NUM_4);
     gpio_pullup_en(GPIO_NUM_12);
