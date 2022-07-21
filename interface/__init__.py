@@ -17,22 +17,13 @@ import comm
 
 # Lists used to enable display in gui.py
 lists = {
-    'graph_time': [0],
-    'graph_force0': [0],
-    'graph_force1': [0],
-    'graph_force2': [0],
-    'graph_force3': [0],
-    'graph_moment0': [0],
-    'graph_moment1': [0],
-    'graph_moment2': [0],
-    'graph_moment3': [0],
-    'graph_velocity': [0, 0, 0],
-    'graph_power': [0, 0, 0],
+    'adc_values': [],
+    'imu_values': [],
+    'power_values': [],
 }
 
-
 wheel = comm.Wheel(lists=lists)
-wheel.connect()
-
 ui = gui.Ui_NextWheel(lists=lists, wheel=wheel)
-ui.run()
+ui.show()
+ui.activateWindow()
+ui.raise_()

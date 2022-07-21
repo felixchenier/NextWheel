@@ -4,15 +4,16 @@ NextWheel Interface.
 comm.py: Submodule that communicates with the instrumented wheels.
 """
 
-__author__ = "Clémence Starosta, Félix Chénier"
+__author__ = "Clémence Starosta, Félix Chénier, Dominic Létourneau"
 __copyright__ = "Laboratoire de recherche en mobilité et sport adapté"
 __email__ = "chenier.felix@uqam.ca"
 __license__ = "Apache 2.0"
 
-import socket
 import threading
-import json
-import constant as c
+import struct
+import datetime
+import websocket
+import requests
 
 
 class Wheel:
@@ -23,133 +24,212 @@ class Wheel:
     ----------
     ip_address : str
         IP address (IPv4) of the wheel. Use 127.0.0.1 for the emulator.
-    port : int
-        Port of the wheel.
+    lists : lists that bring together the data
     """
 
     def __init__(
         self,
-        ip_address: str = '127.0.0.1',
-        port: int = 50000,
         lists={},
     ):
-        self.ip_address = ip_address
-        self.port = port
-        self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.flag_stream = False
         self.lists = lists
+        self.adc_values = []
+        self.imu_values = []
+        self.power_values = []
 
-    def connect(self) -> bool:
+    def parse_power_frame(self, message: bytes) -> tuple:
         """
-        Initialize the connection to the wheel.
+        Analysis of power frames.
 
-        When the gui starts, wheel will automatically connect to the server
+        Performs conversions between Python values and C structures
+        represented as Python bytes objects.
 
         Parameters
         ----------
         self
+        message: framme (bytes)
 
         Returns
         -------
-        True for success, False otherwise.
+        vals (tuple)
         """
-        self.client.connect((self.ip_address, self.port))
-        if self.client.fileno() != -1:
-            return False
+        if len(message) != 13:
+            return []
         else:
-            return True
+            vals = struct.unpack_from('<3fB', message)
+            return vals
 
-    def disconnect(self, client: object) -> bool:
+    def parse_imu_frame(self, message: bytes) -> tuple:
         """
-        Close the connection to the wheel.
+        Analysis of IMU frames.
+
+        Performs conversions between Python values and C structures
+        represented as Python bytes objects.
 
         Parameters
         ----------
         self
+        message: framme (bytes)
 
         Returns
         -------
-        True for success, False otherwise.
+        vals (tuple)
         """
-        self.client.close()
-        if self.client.fileno() == -1:
-            return True
+        if len(message) != 36:
+            return []
         else:
-            return False
+            vals = struct.unpack_from('<9f', message)
+            return vals
 
-    def _receive_streaming_thread(self):
+    def parse_adc_frame(self, message: bytes) -> tuple:
         """
-        Receives data from the stream, places it in the corresponding lists.
+        Analysis of ADC frames.
 
-        Removes items from the list to avoid overloading the display.
+        Performs conversions between Python values and C structures
+        represented as Python bytes objects.
 
         Parameters
         ----------
-        None
+        self
+        message: framme (bytes)
+
+        Returns
+        -------
+        vals (tuple)
+        """
+        if len(message) != 32:
+            return []
+        else:
+            vals = struct.unpack_from('<8f', message)
+            return vals
+
+    def parse_superframe(self, message: bytes, count: int):
+        """
+        Adding the frames to the corresponding lists.
+
+        Frame conversion.
+
+        Parameters
+        ----------
+        self
+        message: framme (bytes)
+        count: Message size
 
         Returns
         -------
         None
         """
-        # Connecting main.py to the right socket
-        while self.flag_stream is True:
-            # Reception of the frames
-            buffer = self.client.recv(c.LENGTH_BUFFER)
-            if (buffer.decode() != "stop"):
-                trame = json.loads(buffer.decode())
+        offset = 0
+        header_size = 10
 
-                for i_receiving in range(0, c.nbr_JSON_per_framme):
-                    data = dict(trame["data"][i_receiving])
+        for sub_count in range(count):
+            (frame_type, timestamp, data_size) = struct.unpack_from(
+                '<BQB', message[offset:offset+header_size])
 
-                    # Put data in the corresponding lists
-                    self.lists['graph_time'].append(data['time'])
-                    self.lists['graph_force0'].append(data['Forces'][0])
-                    self.lists['graph_force1'].append(data['Forces'][1])
-                    self.lists['graph_force2'].append(data['Forces'][2])
-                    self.lists['graph_force3'].append(data['Forces'][3])
-                    self.lists['graph_moment0'].append(data['Moments'][0])
-                    self.lists['graph_moment1'].append(data['Moments'][1])
-                    self.lists['graph_moment2'].append(data['Moments'][2])
-                    self.lists['graph_moment3'].append(data['Moments'][3])
-                    self.lists['graph_velocity'].append(
-                        round(data['Velocity'], 2))
-                    self.lists['graph_power'].append(round(data["Power"], 2))
+        # Convert to real time
+            timestamp = datetime.datetime.fromtimestamp(timestamp / 1e6)
 
-                    # lists length management
-                    if (
-                            len(self.lists['graph_time']) >
-                            3*int(c.nbr_JSON_per_second)
-                    ):
-                        del self.lists['graph_time'][0:int(
-                            c.nbr_JSON_per_second)]
-                        del self.lists['graph_force0'][0:int(
-                            c.nbr_JSON_per_second)]
-                        del self.lists['graph_force1'][0:int(
-                            c.nbr_JSON_per_second)]
-                        del self.lists['graph_force2'][0:int(
-                            c.nbr_JSON_per_second)]
-                        del self.lists['graph_force3'][0:int(
-                            c.nbr_JSON_per_second)]
-                        del self.lists['graph_moment0'][0:int(
-                            c.nbr_JSON_per_second)]
-                        del self.lists['graph_moment1'][0:int(
-                            c.nbr_JSON_per_second)]
-                        del self.lists['graph_moment2'][0:int(
-                            c.nbr_JSON_per_second)]
-                        del self.lists['graph_moment3'][0:int(
-                            c.nbr_JSON_per_second)]
-                        del self.lists['graph_velocity'][0:int(
-                            c.nbr_JSON_per_second)]
-                        del self.lists['graph_power'][0:int(
-                            c.nbr_JSON_per_second)]
-            else:
-                print("end")
+            if frame_type == 2:
+                self.lists["adc_values"].append(
+                    (timestamp, self.parse_adc_frame(
+                        message[
+                            offset+header_size:offset+header_size+data_size])))
+                if len(self.lists["adc_values"]) > 5000:
+                    self.lists["adc_values"].pop(0)
 
-    def streaming(self):
+            elif frame_type == 3:
+                self.lists["imu_values"].append(
+                    (timestamp, self.parse_imu_frame(
+                        message[
+                            offset+header_size:offset+header_size+data_size])))
+                if len(self.lists["imu_values"]) > 500:
+                    self.lists["imu_values"].pop(0)
+
+            elif frame_type == 4:
+                self.lists["power_values"].append(
+                    (timestamp, self.parse_power_frame(
+                        message[
+                            offset+header_size:offset+header_size+data_size])))
+                if len(self.lists["power_values"]) > 5:
+                    self.lists["power_values"].pop(0)
+
+            offset = offset + data_size + header_size
+
+    def on_message(self, ws, message):
         """
-        Send the streaming status to the emulator.
+        Read the message on the websocket.
 
-        Launching the reception management thread in main.py.
+        Parameters
+        ----------
+        self
+        message: framme (bytes)
+        ws: websocket
+
+        Returns
+        -------
+        None
+        """
+        if type(message) is bytes:
+            # Let's decode the header
+            # uint8 type, uint64 timestamp, uint8 datasize (little endian)
+            (frame_type, timestamp, data_size) = struct.unpack_from(
+                '<BQB', message[0:10])
+            # data = message[10:]
+
+            if frame_type == 255:
+                # data_size contains the number of frames
+                self.parse_superframe(message[10:], data_size)
+
+    def on_error(self, ws, error):
+        """
+        Display the errors of the websockets.
+
+        Parameters
+        ----------
+        self
+        ws: websocket
+        error: websocket error
+
+        Returns
+        -------
+        None
+        """
+        print(ws, error)
+
+    def on_close(self, ws, close_status_code, close_msg):
+        """
+        Close the websocket.
+
+        Parameters
+        ----------
+        self
+        ws: websocket
+        close_status_code
+        close_msg
+
+        Returns
+        -------
+        None
+        """
+        print("### closed ###", ws, close_status_code, close_msg)
+
+    def on_open(self, ws):
+        """
+        Open the websocket.
+
+        Parameters
+        ----------
+        self
+        ws: websocket
+
+        Returns
+        -------
+        None
+        """
+        print("Opened connection", ws)
+
+    def connect(self, IP_adress):
+        """
+        Connect to the wheel websocket.
 
         Parameters
         ----------
@@ -157,20 +237,22 @@ class Wheel:
 
         Returns
         -------
-        None
+        None.
         """
-        # asks the wheel to go into stream mode
-        self.client.send(bytes("1", encoding="utf-8"))
-        # Launching the thread for receiving data from the wheel
-        self.thread_streaming = threading.Thread(
-            target=self._receive_streaming_thread
-        )
-        self.flag_stream = True
-        self.thread_streaming.start()
+        # websocket.enableTrace(True)
+        web_socket_ip_wheel = 'ws://' + IP_adress + '/ws'
+        self.ws = websocket.WebSocketApp(web_socket_ip_wheel,
+                                         on_open=self.on_open,
+                                         on_message=self.on_message,
+                                         on_error=self.on_error,
+                                         on_close=self.on_close)
 
-    def end_streaming(self):
+        t = threading.Thread(target=self.ws.run_forever)
+        t.start()
+
+    def disconnect(self):
         """
-        Send the end streaming status to the emulator.
+        Disconnect to the wheel websocket.
 
         Parameters
         ----------
@@ -178,14 +260,15 @@ class Wheel:
 
         Returns
         -------
-        None
+        None.
         """
-        # asks the wheel to go stop stream mode
-        self.flag_stream = False
+        self.ws.close()
 
-    def client_name(self) -> any:
+    def reccord(self, IP_adress):
         """
-        Return the socket address.
+        Launch the reccord on SD card.
+
+        Using HTTP protocole
 
         Parameters
         ----------
@@ -193,6 +276,26 @@ class Wheel:
 
         Returns
         -------
-        Return socket
+        None.
         """
-        return self.client
+        URL = 'http://' + IP_adress + '/recording'
+        requests.get(URL,
+                     params={"recording": "start_recording"})
+
+    def stop_reccord(self, IP_adress):
+        """
+        Stop the reccord on SD card.
+
+        Using HTTP protocole
+
+        Parameters
+        ----------
+        self
+
+        Returns
+        -------
+        None.
+        """
+        URL = 'http://' + IP_adress + '/recording'
+        requests.get(URL,
+                     params={"recording": "stop_recording"})
