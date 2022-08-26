@@ -3,6 +3,7 @@
 #include <SD_MMC.h>
 #include "SDCard.h"
 #include <sys/time.h>
+#include <config/GlobalConfig.h>
 
 WebSocketServer::WebSocketServer() : m_server(80), m_ws("/ws") {}
 
@@ -31,6 +32,9 @@ void WebSocketServer::begin(const GlobalConfig::ConfigData &configData)
 
     // Setup post request
     setupPostForm();
+
+    // Setup config post request
+    setupConfigPostForm();
 
     // Setup not found
     setupNotFound();
@@ -190,6 +194,44 @@ void WebSocketServer::setupStaticRoutes()
     m_server.serveStatic("/download", SD_MMC, "/");
 }
 
+void WebSocketServer::setupConfigPostForm()
+{
+    m_server.on(
+        "/config_update",
+        HTTP_POST,
+        [this](AsyncWebServerRequest* request)
+        {
+            Serial.println("setupConfigPostForm");
+
+            int params = request->params();
+            for (auto i = 0; i < params; i++)
+            {
+                AsyncWebParameter* p = request->getParam(i);
+
+                if (p->isPost())
+                {
+                    Serial.printf("_POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
+
+                    if (p->name() == "accelerometer_precision") {
+                        GlobalConfig::instance().set_accel_range(p->value().toInt());
+                    }
+                    else if (p->name() == "gyrometer_precision") {
+                        GlobalConfig::instance().set_gyro_range(p->value().toInt());
+                    }
+                    else if (p->name() == "imu_sampling_rate") {
+                        GlobalConfig::instance().set_imu_sample_rate(p->value().toInt());
+                    }
+                    else if (p->name() == "adc_sampling_rate") {
+                        GlobalConfig::instance().set_adc_sample_rate(p->value().toInt());
+                    }
+                    else {
+                        Serial.printf("Unknown parameter: %s\n", p->name().c_str());
+                    }
+                }
+            }
+            request->send(200, "text/plain", "OK");
+        });
+}
 
 void WebSocketServer::setupPostForm()
 {
@@ -402,6 +444,22 @@ String WebSocketServer::onFileProcessor(const String& var)
 
 String WebSocketServer::onConfigProcessor(const String& var)
 {
+    if (var == F("IMU_ACC_PRECISION"))
+    {
+        return String(GlobalConfig::instance().get_accel_range());
+    }
+    else if (var == F("IMU_GYR_PRECISION"))
+    {
+        return String(GlobalConfig::instance().get_gyro_range());
+    }
+    else if (var == F("IMU_SAMPLING_RATE"))
+    {
+        return String(GlobalConfig::instance().get_imu_sample_rate());
+    }
+    else if (var == F("ADC_SAMPLING_RATE")) {
+        return String(GlobalConfig::instance().get_adc_sample_rate());
+    }
+
     return onGlobalProcessor(var);
 }
 

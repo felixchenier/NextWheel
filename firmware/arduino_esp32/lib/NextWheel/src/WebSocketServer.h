@@ -29,6 +29,8 @@ private:
     void setupStaticRoutes();
     void setupNotFound();
     void setupPostForm();
+    void setupConfigPostForm();
+
     void sendMessageEvent(String param, String message);
     void onWsEvent(
         AsyncWebSocket* server,
