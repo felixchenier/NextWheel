@@ -4,6 +4,7 @@
 #include "SDCard.h"
 #include <sys/time.h>
 #include <config/GlobalConfig.h>
+#include <state/SystemState.h>
 
 WebSocketServer::WebSocketServer() : m_server(80), m_ws("/ws") {}
 
@@ -389,6 +390,7 @@ void WebSocketServer::onWsEvent(
     if (type == WS_EVT_CONNECT)
     {
         Serial.println("Client connected");
+        SystemState::instance().getState().streaming = true;
         //Send config
         ConfigDataFrame frame(m_configData);
         sendToAll(frame);
@@ -396,6 +398,7 @@ void WebSocketServer::onWsEvent(
     else if (type == WS_EVT_DISCONNECT)
     {
         Serial.println("Client disconnected");
+        SystemState::instance().getState().streaming = false;
     }
     else if (type == WS_EVT_DATA)
     {
@@ -411,6 +414,18 @@ String WebSocketServer::onGlobalProcessor(const String &var)
         gettimeofday(&current_time, NULL);
         struct tm* time_info = localtime(&current_time.tv_sec);
         return String(asctime(time_info));
+    }
+    else if (var == F("SYSTEM_STATE_RECORDING"))
+    {
+        return String(SystemState::instance().getState().recording);
+    }
+    else if (var == F("SYSTEM_STATE_RECORDING_FILE"))
+    {
+        return String(SystemState::instance().getState().filename);
+    }
+    else if (var == F("SYSTEM_STATE_STREAMING"))
+    {
+        return String(SystemState::instance().getState().streaming);
     }
     else if (var == F("IMU_ACC_PRECISION"))
     {

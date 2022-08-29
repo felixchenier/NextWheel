@@ -2,6 +2,7 @@
 #include "NextWheelApp.h"
 #include "data/ConfigDataFrame.h"
 #include "config/GlobalConfig.h"
+#include "state/SystemState.h"
 
 
 SDCardWorkerTask::SDCardWorkerTask()
@@ -99,6 +100,9 @@ void SDCardWorkerTask::run(void* app)
                         Serial.print("SDCardWorkerTask::run: File opened: ");
                         Serial.println(m_file.name());
 
+                        SystemState::instance().getState().recording = true;
+                        SystemState::instance().getState().filename = m_file.name();
+
                         // Write config (first data object in the file)
                         ConfigDataFrame configDataFrame(GlobalConfig::instance().get());
                         m_sdCard.writeToLogFile(m_file, configDataFrame);
@@ -108,6 +112,9 @@ void SDCardWorkerTask::run(void* app)
                     Serial.println("SDCardWorkerTask::run: SDCARD_WORKER_TASK_COMMAND_STOP_RECORDING");
                     if (m_file)
                     {
+                        SystemState::instance().getState().recording = false;
+                        SystemState::instance().getState().filename  = String();
+
                         Serial.print("SDCardWorkerTask::run: File closed: ");
                         Serial.println(m_file.name());
                         Serial.print("SDCardWorkerTask::run: File size: ");
