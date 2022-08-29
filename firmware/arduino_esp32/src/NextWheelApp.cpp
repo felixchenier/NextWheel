@@ -104,6 +104,11 @@ void NextWheelApp::registerSensorTaskToQueues(SensorTask& task)
     task.registerDataQueue(m_webSocketServerTask.getQueue());
 }
 
+bool NextWheelApp::setTime(String time)
+{
+    return m_rtc.setTime(time);
+}
+
 namespace NextWheelInterrupts
 {
     // interrupts

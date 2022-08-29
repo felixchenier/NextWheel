@@ -6,6 +6,12 @@
         <script src="js/jquery-3.6.1.min.js"></script>
         <script src="js/bootstrap.min.js"></script>
         <script src="js/nextwheel.js"></script>
+        <script>
+            $(document).ready(function() {
+                config_update_select_from_value(%IMU_ACC_PRECISION%, %IMU_GYR_PRECISION%, %IMU_SAMPLING_RATE%, %ADC_SAMPLING_RATE%);
+            });
+        </script>
+
     </head>
     <body>
         <div class="container-fluid ">
@@ -62,12 +68,6 @@
                 </div>
 
                 <div class="col-12">
-
-                    <h2>Current Config</h2>
-                    ACC_PRECISION: %IMU_ACC_PRECISION%
-                    GYR_PRECISION: %IMU_GYR_PRECISION%
-                    IMU_SAMPLING_RATE: %IMU_SAMPLING_RATE%
-                    ADC_SAMPLING_RATE: %ADC_SAMPLING_RATE%
 
                     <h2>Current System Time</h2>
                     %SYSTEMTIME%

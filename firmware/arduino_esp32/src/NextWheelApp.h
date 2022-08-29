@@ -37,6 +37,8 @@ public:
 
     bool stopRecording(bool from_isr = false);
 
+    bool setTime(String time);
+
 
 private:
     NextWheelApp();

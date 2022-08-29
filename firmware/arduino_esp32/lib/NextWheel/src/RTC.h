@@ -11,6 +11,7 @@ public:
     RTC();
     void begin();
     void update();
+    bool setTime(String time);
 
 private:
     MCP7940_Class m_mcp7940;

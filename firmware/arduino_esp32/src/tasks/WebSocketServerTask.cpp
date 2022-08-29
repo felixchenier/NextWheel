@@ -29,6 +29,9 @@ void WebSocketServerTask::run(void* app)
                     NextWheelApp::instance()->stopRecording();
                 }
             }
+            else if (param == "set_time") {
+                NextWheelApp::instance()->setTime(message);
+            }
         });
 
     m_server.begin(GlobalConfig::instance().get());

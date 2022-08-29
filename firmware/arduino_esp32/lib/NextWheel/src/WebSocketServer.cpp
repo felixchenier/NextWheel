@@ -196,12 +196,39 @@ void WebSocketServer::setupStaticRoutes()
 
 void WebSocketServer::setupConfigPostForm()
 {
+
+    m_server.on(
+        "/config_set_time",
+        HTTP_POST,
+        [this](AsyncWebServerRequest* request)
+        {
+            Serial.println("setupConfigPostForm: /config_set_time");
+
+            int params = request->params();
+            for (auto i = 0; i < params; i++)
+            {
+                AsyncWebParameter* p = request->getParam(i);
+
+                if (p->isPost())
+                {
+                    if (p->name() == "time")
+                    {
+                        String time = p->value();
+                        sendMessageEvent("set_time", time);
+                    }
+                }
+            }
+
+            request->send(200, "text/plain", "OK");
+        });
+
+
     m_server.on(
         "/config_update",
         HTTP_POST,
         [this](AsyncWebServerRequest* request)
         {
-            Serial.println("setupConfigPostForm");
+            Serial.println("setupConfigPostForm: /config_update");
 
             int params = request->params();
             for (auto i = 0; i < params; i++)
@@ -385,6 +412,21 @@ String WebSocketServer::onGlobalProcessor(const String &var)
         struct tm* time_info = localtime(&current_time.tv_sec);
         return String(asctime(time_info));
     }
+    else if (var == F("IMU_ACC_PRECISION"))
+    {
+        return String(GlobalConfig::instance().get_accel_range());
+    }
+    else if (var == F("IMU_GYR_PRECISION"))
+    {
+        return String(GlobalConfig::instance().get_gyro_range());
+    }
+    else if (var == F("IMU_SAMPLING_RATE"))
+    {
+        return String(GlobalConfig::instance().get_imu_sample_rate());
+    }
+    else if (var == F("ADC_SAMPLING_RATE")) {
+        return String(GlobalConfig::instance().get_adc_sample_rate());
+    }
 
     return String();
 }
@@ -444,22 +486,6 @@ String WebSocketServer::onFileProcessor(const String& var)
 
 String WebSocketServer::onConfigProcessor(const String& var)
 {
-    if (var == F("IMU_ACC_PRECISION"))
-    {
-        return String(GlobalConfig::instance().get_accel_range());
-    }
-    else if (var == F("IMU_GYR_PRECISION"))
-    {
-        return String(GlobalConfig::instance().get_gyro_range());
-    }
-    else if (var == F("IMU_SAMPLING_RATE"))
-    {
-        return String(GlobalConfig::instance().get_imu_sample_rate());
-    }
-    else if (var == F("ADC_SAMPLING_RATE")) {
-        return String(GlobalConfig::instance().get_adc_sample_rate());
-    }
-
     return onGlobalProcessor(var);
 }
 
