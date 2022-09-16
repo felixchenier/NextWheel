@@ -35,6 +35,9 @@ void NextWheelApp::begin()
     m_powerTask.setPriority(TASK_PRIORITY_HIGH);
 
 
+    m_dacTask.setCore(0);
+    m_dacTask.setPriority(TASK_PRIORITY_LOW);
+
     // Register to queues
     registerSensorTaskToQueues(m_adcTask);
     registerSensorTaskToQueues(m_imuTask);
@@ -49,6 +52,7 @@ void NextWheelApp::start()
     m_adcTask.start(this);
     m_imuTask.start(this);
     m_powerTask.start(this);
+    m_dacTask.start(this);
 }
 
 bool NextWheelApp::isRecording()

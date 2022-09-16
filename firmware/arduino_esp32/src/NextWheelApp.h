@@ -15,6 +15,7 @@
 #include "tasks/PrintWorkerTask.h"
 #include "tasks/WebSocketServerTask.h"
 #include "tasks/SDCardWorkerTask.h"
+#include "tasks/DACActuatorTask.h"
 
 #include "config/GlobalConfig.h"
 
@@ -53,6 +54,10 @@ private:
     RTC m_rtc;
     LEDS m_leds;
     Buttons m_buttons;
+
+    // Actuators
+    DACActuatorTask m_dacTask;
+
 
     // Sensors
     ADCSensorTask m_adcTask;
