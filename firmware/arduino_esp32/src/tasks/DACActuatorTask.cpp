@@ -1,5 +1,23 @@
 #include "DACActuatorTask.h"
 
+//#include "I2S.h"
+
+/**
+ * @brief Scale data to 16bit/32bit for I2S DMA output.
+ *        DAC can only output 8bit data value.
+ *        I2S DMA will still send 16 bit or 32bit data, the highest 8bit contains DAC data.
+ */
+int example_i2s_dac_data_scale(uint8_t* d_buff, uint8_t* s_buff, uint32_t len)
+{
+    uint32_t j = 0;
+    for (int i = 0; i < len; i++) {
+        d_buff[j++] = 0;
+        d_buff[j++] = s_buff[i];
+    }
+    return (len * 2);
+}
+
+
 DACActuatorTask::DACActuatorTask(const char* name, uint32_t stackSize, uint8_t priority)
     : Task(name, stackSize, priority)
 {
@@ -9,54 +27,29 @@ DACActuatorTask::DACActuatorTask(const char* name, uint32_t stackSize, uint8_t p
 void DACActuatorTask::run(void *)
 {
     Serial.printf("DACActuatorTask::run Priority: %li Core: %li \n", uxTaskPriorityGet(NULL), xPortGetCoreID());
-
-
+    const uint32_t sampling_rate = m_dac.getSampleRate();
+    const uint32_t frequency = 400;
     TickType_t lastGeneration = xTaskGetTickCount();
     uint32_t tick_increment = portTICK_RATE_MS * 1;
     Serial.print("DACActuatorTask tick_increment: ");
     Serial.println(tick_increment);
 
-    const int frequency = 880; // frequency of square wave in Hz
-    const int amplitude = 16000; // amplitude of square wave
-    const int sampleRate = 8000; // sample rate in Hz
-    const int bps = 16;
 
-    const int halfWavelength = (sampleRate / frequency); // half wavelength of square wave
-    short sample = amplitude; // current sample value
-    int count = 0;
+    size_t index = 0;
 
-
+    uint8_t stereo_buffer[4]; //Right, left
     while (1)
     {
-        // 1 ms task
-        vTaskDelayUntil(&lastGeneration, tick_increment);
+        uint16_t sample =  uint16_t(120 * sin(2 * M_PI * frequency * index++ / sampling_rate) + 120);
+        //Serial.printf("DACActuatorTask::run sample: i: %i %u \n", i, sample);
 
+        //DAC will only use the MSB
+        stereo_buffer[0] = 0;
+        stereo_buffer[1] = sample & 0xFF;
+        stereo_buffer[2] = 0;
+        stereo_buffer[3] = sample & 0xFF;
 
-        /*
-
-        // Writing 8 samples at a time (8khz * 1ms = 8 samples)
-        for (auto i = 0; i < 8; i++)
-        {
-            if (count % halfWavelength == 0 )
-            {
-                // invert the sample every half wavelength count multiple to generate square wave
-                sample = -1 * sample;
-            }
-
-            I2S.write(sample);
-
-            // increment the counter for the next sample
-            count++;
-        }
-
-        */
-        if (++count % 2 == 0)
-        {
-           m_dac.setVoltage(0); //(VDD * 100 / 255)
-        }
-        else
-        {
-            m_dac.setVoltage(100); //(VDD * 100 / 255)
-        }
+        //Write to DAC (will wait if buffer is full)
+        m_dac.writeFrame(stereo_buffer, sizeof(stereo_buffer) / 2);
     }
 }

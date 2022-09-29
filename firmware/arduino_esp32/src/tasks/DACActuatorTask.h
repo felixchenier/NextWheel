@@ -10,7 +10,7 @@
 class DACActuatorTask: public Task {
 
     public:
-        DACActuatorTask(const char* name="DACActuatorTask", uint32_t stackSize=TASK_STACK_SIZE_DEFAULT, uint8_t priority=TASK_PRIORITY_DEFAULT);
+        DACActuatorTask(const char* name="DACActuatorTask", uint32_t stackSize=TASK_STACK_SIZE_DEFAULT * 10, uint8_t priority=TASK_PRIORITY_DEFAULT);
         virtual void run(void *);
 
     private:
