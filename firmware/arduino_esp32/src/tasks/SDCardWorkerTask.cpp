@@ -8,8 +8,7 @@
 SDCardWorkerTask::SDCardWorkerTask()
     : WorkerTask("SDCardWorkerTask", SDCARD_WORKER_TASK_STACK_SIZE),
       m_file(nullptr),
-      m_bytesWritten(0),
-      m_recording(false)
+      m_bytesWritten(0)
 {
     m_commandQueue = xQueueCreate(100, sizeof(SDCardWorkerTaskCommand));
 }
@@ -83,10 +82,9 @@ void SDCardWorkerTask::run(void* app)
                 case SDCARD_WORKER_TASK_COMMAND_START_RECORDING:
 
                     //Already recording
-                    if (m_recording)
+                    if (isRecording())
                         continue;
 
-                    m_recording = true;
                     Serial.println("SDCardWorkerTask::run: SDCARD_WORKER_TASK_COMMAND_START_RECORDING");
                     m_sdCard.begin();
 
@@ -115,10 +113,10 @@ void SDCardWorkerTask::run(void* app)
                     }
                     break;
                 case SDCARD_WORKER_TASK_COMMAND_STOP_RECORDING:
-                    if (!m_recording)
+                    if (!isRecording())
                         continue;
 
-                    m_recording = false;
+
                     Serial.println("SDCardWorkerTask::run: SDCARD_WORKER_TASK_COMMAND_STOP_RECORDING");
                     if (m_file)
                     {
@@ -133,7 +131,6 @@ void SDCardWorkerTask::run(void* app)
                     resetLog();
                     break;
                 default:
-                    m_recording = false;
                     Serial.println("SDCardWorkerTask::run: Unknown command");
                     break;
             }

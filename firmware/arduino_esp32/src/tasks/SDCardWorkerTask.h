@@ -30,7 +30,6 @@ private:
     File m_file;
     String m_filename;
     size_t m_bytesWritten;
-    bool m_recording;
     QueueHandle_t m_commandQueue;
 
     SDCardWorkerTaskCommand dequeueCommand(unsigned long timeout = 10);
