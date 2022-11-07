@@ -17,7 +17,6 @@ public:
         SDCARD_WORKER_TASK_COMMAND_STOP_RECORDING = 2
     };
 
-
     SDCardWorkerTask();
     bool sendCommandEvent(SDCardWorkerTaskCommand command, bool from_isr = false);
 
@@ -31,6 +30,7 @@ private:
     File m_file;
     String m_filename;
     size_t m_bytesWritten;
+    bool m_recording;
     QueueHandle_t m_commandQueue;
 
     SDCardWorkerTaskCommand dequeueCommand(unsigned long timeout = 10);

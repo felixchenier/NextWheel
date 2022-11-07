@@ -40,8 +40,8 @@ void WebSocketServerTask::run(void* app)
 
     while (1)
     {
-        // 50 ms task
-        vTaskDelayUntil(&lastGeneration, 50 / portTICK_RATE_MS);
+        // 100 ms task
+        vTaskDelayUntil(&lastGeneration, 100 / portTICK_RATE_MS);
 
         unsigned int count = 0;
         size_t total_payload_size = 0;

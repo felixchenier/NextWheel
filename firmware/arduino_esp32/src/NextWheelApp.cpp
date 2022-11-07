@@ -35,7 +35,7 @@ void NextWheelApp::begin()
     m_powerTask.setPriority(TASK_PRIORITY_HIGH);
 
 
-    m_dacTask.setCore(0);
+    m_dacTask.setCore(1);
     m_dacTask.setPriority(TASK_PRIORITY_LOW);
 
     // Register to queues
@@ -98,7 +98,7 @@ NextWheelApp::NextWheelApp()
 
     // Initialize buttons
     // TODO disable buttons for now, interrupts are randomly generated because of noisy power suply.
-    // m_buttons.begin();
+    m_buttons.begin();
 }
 
 void NextWheelApp::registerSensorTaskToQueues(SensorTask& task)
