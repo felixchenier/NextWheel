@@ -21,6 +21,7 @@ public:
         DATA_FRAME_TYPE_POWER = 4,
         DATA_FRAME_TYPE_RTC = 5,
         DATA_FRAME_TYPE_AUDIO = 6,
+        DATA_FRAME_TYPE_QUAD_ENCODER = 7,
         DATA_FRAME_TYPE_SUPERFRAME = 255
     };
 

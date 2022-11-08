@@ -16,6 +16,7 @@
 #include "tasks/WebSocketServerTask.h"
 #include "tasks/SDCardWorkerTask.h"
 #include "tasks/DACActuatorTask.h"
+#include "tasks/QuadEncoderSensorTask.h"
 
 #include "config/GlobalConfig.h"
 
@@ -63,6 +64,7 @@ private:
     ADCSensorTask m_adcTask;
     IMUSensorTask m_imuTask;
     PowerSensorTask m_powerTask;
+    QuadEncoderSensorTask m_quadEncoderTask;
 
     // Workers
     // PrintWorkerTask m_printWorkerTask;

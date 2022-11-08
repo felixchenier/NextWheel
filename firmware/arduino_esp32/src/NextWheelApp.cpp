@@ -31,9 +31,11 @@ void NextWheelApp::begin()
     m_imuTask.setCore(1);
     m_imuTask.setPriority(TASK_PRIORITY_HIGHEST);
 
+    m_quadEncoderTask.setCore(1);
+    m_quadEncoderTask.setPriority(TASK_PRIORITY_HIGH);
+
     m_powerTask.setCore(1);
     m_powerTask.setPriority(TASK_PRIORITY_HIGH);
-
 
     m_dacTask.setCore(1);
     m_dacTask.setPriority(TASK_PRIORITY_LOW);
@@ -42,6 +44,7 @@ void NextWheelApp::begin()
     registerSensorTaskToQueues(m_adcTask);
     registerSensorTaskToQueues(m_imuTask);
     registerSensorTaskToQueues(m_powerTask);
+    registerSensorTaskToQueues(m_quadEncoderTask);
 }
 
 void NextWheelApp::start()
@@ -53,6 +56,7 @@ void NextWheelApp::start()
     m_imuTask.start(this);
     m_powerTask.start(this);
     m_dacTask.start(this);
+    m_quadEncoderTask.start(this);
 }
 
 bool NextWheelApp::isRecording()
