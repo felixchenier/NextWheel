@@ -14,6 +14,8 @@ Welcome to NextWheel, the SmartWheel PCB/Firmware replacement for existing Smart
 
 ## Requirements for building the firmware
 
+* [Zoom Recording for temporary reference (unlisted link)](https://uqam.ca.panopto.com/Panopto/Pages/Viewer.aspx?id=369eabaa-aeb1-4282-85cf-af47011472e2)
+
 * [Visual Studio Code](https://code.visualstudio.com/download) (latest version)
 * [PlatformIO extension](https://platformio.org/)
   * Install Espressif 32 Platform @ 5.x.x
