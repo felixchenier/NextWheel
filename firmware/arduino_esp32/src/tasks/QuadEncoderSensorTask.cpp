@@ -26,7 +26,7 @@ void QuadEncoderSensorTask::run(void* app)
         int64_t count = m_encoder.getCount();
 
         // Reset counter
-        m_encoder.clearCount();
+        // m_encoder.clearCount();
 
         // Serial.print("encoder counts: ");
         // Serial.println(count);

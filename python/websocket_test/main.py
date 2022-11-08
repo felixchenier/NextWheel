@@ -13,18 +13,26 @@ HEADER_LENGTH = 10
 adc_values = []
 imu_values = []
 power_values = []
+encoder_values = []
 
 # define and adjust figure
-fig = plt.figure(figsize=(12, 6), facecolor='#DEDEDE')
+fig = plt.figure(figsize=(12, 8), facecolor='#DEDEDE')
 
-adc_plot = plt.subplot(3, 1, 1)  # row, col, index
+adc_plot = plt.subplot(4, 1, 1)  # row, col, index
 adc_plot.set_facecolor('#DEDEDE')
+adc_plot.set_title('ADC')
 
-imu_plot = plt.subplot(3, 1, 2)  # row, col, index
+imu_plot = plt.subplot(4, 1, 2)  # row, col, index
 imu_plot.set_facecolor('#DEDEDE')
+imu_plot.set_title('IMU')
 
-power_plot = plt.subplot(3, 1, 3)  # row, col, index
+power_plot = plt.subplot(4, 1, 3)  # row, col, index
 power_plot.set_facecolor('#DEDEDE')
+power_plot.set_title('POWER')
+
+encoder_plot = plt.subplot(4, 1, 4)  # row, col, index
+encoder_plot.set_facecolor('#DEDEDE')
+encoder_plot.set_title('ENCODER')
 
 
 def parse_power_frame(message: bytes):
@@ -61,6 +69,14 @@ def parse_config_frame(message: bytes):
         return vals
 
 
+def parse_encoder_frame(message: bytes):
+    if len(message) != 8:
+        return []
+    else:
+        vals = struct.unpack_from('<q', message)
+        return vals
+
+
 def parse_superframe(message: bytes, count: int):
     offset = 0
     header_size = 10
@@ -83,16 +99,18 @@ def parse_superframe(message: bytes, count: int):
                 imu_values.pop(0)
 
         elif frame_type == 4:
-            power_values.append((timestamp, parse_power_frame(message[offset+header_size:offset+header_size+data_size])))
+            power_values.append((timestamp,
+                                 parse_power_frame(message[offset+header_size:offset+header_size+data_size])))
             if len(power_values) > 10:
                 power_values.pop(0)
 
-        offset = offset + data_size + header_size
+        elif frame_type == 7:
+            encoder_values.append((timestamp,
+                                   parse_encoder_frame(message[offset + header_size:offset + header_size + data_size])))
+            if len(encoder_values) > 10:
+                encoder_values.pop(0)
 
-    # result['adc'] = adc_values
-    # result['imu'] = imu_values
-    # result['power'] = power_values
-    # return result
+        offset = offset + data_size + header_size
 
 
 def on_message(ws, message):
@@ -131,26 +149,36 @@ def on_open(ws):
 def my_function(i):
     # ADC
     adc_plot.cla()
+    adc_plot.set_title('ADC')
     x_vals = [x[0] for x in adc_values]
     y_vals = [x[1] for x in adc_values]
     adc_plot.plot(x_vals, y_vals)
 
     # IMU
     imu_plot.cla()
+    imu_plot.set_title('IMU')
     x_vals = [x[0] for x in imu_values]
     y_vals = [x[1] for x in imu_values]
     imu_plot.plot(x_vals, y_vals)
 
     # POWER
     power_plot.cla()
+    power_plot.set_title('POWER')
     x_vals = [x[0] for x in power_values]
     y_vals = [x[1][0:3] for x in power_values]
     power_plot.plot(x_vals, y_vals)
 
+    # ENCODER
+    encoder_plot.cla()
+    encoder_plot.set_title('ENCODER')
+    x_vals = [x[0] for x in encoder_values]
+    y_vals = [x[1] for x in encoder_values]
+    encoder_plot.plot(x_vals, y_vals)
+
 
 if __name__ == "__main__":
     websocket.enableTrace(True)
-    ws = websocket.WebSocketApp("ws://192.168.1.138/ws",
+    ws = websocket.WebSocketApp("ws://10.0.1.3/ws",
                                 on_open=on_open,
                                 on_message=on_message,
                                 on_error=on_error,
