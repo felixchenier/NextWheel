@@ -18,7 +18,7 @@ Welcome to NextWheel, the SmartWheel PCB/Firmware replacement for existing Smart
 
 * [Visual Studio Code](https://code.visualstudio.com/download) (latest version)
 * [PlatformIO extension](https://platformio.org/)
-  * Install Espressif 32 Platform @ 5.x.x
+* In VSCode's new PlatformIO menu (left toolbar with alien icon), got to `PIO Home` > `Platforms` and install Espressif 32 Platform @ 5.x.x
 
 ## Coding style
 
@@ -33,9 +33,10 @@ Steps:
 
 1. Modify [lib/NextWheel/src/config/WiFiConfig.h](lib/NextWheel/src/config/WiFiConfig.h) with your WiFi information.
 2. Go to the PlatformIO menu (left toolbar with alien icon)
-3. Click on *Build the Filesystem Image* (static files that are stored in the flash memory)
-4. Click on *Upload Filesystem Image*
-5. Click on *General/Upload*
+3. Click on *Platform/Build the Filesystem Image* (static files that are stored in the flash memory)
+4. Click on *Platform/Upload Filesystem Image*
+5. Click on *General/Build*
+6. Click on *General/Upload*
 
 ## Running
 
