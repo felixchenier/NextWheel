@@ -50,7 +50,7 @@ void loop()
         NextWheelApp::instance()->getLEDS().toggleLED2();
 
         // IDLE loop.
-        // 1000 ms task
-        vTaskDelayUntil(&lastGeneration, 1000 / portTICK_RATE_MS);
+        // 250 ms task
+        vTaskDelayUntil(&lastGeneration, 250 / portTICK_RATE_MS);
     }
 }
