@@ -40,7 +40,8 @@ void DACActuatorTask::run(void *)
     uint8_t stereo_buffer[4]; //Right, left
     while (1)
     {
-        uint16_t sample =  uint16_t(120 * sin(2 * M_PI * frequency * index++ / sampling_rate) + 120);
+//        uint16_t sample =  uint16_t(120 * sin(2 * M_PI * frequency * index++ / sampling_rate) + 120);
+        uint16_t sample = 0;
         //Serial.printf("DACActuatorTask::run sample: i: %i %u \n", i, sample);
 
         //DAC will only use the MSB
