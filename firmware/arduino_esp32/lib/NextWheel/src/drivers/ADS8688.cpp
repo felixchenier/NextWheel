@@ -374,9 +374,12 @@ uint16_t ADS8688::cmdRegister(uint8_t reg) {
     int16_t result = 0;
     if (_mode > 4) {
         // only 16 bit if POWERDOWN or STDBY or RST or IDLE
-        byte MSB = SPI.transfer(0x00);
-        byte LSB = SPI.transfer(0x00);
-        result = ( MSB << 8) | LSB;
+        //byte MSB = SPI.transfer(0x00);
+        //byte LSB = SPI.transfer(0x00);
+        //result = ( MSB << 8) | LSB;
+        // DL - 24 nov 2022 - fix for 16 bit readback, will continously fetch data insted of
+        // two 8 bits transfers that can be delayed because of context switching
+        result = SPI.transfer16(0x0000);
         }
     digitalWrite(_cs, HIGH);
     SPI.endTransaction();
