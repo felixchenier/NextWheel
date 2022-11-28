@@ -32,11 +32,9 @@ void ADCSensorTask::run(void* app)
     {
         // ADC update will be triggered by timer interrupt
         xSemaphoreTake(NextWheelInterrupts::g_adc_semaphore, portMAX_DELAY);
-        digitalWrite(PIN_LED_2, HIGH);
 
         // Update values
         m_adc.update(frame);
-        digitalWrite(PIN_LED_2, LOW);
 
         // Send data to registered queues
         sendData(frame);

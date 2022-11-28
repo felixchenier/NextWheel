@@ -45,7 +45,7 @@ void loop()
         }
 
         // Blinking led2 for now...
-        //NextWheelApp::instance()->getLEDS().toggleLED2();
+        NextWheelApp::instance()->getLEDS().toggleLED2();
 
         // IDLE loop.
         // 250 ms task
