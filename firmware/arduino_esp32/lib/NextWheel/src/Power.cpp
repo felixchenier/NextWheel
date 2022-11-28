@@ -33,8 +33,8 @@ void Power::begin()
 void Power::update(PowerDataFrame& frame)
 {
     float voltage = m_ina220.getBusMilliVolts(0) / 1000.0;
-    float current = m_ina220.getBusMicroAmps(0) / 1000.0;
-    float power = m_ina220.getBusMicroWatts(0) / 1000.0;
+    float current = m_ina220.getBusMicroAmps(0) / 1000000.0;
+    float power = m_ina220.getBusMicroWatts(0) / 1000000.0;
 
     uint8_t flags = isLowPower() ? 0b00000001 : 0;
     flags |= isSensorsEnabled() ? 0b00000010 : 0;

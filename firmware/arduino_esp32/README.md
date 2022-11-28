@@ -51,6 +51,9 @@ The following sections will describe the supported hardware / software modules.
 IMU: SEN0373 (BMX160 9-AXIS SENSOR MODULE)
 Default address : 0x68
 
+RTC: MCP7940M (Real time clock with battery backup)
+Default address : 0xDE
+
 ### SPI
 
 ADS8688  IDBTR

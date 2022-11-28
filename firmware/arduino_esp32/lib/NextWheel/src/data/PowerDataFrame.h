@@ -3,6 +3,9 @@
 
 #include "data/DataFrame.h"
 
+/**
+ * @brief Data frame for power data, units are in Volt, Ampere and Watt.
+*/
 class PowerDataFrame : public DataFrame
 {
 public:
@@ -22,12 +25,9 @@ public:
     virtual size_t serializePayload(uint8_t* buffer, size_t buffer_size) const override;
 
     void setVoltage(float voltage);
-
     void setCurrent(float current);
     void setPower(float power);
-
     void setFlags(uint8_t flags);
-
     void setAll(float voltage, float current, float power, uint8_t flags);
 
     float getVoltage();
