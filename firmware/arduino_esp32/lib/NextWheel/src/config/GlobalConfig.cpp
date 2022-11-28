@@ -11,8 +11,8 @@ const std::vector<uint32_t> GlobalConfig::m_gyro_ranges =
 
 const std::vector<uint32_t> GlobalConfig::m_mag_ranges = {IMU::IMU_MAG_RANGE_2500uGAUSS};
 
-const std::vector<uint32_t> GlobalConfig::m_imu_sampling_rate_ranges = {25, 50, 100, 200, 400 /*, 800, 1600*/};
-const std::vector<uint32_t> GlobalConfig::m_adc_sampling_rate_ranges = {25, 50, 100, 200, 400, 800, 1000};
+const std::vector<uint32_t> GlobalConfig::m_imu_sampling_rate_ranges = {60, 120, 240};
+const std::vector<uint32_t> GlobalConfig::m_adc_sampling_rate_ranges = {120, 240, 480, 960, 1000, 2000};
 
 
 void GlobalConfig::begin()
@@ -105,6 +105,7 @@ void GlobalConfig::set_imu_sample_rate(unsigned int rate)
 
 uint32_t GlobalConfig::get_imu_sample_rate() const
 {
+    //return 400;
     return m_config.imu_sample_rate;
 }
 
@@ -116,6 +117,7 @@ void GlobalConfig::set_adc_sample_rate(unsigned int rate)
 
 uint32_t GlobalConfig::get_adc_sample_rate() const
 {
+    //return 1000;
     return m_config.adc_sample_rate;
 }
 

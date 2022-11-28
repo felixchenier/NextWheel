@@ -1,15 +1,14 @@
 #include "WebSocketServerTask.h"
 #include "config/GlobalConfig.h"
 #include "NextWheelApp.h"
+#include <esp_task_wdt.h>
 
-WebSocketServerTask::WebSocketServerTask()
-    : WorkerTask("WebSocketServerTask", WEBSOCKET_SERVER_STACK_SIZE)
-{
-}
+WebSocketServerTask::WebSocketServerTask() : WorkerTask("WebSocketServerTask", WEBSOCKET_SERVER_STACK_SIZE) {}
 
 
 void WebSocketServerTask::run(void* app)
 {
+    esp_task_wdt_init(30, false);
     Serial.printf("WebSocketServerTask::run Priority: %li Core: %li \n", uxTaskPriorityGet(NULL), xPortGetCoreID());
 
     // Setup WebSocketServer callbacks
@@ -29,7 +28,8 @@ void WebSocketServerTask::run(void* app)
                     NextWheelApp::instance()->stopRecording();
                 }
             }
-            else if (param == "set_time") {
+            else if (param == "set_time")
+            {
                 NextWheelApp::instance()->setTime(message);
             }
         });
@@ -40,7 +40,7 @@ void WebSocketServerTask::run(void* app)
 
     while (1)
     {
-        // 100 ms task
+        // 50 ms task
         vTaskDelayUntil(&lastGeneration, 50 / portTICK_RATE_MS);
 
         unsigned int count = 0;
@@ -53,31 +53,43 @@ void WebSocketServerTask::run(void* app)
             // m_ws.send(dataPtr->getData(), dataPtr->getSize());
             count++;
             total_payload_size += dataPtr->getTotalSize();
-            dataPtrs.push_back(dataPtr);
+            if (m_server.webSocketClientCount() > 0)
+            {
+                dataPtrs.push_back(dataPtr);
+            }
+            else
+            {
+                delete dataPtr;
+            }
         }
+        //Serial.print("WebSocketServerTask::run count: ");
+        //Serial.print(count);Serial.print(" total_payload_size:");Serial.println(total_payload_size);
+        //  Serial.println();
+        //  Serial.print("Sent ");Serial.print(count);Serial.println(" frames") ;
+        //  Serial.print("Total payload size: ");Serial.println(total_payload_size);
 
-        // Serial.println();
-        // Serial.print("Sent ");Serial.print(count);Serial.println(" frames") ;
-        // Serial.print("Total payload size: ");Serial.println(total_payload_size);
 
-        uint8_t* super_frame = new uint8_t[total_payload_size + DataFrame::HEADER_SIZE];
-
-        uint64_t timestamp = DataFrame::getCurrentTimeStamp();
-
-        super_frame[0] = 255;
-        memcpy(super_frame + 1, &timestamp, sizeof(uint64_t));
-        super_frame[9] = count;
-
-        size_t offset = DataFrame::HEADER_SIZE;
-        for (auto dataPtr : dataPtrs)
+        if (m_server.webSocketClientCount() > 0)
         {
-            dataPtr->serialize(super_frame + offset, dataPtr->getTotalSize());
-            offset += dataPtr->getTotalSize();
-            delete dataPtr;
-        }
+            // uint8_t* super_frame = new uint8_t[total_payload_size + DataFrame::HEADER_SIZE];
+            uint8_t super_frame[total_payload_size + DataFrame::HEADER_SIZE];  // Allocate on stack
+            uint64_t timestamp = DataFrame::getCurrentTimeStamp();
 
-        m_server.sendToAll(super_frame, total_payload_size + DataFrame::HEADER_SIZE);
-        delete[] super_frame;
+            super_frame[0] = 255;
+            memcpy(super_frame + 1, &timestamp, sizeof(uint64_t));
+            super_frame[9] = count;
+
+            size_t offset = DataFrame::HEADER_SIZE;
+            for (auto dataPtr : dataPtrs)
+            {
+                dataPtr->serialize(super_frame + offset, dataPtr->getTotalSize());
+                offset += dataPtr->getTotalSize();
+                delete dataPtr;
+            }
+
+            m_server.sendToAll(super_frame, total_payload_size + DataFrame::HEADER_SIZE);
+            // delete[] super_frame;
+        }
     }
 }
 

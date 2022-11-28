@@ -12,7 +12,7 @@ class WorkerTask : public Task {
         WorkerTask(const char* name, uint32_t stackSize=TASK_STACK_SIZE_DEFAULT, uint8_t priority=TASK_PRIORITY_DEFAULT)
             : Task(name, stackSize, priority), m_dataQueue(nullptr) {
 
-            m_dataQueue = xQueueCreate(100, sizeof(DataFramePtr));
+            m_dataQueue = xQueueCreate(200, sizeof(DataFramePtr));
 
         }
 

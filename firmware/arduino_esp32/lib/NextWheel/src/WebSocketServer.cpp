@@ -367,7 +367,7 @@ void WebSocketServer::sendToAll(const uint8_t* data, size_t size)
     }
     else
     {
-        Serial.println("WebSocketServer::sendToAll: No available websocket for writing");
+        Serial.println("WebSocketServer::sendToAll: Buffer full, not available for write");
     }
 }
 
@@ -507,4 +507,9 @@ String WebSocketServer::onConfigProcessor(const String& var)
 String WebSocketServer::onLiveProcessor(const String& var)
 {
     return onGlobalProcessor(var);
+}
+
+int WebSocketServer::webSocketClientCount()
+{
+    return m_ws.count();
 }

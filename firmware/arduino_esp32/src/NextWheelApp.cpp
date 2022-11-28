@@ -16,14 +16,14 @@ void NextWheelApp::begin()
 {
     // Sensors must be enabled
     // Must be first
-    m_sdCardWorkerTask.setCore(0);
+    m_sdCardWorkerTask.setCore(1);
     m_sdCardWorkerTask.setPriority(TASK_PRIORITY_HIGH);
 
     // m_printWorkerTask.setCore(0);
     // m_printWorkerTask.setPriority(TASK_PRIORITY_IDLE);
 
-    m_webSocketServerTask.setCore(1);
-    m_webSocketServerTask.setPriority(TASK_PRIORITY_MEDIUM);
+    m_webSocketServerTask.setCore(0);
+    m_webSocketServerTask.setPriority(TASK_PRIORITY_LOW);
 
     m_adcTask.setCore(1);
     m_adcTask.setPriority(TASK_PRIORITY_HIGHEST);
@@ -49,9 +49,14 @@ void NextWheelApp::begin()
 
 void NextWheelApp::start()
 {
+    Serial.println("Starting worker tasks");
     m_sdCardWorkerTask.start(this);
     // m_printWorkerTask.start(nullptr);
     m_webSocketServerTask.start(this);
+
+    //Make sure we wait for the SD card to be ready and the queues to be ready.
+    delay(1000);
+    Serial.println("Starting sensor tasks");
     m_adcTask.start(this);
     m_imuTask.start(this);
     m_powerTask.start(this);

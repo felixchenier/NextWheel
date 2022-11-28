@@ -9,7 +9,7 @@
 
 class WebSocketServerTask : public WorkerTask
 {
-    static const size_t WEBSOCKET_SERVER_STACK_SIZE = 16000;
+    static const size_t WEBSOCKET_SERVER_STACK_SIZE = 24000;
 
 public:
     WebSocketServerTask();

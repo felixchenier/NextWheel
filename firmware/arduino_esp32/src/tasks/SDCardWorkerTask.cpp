@@ -52,6 +52,7 @@ void SDCardWorkerTask::run(void* app)
         // 10 ms task
         vTaskDelayUntil(&lastGeneration, 10 / portTICK_RATE_MS);
 
+        int count = 0;
         // Dequeue all data values (one shot), no timeout
         while (DataFramePtr dataPtr = dequeue(0))
         {
@@ -61,9 +62,13 @@ void SDCardWorkerTask::run(void* app)
                 m_bytesWritten += m_sdCard.writeToLogFile(m_file, *dataPtr);
             }
 
+            count++;
+
             // Mandatory to delete, otherwise the memory will be leaked
             delete dataPtr;
         }
+
+        // Serial.print("SDCardWorkerTask::run() dequeued ");Serial.print(count);Serial.println(" frames");
 
         // Make sure write is complete
         if (m_file)
@@ -81,7 +86,7 @@ void SDCardWorkerTask::run(void* app)
                     break;
                 case SDCARD_WORKER_TASK_COMMAND_START_RECORDING:
 
-                    //Already recording
+                    // Already recording
                     if (isRecording())
                         continue;
 
@@ -121,7 +126,7 @@ void SDCardWorkerTask::run(void* app)
                     if (m_file)
                     {
                         SystemState::instance().getState().recording = false;
-                        SystemState::instance().getState().filename  = String();
+                        SystemState::instance().getState().filename = String();
 
                         Serial.print("SDCardWorkerTask::run: File closed: ");
                         Serial.println(m_file.name());

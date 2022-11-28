@@ -17,6 +17,7 @@ public:
 
     void sendToAll(DataFrame& frame);
     void sendToAll(const uint8_t* data, size_t size);
+    int webSocketClientCount();
     void onMessage(WebSocketServerMessageEventHandler handler);
 
 private:

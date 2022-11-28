@@ -34,9 +34,6 @@ class SensorTask: public Task {
         }
 
         bool sendData(const DataFrame &dataFrame) {
-
-            m_dataSentCounter++;
-
             if (m_dataQueues.empty()) {
                 return false;
             }
@@ -45,11 +42,17 @@ class SensorTask: public Task {
 
                 DataFrame* dataPtr = dataFrame.clone();
 
+                if (dataPtr == nullptr) {
+                    return false;
+                }
+
                 if (xQueueSend(*queue, &dataPtr, 0) != pdTRUE) {
+                    Serial.print("Failed to send data to queue: ");Serial.println(dataPtr->getType());
                     delete dataPtr;
                     return false;
                 }
             }
+            m_dataSentCounter++;
             return true;
         }
 
