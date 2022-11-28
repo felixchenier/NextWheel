@@ -22,7 +22,7 @@ void NextWheelApp::begin()
     // m_printWorkerTask.setCore(0);
     // m_printWorkerTask.setPriority(TASK_PRIORITY_IDLE);
 
-    m_webSocketServerTask.setCore(1);
+    m_webSocketServerTask.setCore(0);
     m_webSocketServerTask.setPriority(TASK_PRIORITY_LOW);
 
     m_adcTask.setCore(1);
