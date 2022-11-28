@@ -90,6 +90,7 @@ void SDCardWorkerTask::run(void* app)
                     if (isRecording())
                         continue;
 
+
                     Serial.println("SDCardWorkerTask::run: SDCARD_WORKER_TASK_COMMAND_START_RECORDING");
                     m_sdCard.begin();
 
@@ -115,13 +116,16 @@ void SDCardWorkerTask::run(void* app)
                         // Write config (first data object in the file)
                         ConfigDataFrame configDataFrame(GlobalConfig::instance().get());
                         m_sdCard.writeToLogFile(m_file, configDataFrame);
+
+                        // Allowing messages only if file opened successfully
+                        NextWheelApp::instance()->registerSensorTasksToSDCardWorker();
                     }
                     break;
                 case SDCARD_WORKER_TASK_COMMAND_STOP_RECORDING:
                     if (!isRecording())
                         continue;
 
-
+                    NextWheelApp::instance()->unregisterSensorTasksFromSDCardWorker();
                     Serial.println("SDCardWorkerTask::run: SDCARD_WORKER_TASK_COMMAND_STOP_RECORDING");
                     if (m_file)
                     {

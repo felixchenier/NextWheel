@@ -22,29 +22,23 @@ void NextWheelApp::begin()
     // m_printWorkerTask.setCore(0);
     // m_printWorkerTask.setPriority(TASK_PRIORITY_IDLE);
 
-    m_webSocketServerTask.setCore(0);
+    m_webSocketServerTask.setCore(1);
     m_webSocketServerTask.setPriority(TASK_PRIORITY_LOW);
 
     m_adcTask.setCore(1);
     m_adcTask.setPriority(TASK_PRIORITY_HIGHEST);
 
     m_imuTask.setCore(1);
-    m_imuTask.setPriority(TASK_PRIORITY_HIGHEST);
+    m_imuTask.setPriority(TASK_PRIORITY_HIGH);
 
     m_quadEncoderTask.setCore(1);
-    m_quadEncoderTask.setPriority(TASK_PRIORITY_HIGH);
+    m_quadEncoderTask.setPriority(TASK_PRIORITY_MEDIUM);
 
     m_powerTask.setCore(1);
-    m_powerTask.setPriority(TASK_PRIORITY_HIGH);
+    m_powerTask.setPriority(TASK_PRIORITY_MEDIUM);
 
     m_dacTask.setCore(1);
     m_dacTask.setPriority(TASK_PRIORITY_LOW);
-
-    // Register to queues
-    registerSensorTaskToQueues(m_adcTask);
-    registerSensorTaskToQueues(m_imuTask);
-    registerSensorTaskToQueues(m_powerTask);
-    registerSensorTaskToQueues(m_quadEncoderTask);
 }
 
 void NextWheelApp::start()
@@ -53,9 +47,6 @@ void NextWheelApp::start()
     m_sdCardWorkerTask.start(this);
     // m_printWorkerTask.start(nullptr);
     m_webSocketServerTask.start(this);
-
-    //Make sure we wait for the SD card to be ready and the queues to be ready.
-    delay(1000);
     Serial.println("Starting sensor tasks");
     m_adcTask.start(this);
     m_imuTask.start(this);
@@ -94,6 +85,8 @@ NextWheelApp::NextWheelApp()
     Serial.print("NextWheel version: ");
     Serial.println(NEXT_WHEEL_VERSION);
 
+    m_queueMutex = xSemaphoreCreateMutex();
+
     // WARNING -  Make sure Arduino is initialized before creating an instance of NextWheelApp
 
     // Load config
@@ -110,12 +103,50 @@ NextWheelApp::NextWheelApp()
     m_buttons.begin();
 }
 
-void NextWheelApp::registerSensorTaskToQueues(SensorTask& task)
+void NextWheelApp::registerSensorTasksToSDCardWorker()
 {
-    // task.registerDataQueue(m_printWorkerTask.getQueue());
-    task.registerDataQueue(m_sdCardWorkerTask.getQueue());
-    task.registerDataQueue(m_webSocketServerTask.getQueue());
+    Serial.println("Registering sensor tasks to SDCardWorkerTask");
+    xSemaphoreTake(m_queueMutex, portMAX_DELAY);
+    m_adcTask.registerDataQueue(m_sdCardWorkerTask.getQueue());
+    m_imuTask.registerDataQueue(m_sdCardWorkerTask.getQueue());
+    m_powerTask.registerDataQueue(m_sdCardWorkerTask.getQueue());
+    m_quadEncoderTask.registerDataQueue(m_sdCardWorkerTask.getQueue());
+    xSemaphoreGive(m_queueMutex);
 }
+
+void NextWheelApp::unregisterSensorTasksFromSDCardWorker()
+{
+    Serial.println("Unregistering sensor tasks from SDCardWorkerTask");
+    xSemaphoreTake(m_queueMutex, portMAX_DELAY);
+    m_adcTask.unregisterDataQueue(m_sdCardWorkerTask.getQueue());
+    m_imuTask.unregisterDataQueue(m_sdCardWorkerTask.getQueue());
+    m_powerTask.unregisterDataQueue(m_sdCardWorkerTask.getQueue());
+    m_quadEncoderTask.unregisterDataQueue(m_sdCardWorkerTask.getQueue());
+    xSemaphoreGive(m_queueMutex);
+}
+
+void NextWheelApp::registerSensorTasksToWebSocketServer()
+{
+    Serial.println("Registering sensor tasks to WebSocketServerTask");
+    xSemaphoreTake(m_queueMutex, portMAX_DELAY);
+    m_adcTask.registerDataQueue(m_webSocketServerTask.getQueue());
+    m_imuTask.registerDataQueue(m_webSocketServerTask.getQueue());
+    m_powerTask.registerDataQueue(m_webSocketServerTask.getQueue());
+    m_quadEncoderTask.registerDataQueue(m_webSocketServerTask.getQueue());
+    xSemaphoreGive(m_queueMutex);
+}
+
+void NextWheelApp::unregisterSensorTasksFromWebSocketServer()
+{
+    Serial.println("Unregistering sensor tasks from WebSocketServerTask");
+    xSemaphoreTake(m_queueMutex, portMAX_DELAY);
+    m_adcTask.unregisterDataQueue(m_webSocketServerTask.getQueue());
+    m_imuTask.unregisterDataQueue(m_webSocketServerTask.getQueue());
+    m_powerTask.unregisterDataQueue(m_webSocketServerTask.getQueue());
+    m_quadEncoderTask.unregisterDataQueue(m_webSocketServerTask.getQueue());
+    xSemaphoreGive(m_queueMutex);
+}
+
 
 bool NextWheelApp::setTime(String time)
 {

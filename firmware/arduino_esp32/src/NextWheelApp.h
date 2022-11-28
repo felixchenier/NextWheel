@@ -41,11 +41,13 @@ public:
 
     bool setTime(String time);
 
+    void registerSensorTasksToSDCardWorker();
+    void unregisterSensorTasksFromSDCardWorker();
+    void registerSensorTasksToWebSocketServer();
+    void unregisterSensorTasksFromWebSocketServer();
 
 private:
     NextWheelApp();
-
-    void registerSensorTaskToQueues(SensorTask& task);
 
     // Singleton instance
     static NextWheelApp* m_instance;
@@ -70,5 +72,7 @@ private:
     // PrintWorkerTask m_printWorkerTask;
     SDCardWorkerTask m_sdCardWorkerTask;
     WebSocketServerTask m_webSocketServerTask;
+
+    SemaphoreHandle_t m_queueMutex;
 };
 #endif

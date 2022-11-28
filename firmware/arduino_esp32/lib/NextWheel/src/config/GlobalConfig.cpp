@@ -105,7 +105,6 @@ void GlobalConfig::set_imu_sample_rate(unsigned int rate)
 
 uint32_t GlobalConfig::get_imu_sample_rate() const
 {
-    //return 400;
     return m_config.imu_sample_rate;
 }
 
@@ -117,7 +116,6 @@ void GlobalConfig::set_adc_sample_rate(unsigned int rate)
 
 uint32_t GlobalConfig::get_adc_sample_rate() const
 {
-    //return 1000;
     return m_config.adc_sample_rate;
 }
 

@@ -17,6 +17,8 @@ public:
 
 protected:
     void onMessage(String param, String message);
+    void onWebsocketConnected();
+    void onWebsocketDisconnected();
 
     WebSocketServer m_server;
 };

@@ -394,11 +394,22 @@ void WebSocketServer::onWsEvent(
         //Send config
         ConfigDataFrame frame(m_configData);
         sendToAll(frame);
+
+        if (m_websocketConnectedHandler)
+        {
+            m_websocketConnectedHandler();
+        }
+
     }
     else if (type == WS_EVT_DISCONNECT)
     {
         Serial.println("Client disconnected");
         SystemState::instance().getState().streaming = false;
+
+        if (m_websocketDisconnectedHandler)
+        {
+            m_websocketDisconnectedHandler();
+        }
     }
     else if (type == WS_EVT_DATA)
     {
@@ -512,4 +523,14 @@ String WebSocketServer::onLiveProcessor(const String& var)
 int WebSocketServer::webSocketClientCount()
 {
     return m_ws.count();
+}
+
+void WebSocketServer::registerWebsocketConnectedHandler(WebSocketServerWebsocketConnectedHandler handler)
+{
+    m_websocketConnectedHandler = handler;
+}
+
+void WebSocketServer::registerWebsocketDisconnectedHandler(WebSocketServerWebsocketDisconnectedHandler handler)
+{
+    m_websocketDisconnectedHandler = handler;
 }

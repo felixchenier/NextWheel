@@ -35,5 +35,9 @@ class WorkerTask : public Task {
 
     QueueHandle_t m_dataQueue;
 
+
+
+
+
 };
 #endif  // _WORKER_TASK_H_

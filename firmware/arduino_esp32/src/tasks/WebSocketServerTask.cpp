@@ -3,13 +3,19 @@
 #include "NextWheelApp.h"
 #include <esp_task_wdt.h>
 
-WebSocketServerTask::WebSocketServerTask() : WorkerTask("WebSocketServerTask", WEBSOCKET_SERVER_STACK_SIZE) {}
+WebSocketServerTask::WebSocketServerTask() : WorkerTask("WebSocketServerTask", WEBSOCKET_SERVER_STACK_SIZE)
+{
+
+}
 
 
 void WebSocketServerTask::run(void* app)
 {
-    esp_task_wdt_init(30, false);
     Serial.printf("WebSocketServerTask::run Priority: %li Core: %li \n", uxTaskPriorityGet(NULL), xPortGetCoreID());
+
+
+    m_server.registerWebsocketConnectedHandler([this]() { this->onWebsocketConnected(); });
+    m_server.registerWebsocketDisconnectedHandler([this]() { this->onWebsocketDisconnected(); });
 
     // Setup WebSocketServer callbacks
     m_server.onMessage(
@@ -100,4 +106,16 @@ void WebSocketServerTask::onMessage(String param, String message)
     Serial.print(param);
     Serial.print(" Message: ");
     Serial.println(message);
+}
+
+void WebSocketServerTask::onWebsocketConnected()
+{
+    Serial.println("WebSocketServerTask::onWebsocketConnected");
+    NextWheelApp::instance()->registerSensorTasksToWebSocketServer();
+}
+
+void WebSocketServerTask::onWebsocketDisconnected()
+{
+    Serial.println("WebSocketServerTask::onWebsocketDisconnected");
+    NextWheelApp::instance()->unregisterSensorTasksFromWebSocketServer();
 }

@@ -369,8 +369,9 @@ uint8_t ADS8688::readRegister(uint8_t reg) {
 uint16_t ADS8688::cmdRegister(uint8_t reg) {
     SPI.beginTransaction(SPISettings(17000000, MSBFIRST, SPI_MODE1));
     digitalWrite(_cs, LOW);
-    SPI.transfer(reg);
-    SPI.transfer(0x00);
+    SPI.transfer16((reg << 8) | 0x0000);
+    //SPI.transfer(reg);
+    //SPI.transfer(0x00);
     int16_t result = 0;
     if (_mode > 4) {
         // only 16 bit if POWERDOWN or STDBY or RST or IDLE

@@ -2,9 +2,6 @@
 #include <NextWheel.h>
 #include "NextWheelApp.h"
 
-
-
-
 void setup()
 {
     // Serial must be initialized for prints to work
@@ -48,7 +45,7 @@ void loop()
         }
 
         // Blinking led2 for now...
-        NextWheelApp::instance()->getLEDS().toggleLED2();
+        //NextWheelApp::instance()->getLEDS().toggleLED2();
 
         // IDLE loop.
         // 250 ms task

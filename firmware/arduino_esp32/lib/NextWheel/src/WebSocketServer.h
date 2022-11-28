@@ -11,14 +11,18 @@ class WebSocketServer
 {
 public:
     typedef std::function<void(String param, String message)> WebSocketServerMessageEventHandler;
+    typedef std::function<void()> WebSocketServerWebsocketConnectedHandler;
+    typedef std::function<void()> WebSocketServerWebsocketDisconnectedHandler;
+
 
     WebSocketServer();
     void begin(const GlobalConfig::ConfigData &configData);
-
     void sendToAll(DataFrame& frame);
     void sendToAll(const uint8_t* data, size_t size);
     int webSocketClientCount();
     void onMessage(WebSocketServerMessageEventHandler handler);
+    void registerWebsocketConnectedHandler(WebSocketServerWebsocketConnectedHandler handler);
+    void registerWebsocketDisconnectedHandler(WebSocketServerWebsocketDisconnectedHandler handler);
 
 private:
     AsyncWebServer m_server;
@@ -46,6 +50,9 @@ private:
     String onConfigProcessor(const String& var);
     String onLiveProcessor(const String& var);
     GlobalConfig::ConfigData m_configData;
+
+    WebSocketServerWebsocketConnectedHandler m_websocketConnectedHandler;
+    WebSocketServerWebsocketConnectedHandler m_websocketDisconnectedHandler;
 };
 
 #endif  // _WEBSOCKET_SERVER_H_
