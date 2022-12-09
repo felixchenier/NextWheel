@@ -23,7 +23,7 @@ void NextWheelApp::begin()
     // m_printWorkerTask.setPriority(TASK_PRIORITY_IDLE);
 
     m_webSocketServerTask.setCore(0);
-    m_webSocketServerTask.setPriority(TASK_PRIORITY_LOW);
+    m_webSocketServerTask.setPriority(TASK_PRIORITY_MEDIUM);
 
     m_adcTask.setCore(1);
     m_adcTask.setPriority(TASK_PRIORITY_HIGHEST);
@@ -46,7 +46,14 @@ void NextWheelApp::start()
     Serial.println("Starting worker tasks");
     m_sdCardWorkerTask.start(this);
     // m_printWorkerTask.start(nullptr);
+
+#ifndef NEXTWHEEL_DISABLE_WIFI
     m_webSocketServerTask.start(this);
+#else
+    Serial.println("WiFi + WebSocketServerTask disabled");
+#endif
+
+
     Serial.println("Starting sensor tasks");
     m_adcTask.start(this);
     m_imuTask.start(this);

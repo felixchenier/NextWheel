@@ -49,8 +49,8 @@ void SDCardWorkerTask::run(void* app)
 
     while (1)
     {
-        // 10 ms task
-        vTaskDelayUntil(&lastGeneration, 10 / portTICK_RATE_MS);
+        // 50 ms task
+        vTaskDelayUntil(&lastGeneration, 50 / portTICK_RATE_MS);
 
         int count = 0;
         // Dequeue all data values (one shot), no timeout

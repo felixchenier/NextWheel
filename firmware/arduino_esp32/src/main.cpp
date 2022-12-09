@@ -50,5 +50,7 @@ void loop()
         // IDLE loop.
         // 250 ms task
         vTaskDelayUntil(&lastGeneration, 250 / portTICK_RATE_MS);
+
+       //Serial.print("Free heap size: "); Serial.println(ESP.getFreeHeap());
     }
 }
