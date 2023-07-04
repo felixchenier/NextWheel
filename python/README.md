@@ -8,6 +8,7 @@ This folder will contain a `nextwheel` Python module to fetch streamed data from
 - NextWheel.close() -> None
 
 
+```
 >>> from nextwheel import NextWheel
 
 >>> nw = NextWheel("xx.xx.xx.xx")
@@ -16,3 +17,4 @@ This folder will contain a `nextwheel` Python module to fetch streamed data from
 >>> print(nw.fetch()
     
 >>> nw.close()
+```
