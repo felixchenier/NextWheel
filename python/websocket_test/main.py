@@ -286,7 +286,7 @@ def update_plots(i):
 if __name__ == "__main__":
     # websocket.enableTrace(True)  # Uncomment to print all received data
     ws = websocket.WebSocketApp(
-        "ws://192.168.2.3/ws",
+        "ws://192.168.1.254/ws",
         on_open=on_open,
         on_message=on_message,
         on_error=on_error,
