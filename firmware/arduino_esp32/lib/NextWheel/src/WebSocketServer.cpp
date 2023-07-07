@@ -6,6 +6,8 @@
 #include <config/GlobalConfig.h>
 #include <state/SystemState.h>
 
+
+
 WebSocketServer::WebSocketServer() : m_server(80), m_ws("/ws") {}
 
 void WebSocketServer::begin(const GlobalConfig::ConfigData &configData)
@@ -18,6 +20,7 @@ void WebSocketServer::begin(const GlobalConfig::ConfigData &configData)
     SPIFFS.begin();
 
     WiFi.begin(WIFI_DEFAULT_SSID, WIFI_DEFAULT_PASSWORD);
+      // put your setup code here, to run once:
     while (WiFi.status() != WL_CONNECTED)
     {
         delay(500);

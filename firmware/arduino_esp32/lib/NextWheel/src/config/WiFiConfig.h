@@ -3,11 +3,11 @@
 
 // WIFI
 #ifndef WIFI_DEFAULT_SSID
-    #define WIFI_DEFAULT_SSID "YOUR_WIFI_SSID"
+    #define WIFI_DEFAULT_SSID "pulsewifidl"
 #endif
 
 #ifndef WIFI_DEFAULT_PASSWORD
-    #define WIFI_DEFAULT_PASSWORD "YOUR_WIFI_PASSWORD"
+    #define WIFI_DEFAULT_PASSWORD "wolfpack"
 #endif
 
 #endif // _WIFI_CONFIG_H_
