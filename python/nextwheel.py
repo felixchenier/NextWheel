@@ -15,48 +15,76 @@ class NextWheel:
         self.TIME_ZERO = 0
 
         self.adc_TIME = np.ndarray((0, 1))
-        self.adc_value = np.ndarray((0, 9))
+        self.adc_values = np.ndarray((0, 8))
 
         self.imu_TIME = np.ndarray((0, 1))
-        self.imu_value = np.ndarray((0, 9))
+        self.imu_values = np.ndarray((0, 9))
 
         self.power_TIME = np.ndarray((0, 1))
-        self.power_values = np.ndarray((0, 3))
+        self.power_values = np.ndarray((0, 4))
 
         self.encoder_TIME = np.ndarray((0, 1))
         self.encoder_values = np.ndarray((0, 1))
 
     def __parse_config_frame__(self, message: bytes):
-        if len(message) != 20:
-            return []
-        else:
+        if len(message) == 20:
             vals = struct.unpack_from("<5I", message)
             print(
                 f"Config accel_range:{vals[0]}, gyro_range:{vals[1]}, "
                 f"mag_range:{vals[2]}, imu_sample_rate:{vals[3]}, adc_sample_rate:{vals[4]}"
             )
-            return vals
 
     def __fetch_values__(self, frame_type: int, message: bytes, TIME: float):
         if frame_type == 2:  # frame type of the ADC values
             if len(message) == 32:
                 self.adc_TIME = np.append(self.adc_TIME, TIME)
-                vals = struct.unpack_from("<8f", message)
+                self.adc_values = np.vstack(
+                    (self.adc_values, struct.unpack_from("<8f", message))
+                )
+
+                if np.size(self.adc_values, axis=0) > self.max_analog_samples:
+                    self.adc_values = self.adc_values[
+                        -self.max_analog_samples :, :
+                    ]
 
         elif frame_type == 3:  # frame type of the IMU
             if len(message) == 36:
                 self.imu_TIME = np.append(self.imu_TIME, TIME)
-                vals = struct.unpack_from("<9f", message)
+                self.imu_values = np.vstack(
+                    (self.imu_values, struct.unpack_from("<9f", message))
+                )
+
+                if np.size(self.imu_values, axis=0) > self.max_imu_samples:
+                    self.imu_values = self.imu_values[
+                        -self.max_imu_samples :, :
+                    ]
 
         elif frame_type == 4:  # frame type of the POWER
             if len(message) == 13:
                 self.power_TIME = np.append(self.power_TIME, TIME)
-                vals = struct.unpack_from("<3fB", message)
+                self.power_values = np.vstack(
+                    (self.power_values, struct.unpack_from("<3fB", message))
+                )
+
+                if np.size(self.power_values, axis=0) > self.max_power_samples:
+                    self.power_values = self.power_values[
+                        -self.max_power_samples :, :
+                    ]
 
         elif frame_type == 7:  # frame type of the ENCODER
             if len(message) == 8:
                 self.encoder_TIME = np.append(self.encoder_TIME, TIME)
-                vals = struct.unpack_from("<q", message)
+                self.encoder_values = np.vstack(
+                    (self.encoder_values, struct.unpack_from("<q", message))
+                )
+
+                if (
+                    np.size(self.encoder_values, axis=0)
+                    > self.max_encoder_samples
+                ):
+                    self.encoder_values = self.encoder_values[
+                        -self.max_encoder_samples :, :
+                    ]
 
     def __parse_superframe__(self, message: bytes, count: int):
         offset = 0
@@ -139,6 +167,8 @@ class NextWheel:
 
         t = threading.Thread(target=self.ws.run_forever)
         t.start()
+
+    # def fetch(self) -> dict[dict[str, numpy.array]]:
 
     def close(self):
         self.ws.close()
