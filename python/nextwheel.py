@@ -12,8 +12,6 @@ class NextWheel:
         self.HEADER_LENGTH = HEADER_LENGTH
         self.is_connect = False
 
-        self.TIME_ZERO = 0
-
         self.adc_TIME = np.ndarray((0, 1))
         self.adc_values = np.ndarray((0, 8))
 
@@ -125,7 +123,6 @@ class NextWheel:
                     data_size,
                     len(message[10:]),
                 )
-                self.TIME = timestamp / 1e6
                 self.__parse_config_frame__(message[10:])
 
             if frame_type == 255:
@@ -168,7 +165,53 @@ class NextWheel:
         t = threading.Thread(target=self.ws.run_forever)
         t.start()
 
-    # def fetch(self) -> dict[dict[str, numpy.array]]:
+    def fetch(self):
+        TIME_ZERO = np.min(
+            [
+                self.adc_TIME[0],
+                self.imu_TIME[0],
+                self.encoder_TIME[0],
+                self.power_TIME[0],
+            ]
+        )
+
+        DATAS = {
+            "IMU": {
+                "Time": self.imu_TIME - TIME_ZERO,
+                "Acc": self.imu_values[:, :3],
+                "Gyro": self.imu_values[:, 3:6],
+                "Mag": self.imu_values[:, 6:],
+            },
+            "Analog": {
+                "Time": self.adc_TIME - TIME_ZERO,
+                "Force": self.adc_values[:, :6],
+                "Spare": self.adc_values[:, 6:],
+            },
+            "Encoder": {
+                "Time": self.encoder_TIME - TIME_ZERO,
+                "Angle": self.encoder_values,
+            },
+            "Power": {
+                "Time": self.power_TIME - TIME_ZERO,
+                "Voltage": self.power_values[:, 0],
+                "Current": self.power_values[:, 1],
+                "Power": self.power_values[:, 2],
+            },
+        }
+
+        self.adc_TIME = np.ndarray((0, 1))
+        self.adc_values = np.ndarray((0, 8))
+
+        self.imu_TIME = np.ndarray((0, 1))
+        self.imu_values = np.ndarray((0, 9))
+
+        self.power_TIME = np.ndarray((0, 1))
+        self.power_values = np.ndarray((0, 4))
+
+        self.encoder_TIME = np.ndarray((0, 1))
+        self.encoder_values = np.ndarray((0, 1))
+
+        return DATAS
 
     def close(self):
         self.ws.close()
