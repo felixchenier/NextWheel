@@ -12,6 +12,8 @@ class NextWheel:
         self.HEADER_LENGTH = HEADER_LENGTH
         self.is_connect = False
 
+        self.TIME_ZERO = 0
+
         self.adc_TIME = np.ndarray((0, 1))
         self.adc_values = np.ndarray((0, 8))
 
@@ -44,6 +46,7 @@ class NextWheel:
                     self.adc_values = self.adc_values[
                         -self.max_analog_samples :, :
                     ]
+                    self.adc_TIME = self.adc_TIME[-self.max_analog_samples :]
 
         elif frame_type == 3:  # frame type of the IMU
             if len(message) == 36:
@@ -56,6 +59,7 @@ class NextWheel:
                     self.imu_values = self.imu_values[
                         -self.max_imu_samples :, :
                     ]
+                    self.imu_TIME = self.imu_TIME[-self.max_imu_samples :]
 
         elif frame_type == 4:  # frame type of the POWER
             if len(message) == 13:
@@ -67,6 +71,9 @@ class NextWheel:
                 if np.size(self.power_values, axis=0) > self.max_power_samples:
                     self.power_values = self.power_values[
                         -self.max_power_samples :, :
+                    ]
+                    self.power_TIME = self.power_TIME[
+                        -self.max_power_samples :
                     ]
 
         elif frame_type == 7:  # frame type of the ENCODER
@@ -82,6 +89,9 @@ class NextWheel:
                 ):
                     self.encoder_values = self.encoder_values[
                         -self.max_encoder_samples :, :
+                    ]
+                    self.encoder_TIME = self.encoder_TIME[
+                        -self.max_encoder_samples :
                     ]
 
     def __parse_superframe__(self, message: bytes, count: int):
@@ -123,6 +133,7 @@ class NextWheel:
                     data_size,
                     len(message[10:]),
                 )
+                self.TIME_ZERO = timestamp / 1e6
                 self.__parse_config_frame__(message[10:])
 
             if frame_type == 255:
@@ -166,33 +177,33 @@ class NextWheel:
         t.start()
 
     def fetch(self):
-        TIME_ZERO = np.min(
-            [
-                self.adc_TIME[0],
-                self.imu_TIME[0],
-                self.encoder_TIME[0],
-                self.power_TIME[0],
-            ]
-        )
+        # TIME_ZERO = np.min(
+        #     [
+        #         self.adc_TIME[0],
+        #         self.imu_TIME[0],
+        #         self.encoder_TIME[0],
+        #         self.power_TIME[0],
+        #     ]
+        # )
 
         DATAS = {
             "IMU": {
-                "Time": self.imu_TIME - TIME_ZERO,
+                "Time": self.imu_TIME - self.TIME_ZERO,
                 "Acc": self.imu_values[:, :3],
                 "Gyro": self.imu_values[:, 3:6],
                 "Mag": self.imu_values[:, 6:],
             },
             "Analog": {
-                "Time": self.adc_TIME - TIME_ZERO,
+                "Time": self.adc_TIME - self.TIME_ZERO,
                 "Force": self.adc_values[:, :6],
                 "Spare": self.adc_values[:, 6:],
             },
             "Encoder": {
-                "Time": self.encoder_TIME - TIME_ZERO,
+                "Time": self.encoder_TIME - self.TIME_ZERO,
                 "Angle": self.encoder_values,
             },
             "Power": {
-                "Time": self.power_TIME - TIME_ZERO,
+                "Time": self.power_TIME - self.TIME_ZERO,
                 "Voltage": self.power_values[:, 0],
                 "Current": self.power_values[:, 1],
                 "Power": self.power_values[:, 2],
