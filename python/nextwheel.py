@@ -31,7 +31,7 @@ class NextWheel:
                 f"adc_sample_rate:{unpacked_values[4]}"
             )
 
-    def __fetch_values(self, frame_type: int, message: bytes, time: float):
+    def __extract_value(self, frame_type: int, message: bytes, time: float):
         """Unpack data and save them in the appropriate variables."""
         if frame_type == 2:  # frame type of the ADC values
             if len(message) == 32:
@@ -78,7 +78,7 @@ class NextWheel:
                 "<BQB", message[offset : offset + self.HEADER_LENGTH]
             )
 
-            self.__fetch_values(
+            self.__extract_value(
                 frame_type,
                 message[
                     offset
