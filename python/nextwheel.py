@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+"""The module contain the NextWheel class."""
 
 import websocket
 import struct
@@ -7,94 +7,70 @@ import numpy as np
 
 
 class NextWheel:
-    def __init__(self, ip: str, HEADER_LENGTH: int = 10):
-        self.ip = ip
-        self.HEADER_LENGTH = HEADER_LENGTH
-        self.is_connect = False
+    """The class permit communication with the SmartWheel."""
 
+    def __init__(self, IP: str, HEADER_LENGTH: int = 10):
+        self.IP = IP
+        self.HEADER_LENGTH = HEADER_LENGTH
         self.TIME_ZERO = 0
 
-        self.adc_TIME = np.ndarray((0, 1))
-        self.adc_values = np.ndarray((0, 8))
+        self.adc_values = []
+        self.imu_values = []
+        self.power_values = []
+        self.encoder_values = []
 
-        self.imu_TIME = np.ndarray((0, 1))
-        self.imu_values = np.ndarray((0, 9))
-
-        self.power_TIME = np.ndarray((0, 1))
-        self.power_values = np.ndarray((0, 4))
-
-        self.encoder_TIME = np.ndarray((0, 1))
-        self.encoder_values = np.ndarray((0, 1))
-
-    def __parse_config_frame__(self, message: bytes):
+    def __parse_config_frame(self, message: bytes):
+        """Unpack data from the configurtion frame."""
         if len(message) == 20:
-            vals = struct.unpack_from("<5I", message)
+            unpacked_values = struct.unpack_from("<5I", message)
             print(
-                f"Config accel_range:{vals[0]}, gyro_range:{vals[1]}, "
-                f"mag_range:{vals[2]}, imu_sample_rate:{vals[3]}, adc_sample_rate:{vals[4]}"
+                f"Config accel_range:{unpacked_values[0]}, "
+                f"gyro_range:{unpacked_values[1]}, "
+                f"mag_range:{unpacked_values[2]}, "
+                f"imu_sample_rate:{unpacked_values[3]}, "
+                f"adc_sample_rate:{unpacked_values[4]}"
             )
 
-    def __fetch_values__(self, frame_type: int, message: bytes, TIME: float):
+    def __fetch_values(self, frame_type: int, message: bytes, time: float):
+        """Unpack data and save them in the appropriate variables."""
         if frame_type == 2:  # frame type of the ADC values
             if len(message) == 32:
-                self.adc_TIME = np.append(self.adc_TIME, TIME)
-                self.adc_values = np.vstack(
-                    (self.adc_values, struct.unpack_from("<8f", message))
+                self.adc_values.append(
+                    (time, struct.unpack_from("<8f", message))
                 )
 
-                if np.size(self.adc_values, axis=0) > self.max_analog_samples:
-                    self.adc_values = self.adc_values[
-                        -self.max_analog_samples :, :
-                    ]
-                    self.adc_TIME = self.adc_TIME[-self.max_analog_samples :]
+                if len(self.adc_values) > self.max_analog_samples:
+                    self.adc_values.pop(0)
 
         elif frame_type == 3:  # frame type of the IMU
             if len(message) == 36:
-                self.imu_TIME = np.append(self.imu_TIME, TIME)
-                self.imu_values = np.vstack(
-                    (self.imu_values, struct.unpack_from("<9f", message))
+                self.imu_values.append(
+                    (time, struct.unpack_from("<9f", message))
                 )
 
-                if np.size(self.imu_values, axis=0) > self.max_imu_samples:
-                    self.imu_values = self.imu_values[
-                        -self.max_imu_samples :, :
-                    ]
-                    self.imu_TIME = self.imu_TIME[-self.max_imu_samples :]
+                if len(self.imu_values) > self.max_imu_samples:
+                    self.imu_values.pop(0)
 
         elif frame_type == 4:  # frame type of the POWER
             if len(message) == 13:
-                self.power_TIME = np.append(self.power_TIME, TIME)
-                self.power_values = np.vstack(
-                    (self.power_values, struct.unpack_from("<3fB", message))
+                self.power_values.append(
+                    (time, struct.unpack_from("<3fB", message))
                 )
 
-                if np.size(self.power_values, axis=0) > self.max_power_samples:
-                    self.power_values = self.power_values[
-                        -self.max_power_samples :, :
-                    ]
-                    self.power_TIME = self.power_TIME[
-                        -self.max_power_samples :
-                    ]
+                if len(self.power_values) > self.max_power_samples:
+                    self.power_values.pop(0)
 
         elif frame_type == 7:  # frame type of the ENCODER
             if len(message) == 8:
-                self.encoder_TIME = np.append(self.encoder_TIME, TIME)
-                self.encoder_values = np.vstack(
-                    (self.encoder_values, struct.unpack_from("<q", message))
+                self.encoder_values.append(
+                    (time, struct.unpack_from("<q", message))
                 )
 
-                if (
-                    np.size(self.encoder_values, axis=0)
-                    > self.max_encoder_samples
-                ):
-                    self.encoder_values = self.encoder_values[
-                        -self.max_encoder_samples :, :
-                    ]
-                    self.encoder_TIME = self.encoder_TIME[
-                        -self.max_encoder_samples :
-                    ]
+                if len(self.encoder_values) > self.max_encoder_samples:
+                    self.encoder_values.pop(0)
 
-    def __parse_superframe__(self, message: bytes, count: int):
+    def __parse_superframe(self, message: bytes, count: int):
+        """Unpack superframe data and loop to scan the message."""
         offset = 0
 
         for sub_count in range(count):
@@ -102,7 +78,7 @@ class NextWheel:
                 "<BQB", message[offset : offset + self.HEADER_LENGTH]
             )
 
-            self.__fetch_values__(
+            self.__fetch_values(
                 frame_type,
                 message[
                     offset
@@ -110,15 +86,14 @@ class NextWheel:
                     + self.HEADER_LENGTH
                     + data_size
                 ],
-                timestamp / 1e6,
+                timestamp / 1e6 - self.TIME_ZERO,
             )
 
             offset = offset + data_size + self.HEADER_LENGTH
 
-    def __on_message__(self, ws, message):
+    def __on_message(self, ws, message):
+        """React on receiving a message from the SmartWheel."""
         if type(message) is bytes:
-            # Let's decode the header
-            # uint8 type, uint64 timestamp, uint8 datasize (little endian)
             (frame_type, timestamp, data_size) = struct.unpack_from(
                 "<BQB", message[0:10]
             )
@@ -134,23 +109,22 @@ class NextWheel:
                     len(message[10:]),
                 )
                 self.TIME_ZERO = timestamp / 1e6
-                self.__parse_config_frame__(message[10:])
+                self.__parse_config_frame(message[10:])
 
             if frame_type == 255:
-                # print(frame_type, timestamp, data_size, len(message[10:]))
-                # data_size contains the number of frames
-                self.__parse_superframe__(message[10:], data_size)
+                self.__parse_superframe(message[10:], data_size)
 
-    def __on_open__(self, ws):
-        self.is_connect = True
+    def __on_open(self, ws):
+        """React on opening a connection with the SmartWheel."""
         print("Opened connection", self.ws)
 
-    def __on_error__(self, ws, error):
+    def __on_error(self, ws, error):
+        """React on an error with the SmartWheel."""
         self.close()
         print(self.ws, error)
 
-    def __on_close__(self, ws, close_status_code, close_msg):
-        self.is_connect = False
+    def __on_close(self, ws, close_status_code, close_msg):
+        """React on closing a connection with the SmartWheel."""
         print("### closed ###", ws, close_status_code, close_msg)
 
     def connect(
@@ -160,74 +134,56 @@ class NextWheel:
         max_encoder_samples: int = 100,
         max_power_samples: int = 10,
     ):
+        """Connect the SmartWheel with the WebSocketApp."""
         self.max_imu_samples = max_imu_samples
         self.max_analog_samples = max_analog_samples
         self.max_encoder_samples = max_encoder_samples
         self.max_power_samples = max_power_samples
 
         self.ws = websocket.WebSocketApp(
-            f"ws://{self.ip}/ws",
-            on_open=self.__on_open__,
-            on_message=self.__on_message__,
-            on_error=self.__on_error__,
-            on_close=self.__on_close__,
+            f"ws://{self.IP}/ws",
+            on_open=self.__on_open,
+            on_message=self.__on_message,
+            on_error=self.__on_error,
+            on_close=self.__on_close,
         )
 
         t = threading.Thread(target=self.ws.run_forever)
         t.start()
 
     def fetch(self):
-        # TIME_ZERO = np.min(
-        #     [
-        #         self.adc_TIME[0],
-        #         self.imu_TIME[0],
-        #         self.encoder_TIME[0],
-        #         self.power_TIME[0],
-        #     ]
-        # )
-
-        DATAS = {
+        """Fetch data and return a nested dictionary."""
+        data = {
             "IMU": {
-                "Time": self.imu_TIME - self.TIME_ZERO,
-                "Acc": self.imu_values[:, :3],
-                "Gyro": self.imu_values[:, 3:6],
-                "Mag": self.imu_values[:, 6:],
+                "Time": np.array([t[0] for t in self.imu_values]),
+                "Acc": np.array([i[1][:3] for i in self.imu_values]),
+                "Gyro": np.array([i[1][3:6] for i in self.imu_values]),
+                "Mag": np.array([i[1][6:] for i in self.imu_values]),
             },
             "Analog": {
-                "Time": self.adc_TIME - self.TIME_ZERO,
-                "Force": self.adc_values[:, :6],
-                "Spare": self.adc_values[:, 6:],
+                "Time": np.array([t[0] for t in self.adc_values]),
+                "Force": np.array([i[1][:6] for i in self.adc_values]),
+                "Spare": np.array([i[1][6:] for i in self.adc_values]),
             },
             "Encoder": {
-                "Time": self.encoder_TIME - self.TIME_ZERO,
-                "Angle": self.encoder_values,
+                "Time": np.array([t[0] for t in self.encoder_values]),
+                "Angle": np.array([i[1][0] for i in self.encoder_values]),
             },
             "Power": {
-                "Time": self.power_TIME - self.TIME_ZERO,
-                "Voltage": self.power_values[:, 0],
-                "Current": self.power_values[:, 1],
-                "Power": self.power_values[:, 2],
+                "Time": np.array([t[0] for t in self.power_values]),
+                "Voltage": np.array([i[1][0] for i in self.power_values]),
+                "Current": np.array([i[1][1] for i in self.power_values]),
+                "Power": np.array([i[1][2] for i in self.power_values]),
             },
         }
 
-        self.adc_TIME = np.ndarray((0, 1))
-        self.adc_values = np.ndarray((0, 8))
+        self.adc_values = []
+        self.imu_values = []
+        self.power_values = []
+        self.encoder_values = []
 
-        self.imu_TIME = np.ndarray((0, 1))
-        self.imu_values = np.ndarray((0, 9))
-
-        self.power_TIME = np.ndarray((0, 1))
-        self.power_values = np.ndarray((0, 4))
-
-        self.encoder_TIME = np.ndarray((0, 1))
-        self.encoder_values = np.ndarray((0, 1))
-
-        return DATAS
+        return data
 
     def close(self):
+        """Close the connection with the SmartWheel."""
         self.ws.close()
-
-
-nw = NextWheel("192.168.1.254")
-nw.connect()
-# nw.close()
