@@ -18,6 +18,14 @@ from nextwheel import NextWheel
 #     "mag[0],mag[1],mag[2]\n"
 # )
 
+power_values = []
+voltage_values = []
+current_values = []
+power_time = []
+
+encoder_values = []
+encoder_time = []
+
 mpl.rcParams["axes.prop_cycle"] = mpl.cycler(
     color=["r", "g", "b", "c", "m", "y", "k", "tab:orange"]
 )
@@ -56,30 +64,56 @@ def update_plots(i):
     # ADC
     adc_plot.cla()
     adc_plot.set_title(f"[{i}] - Force Channels (ADC)")
-    x_vals = data["Analog"]["Time"]
-    y_vals = data["Analog"]["Force"]
-    adc_plot.plot(x_vals, y_vals)
+    adc_plot.plot(data["Analog"]["Time"], data["Analog"]["Force"])
 
     # IMU
     imu_plot.cla()
     imu_plot.set_title("IMU")
-    x_vals = data["IMU"]["Time"]
-    y_vals = data["IMU"]["Acc"]
-    imu_plot.plot(x_vals, y_vals)
+    imu_plot.plot(
+        data["IMU"]["Time"],
+        data["IMU"]["Acc"],
+        data["IMU"]["Time"],
+        data["IMU"]["Gyro"],
+        data["IMU"]["Time"],
+        data["IMU"]["Mag"],
+    )
 
     # POWER Sample frequency too slow to just use nw.fetch() alone
+    if len(data["Power"]["Time"]) != 0:
+        power_time.append(data["Power"]["Time"][0])
+        power_values.append(data["Power"]["Power"][0])
+        voltage_values.append(data["Power"]["Voltage"][0])
+        current_values.append(data["Power"]["Current"][0])
+
+    if len(power_time) > 10:
+        power_time.pop(0)
+        power_values.pop(0)
+        voltage_values.pop(0)
+        current_values.pop(0)
+
     power_plot.cla()
     power_plot.set_title("Battery level")
-    x_vals = data["Power"]["Time"]
-    y_vals = data["Power"]["Power"]
-    power_plot.plot(x_vals, y_vals)
+    power_plot.plot(
+        power_time,
+        voltage_values,
+        power_time,
+        current_values,
+        power_time,
+        power_values,
+    )
 
     # ENCODER Sample frequency too slow to just use nw.fetch() alone
+    if len(data["Encoder"]["Time"]) != 0:
+        encoder_time.append(data["Encoder"]["Time"][0])
+        encoder_values.append(data["Encoder"]["Angle"][0])
+
+    if len(power_time) > 10:
+        encoder_time.pop(0)
+        encoder_values.pop(0)
+
     encoder_plot.cla()
     encoder_plot.set_title("Encoder")
-    x_vals = data["Encoder"]["Time"]
-    y_vals = data["Encoder"]["Angle"]
-    encoder_plot.plot(x_vals, y_vals)
+    encoder_plot.plot(encoder_time, encoder_values)
 
 
 if __name__ == "__main__":
