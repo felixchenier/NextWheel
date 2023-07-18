@@ -42,7 +42,7 @@ encoder_plot.set_title("ENCODER")
 plt.tight_layout()
 
 
-# funct to update the data
+# # funct to update the data
 def update_plots(i):
     """
     Update the plots.
@@ -51,33 +51,34 @@ def update_plots(i):
     imu_values, power_values and encoder_values. It is normally called by
     Matplotlib's FunctAnimation class.
     """
+    data = nw.fetch()
 
     # ADC
     adc_plot.cla()
     adc_plot.set_title(f"[{i}] - Force Channels (ADC)")
-    x_vals = [x[0] for x in nw.adc_values]
-    y_vals = [x[1][0:6] for x in nw.adc_values]
+    x_vals = data["Analog"]["Time"]
+    y_vals = data["Analog"]["Force"]
     adc_plot.plot(x_vals, y_vals)
 
     # IMU
     imu_plot.cla()
     imu_plot.set_title("IMU")
-    x_vals = [x[0] for x in nw.imu_values]
-    y_vals = [x[1] for x in nw.imu_values]
+    x_vals = data["IMU"]["Time"]
+    y_vals = data["IMU"]["Acc"]
     imu_plot.plot(x_vals, y_vals)
 
-    # POWER
+    # POWER Sample frequency too slow to just use nw.fetch() alone
     power_plot.cla()
     power_plot.set_title("Battery level")
-    x_vals = [x[0] for x in nw.power_values]
-    y_vals = [x[1][0:3] for x in nw.power_values]
+    x_vals = data["Power"]["Time"]
+    y_vals = data["Power"]["Power"]
     power_plot.plot(x_vals, y_vals)
 
-    # ENCODER
+    # ENCODER Sample frequency too slow to just use nw.fetch() alone
     encoder_plot.cla()
     encoder_plot.set_title("Encoder")
-    x_vals = [x[0] for x in nw.encoder_values]
-    y_vals = [x[1] for x in nw.encoder_values]
+    x_vals = data["Encoder"]["Time"]
+    y_vals = data["Encoder"]["Angle"]
     encoder_plot.plot(x_vals, y_vals)
 
 
