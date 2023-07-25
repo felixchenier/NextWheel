@@ -249,13 +249,13 @@ class NextWheel:
         t = threading.Thread(target=self.ws.run_forever)
         t.start()
 
-    def fetch(self):
+    def fetch(self) -> dict[str, dict[str, np.ndarray]]:
         """
         Fetch data and return a nested dictionary. Clear the buffer.
 
         Returns
         -------
-        data : dict[dict[str : np.array]]
+        data : dict[str, dict[str, np.ndarray]]
             A dictionary of multiple dictionaries that contain latest
             informations on:
                 - IMU values
