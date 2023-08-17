@@ -38,7 +38,6 @@ class NextWheel:
     def __init__(self, IP: str, HEADER_LENGTH: int = 10):
         self.IP = IP
         self.HEADER_LENGTH = HEADER_LENGTH
-        self.TIME_ZERO = 0
 
         self._adc_values = []
         self._imu_values = []
@@ -177,13 +176,6 @@ class NextWheel:
             # Config frame (should always be first)
             if frame_type == 1:
                 print("ConfigFrame detected")
-                print(
-                    "header: ",
-                    frame_type,
-                    timestamp,
-                    data_size,
-                    len(message[10:]),
-                )
                 self.TIME_ZERO = timestamp / 1e6
 
                 if len(message[10:]) == 20:
@@ -319,3 +311,8 @@ class NextWheel:
 
         """
         self.ws.close()
+
+        self._adc_values = []
+        self._imu_values = []
+        self._power_values = []
+        self._encoder_values = []
