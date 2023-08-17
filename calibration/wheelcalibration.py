@@ -1,9 +1,9 @@
 """
 The module permit to calibrate the instrumented wheel.
 
-To be use with the nextwheel module ?
-"""
+The module use the NextWheel module to calibrate the instrumented wheel.
 
+"""
 import numpy as np
 
 
@@ -23,7 +23,7 @@ def normalize_vector(ob: np.ndarray) -> np.ndarray:
 
     """
     normalized_vector = ob / np.tile(
-        np.linalg.norm(ob, axis=0), (np.size(ob, axis=0), 1)
+        np.transpose(np.linalg.norm(ob, axis=1)), (1, 3)
     )
     return normalized_vector
 
@@ -48,8 +48,8 @@ def estimate_gyro_bias(omega_static: np.ndarray) -> np.ndarray:
     return bias
 
 
-def estimate_acc_bias(
-    acc_static1: np.ndarray, acc_static2: np.ndarray, acc_static3: np.ndarray
+def estimate_acc_bias(  # À modifier pour avoir plus de tâches
+    acc_statics: np.ndarray,
 ) -> np.ndarray:
     """
     Estimate the bias of the accelerometer.
@@ -66,20 +66,20 @@ def estimate_acc_bias(
 
     If we develop, we obtain :
 
-        ax^2 + ay^2 + az^2 + 2(axbx + ayby + azbz) + bx^2 + by^2 + bz^2 = N^2
-        = ||g||^2 + 2(axbx + ayby + azbz) + ||bias||^2 = N^2
+        ax^2 + ay^2 + az^2 + 2(ax*bx + ay*by + az*bz) + bx^2 + by^2 + bz^2 = N^2
+        = ||g||^2 + 2(ax*bx + ay*by + az*bz) + ||bias||^2 = N^2
 
-    If we substract two norms square of two m vectors, the constant cancel each
-    and we obtain :
+    If we substract two norms square of two m vectors, the constants cancel and
+    we obtain :
 
-        (N^2 - N'^2)/2 = bx(ax - ax') + by(ay - ay') + bz(az - az')
+        (N^2 - N'^2)/2 = bx*(ax - ax') + by*(ay - ay') + bz*(az - az')
 
     This is the final equation, because (ax - ax') = (mx - mx'), (ay - ay') =
     (my - my') and (az - az') = (mz - mz'). This is already known. With three
-    static trials, there is three equations and three unknown, so we can find
-    the bias with a linear system Ax = b.
+    static trials, there is three equations and  three unknown, so we can find
+    the bias with a linear system Ax = b. A -> (N,3) et b -> (N,1) avec N >=3.
 
-    Exemple with three static trial :
+    Exemple with three static trials :
 
     [ (ax1 - ax2) (ay1 - ay2) (az1 - az2) ] [ bx ]     [ (N1^2 - N2^2)/2 ]
     [ (ax1 - ax3) (ay1 - ay3) (az1 - az3) ] [ by ]  =  [ (N1^2 - N3^2)/2 ]
@@ -88,12 +88,10 @@ def estimate_acc_bias(
 
     Parameters
     ----------
-    acc_static1 : np.ndarray
-        Measurement of the acceleration of the first static trial.
-    acc_static2 : np.ndarray
-        Measurement of the acceleration of the second static trial.
-    acc_static3 : np.ndarray
-        Measurement of the acceleration of the third static trial.
+    acc_statics : np.ndarray
+        Contain at least three different static measurements of the wheel. Each
+        line must be the median of an different static trial of the
+        accelerometer.
 
     Returns
     -------
@@ -101,27 +99,22 @@ def estimate_acc_bias(
         Estimated bias.
 
     """
-    grav1 = np.median(acc_static1, axis=0)
-    grav2 = np.median(acc_static2, axis=0)
-    grav3 = np.median(acc_static3, axis=0)
+    m, n = np.shape(acc_statics)
+    norms = np.linalg.norm(acc_statics, axis=1)
 
-    norm1 = np.linalg.norm(grav1)
-    norm2 = np.linalg.norm(grav2)
-    norm3 = np.linalg.norm(grav3)
+    m_line_matrix = int(np.math.factorial(m) / (2 * np.math.factorial(m - 2)))
 
-    delta_grav12 = grav1 - grav2
-    delta_grav13 = grav1 - grav3
-    delta_grav23 = grav2 - grav3
+    delta_grav_matrix = np.zeros((m_line_matrix, 3))
+    delta_norm_square = np.zeros((m_line_matrix, 1))
 
-    delta_norm12 = norm1**2 - norm2**2
-    delta_norm13 = norm1**2 - norm3**2
-    delta_norm23 = norm2**2 - norm3**2
+    i = 0
+    for j in range(m):
+        for k in range(j + 1, m):
+            delta_grav_matrix[i, :] = acc_statics[j, :] - acc_statics[k, :]
+            delta_norm_square[i, 1] = (norms[j] ** 2 - norms[k] ** 2) / 2
+            i += 1
 
-    norm_vector = np.vstack((delta_norm12, delta_norm13, delta_norm23))
-
-    grav_matrix = np.vstack((delta_grav12, delta_grav13, delta_grav23))
-
-    bias = np.linalg.solve(grav_matrix, norm_vector / 2)
+    bias = np.linalg.solve(delta_grav_matrix, delta_norm_square)
 
     return bias
 
@@ -307,9 +300,7 @@ def calculate_forces_moments(
         * masse
         * 9.81
         * np.dot(np.transpose(wheel_ref_delsys[:3, :3]), ref_grav)
-    )  # Est-ce que ref_grav doit être normaliser (je crois que oui?), sinon,
-    # on a la norme de la gravité deux fois dans l'équation...le biais n'est
-    # pas en quelque sorte déjà inclu ?
+    )
 
     f2 = (
         -1
@@ -320,7 +311,7 @@ def calculate_forces_moments(
 
     forces = f1 + f2
     moments = np.cross(f1, force_application_point) + np.cross(
-        (f1 + f2), np.array([[0], [0], [H]])
-    )  # le moment de f1 n'est pas calculé deux fois avec H ???
+        f2, np.array([[0], [0], [H]])
+    )
 
     return forces, moments
