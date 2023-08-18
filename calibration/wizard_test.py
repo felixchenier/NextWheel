@@ -1,8 +1,28 @@
+"""
+The module is a python wizard that guide through the wheel calibration.
+
+Form the trials dictionary and perform calculations of the calibration matrix.
+In the end of the calibration, trials should look like below.
+
+trials = {"StaticDelsysTrial1": dictionary extracted from the nextwheel module,
+          "StaticDelsysTrial2": dictionary extracted from the nextwheel module,
+          "DynamicTrial": dictionary extracted from the nextwheel module,
+          "GravityTrial1": {dictionary extracted from the nextwheel module,
+                            "Mass" : float (in kg),
+                            "Angle": float (in degree),
+                            "MassApplicationPosition": np.ndarray(1,3)}
+          "GravityTrial2": {dictionary extracted from the nextwheel module,
+                            "Mass" : float (in kg),
+                            "Angle": float (in degree),
+                            "MassApplicationPosition": np.ndarray(1,3)}
+          etc.}
+
+"""
+
 import tkinter as tk
-import tkinter.ttk as ttk
-from PIL import ImageTk, Image
 import limitedinteraction as li
 from time import sleep
+import wheelcalibration as wc
 
 # from nextwheel import NextWheel
 
@@ -10,9 +30,11 @@ from time import sleep
 class wizard:
     def __init__(self):
         self.trials = {}
-        self.nb_force_trial = 0
+
+        self.nb_gravity_trial = 0
         self.step_number = 0
         self.progression = 0
+        self.is_done = False
 
         # Create root window
 
@@ -23,8 +45,8 @@ class wizard:
 
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
-        height = 700
         width = 800
+        height = 700
         self.root.resizable(False, False)
         center_x = int((screen_width - width) / 2)
         center_y = int((screen_height - height) / 2)
@@ -82,6 +104,76 @@ class wizard:
 
         if self.progression < self.step_number:
             self.progression += 1
+            self.next_button.pack()
+        elif self.progression == 4 and self.nb_gravity_trial > 5:
+            self.is_done = True
+
+        if self.step_number == 4:
+            self.nb_gravity_trial += 1
+            self.trials[
+                self.trial_name
+            ] = {}  # À enlever lorsque nextwheel va être inclu ?
+            self.trials[self.trial_name]["Mass"] = float(self.mass_entry.get())
+            self.trials[self.trial_name]["Angle"] = float(
+                self.angle_entry.get()
+            )
+
+    def back_measure_next_button(
+        self,
+        back_command,
+        measure_command,
+        next_command,
+    ):
+        """
+        Create and place the back, measure and next buttons on windows.
+
+        Parameters
+        ----------
+        back_command : func
+            Action of the back button.
+        measure_command : func
+            Action of the measure button.
+        next_command : func
+            Action of the next button.
+
+        Returns
+        -------
+        None.
+
+        """
+        self.botom_left_frame = tk.Frame(self.root)
+        self.botom_left_frame.place(relx=0.02, rely=0.98, anchor="sw")
+
+        back_button = tk.Button(
+            self.botom_left_frame,
+            font=8,
+            text="Back",
+            command=back_command,
+        )
+        back_button.pack()
+
+        self.botom_frame = tk.Frame(self.root)
+        self.botom_frame.place(relx=0.5, rely=0.98, anchor="s")
+
+        self.measure_button = tk.Button(
+            self.botom_frame,
+            font=8,
+            text="Measure",
+            command=measure_command,
+        )
+        self.measure_button.pack()
+
+        self.botom_right_frame = tk.Frame(self.root)
+        self.botom_right_frame.place(relx=0.98, rely=0.98, anchor="se")
+
+        self.next_button = tk.Button(
+            self.botom_right_frame,
+            font=8,
+            text="Next",
+            command=next_command,
+        )
+
+        if self.progression >= self.step_number:
             self.next_button.pack()
 
     def get_id_page(self):
@@ -154,56 +246,35 @@ class wizard:
         self.root.title("Step 1 : First static measure")
 
         self.top_frame = tk.Frame(self.root)
-        self.top_frame.place(relx=0.5, rely=0.1, anchor="center")
+        self.top_frame.place(relx=0.5, rely=0.05, anchor="center")
 
         label = tk.Label(
             self.top_frame,
             text="Place the wheel like in the picture below",
             font=8,
         )
-        label.pack()
+        label.grid(column=0, row=0)
+        # label.pack()
 
         label2 = tk.Label(
             self.top_frame,
-            text="Click on 'Measure' when ready",
+            text="Click 'Measure' when ready and 'Next' when finish.",
             font=8,
         )
-        label2.pack()
+        label2.grid(column=0, row=1)
+        # label2.pack()
 
-        self.botom_left_frame = tk.Frame(self.root)
-        self.botom_left_frame.place(relx=0.1, rely=0.9, anchor="sw")
+        # insert image
 
-        back_button = tk.Button(
-            self.botom_left_frame,
-            font=8,
-            text="Back",
-            command=self.get_id_page,
-        )
-        back_button.pack()
+        image = tk.PhotoImage(file="test.png")
+        image_label = tk.Label(self.root, image=image)
+        image_label.place(relx=0.5, rely=0.5, anchor="center")
 
-        self.botom_frame = tk.Frame(self.root)
-        self.botom_frame.place(relx=0.5, rely=0.9, anchor="s")
-
-        self.measure_button = tk.Button(
-            self.botom_frame,
-            font=8,
-            text="Measure",
-            command=self.measure_data,
-        )
-        self.measure_button.pack()
-
-        self.botom_right_frame = tk.Frame(self.root)
-        self.botom_right_frame.place(relx=0.9, rely=0.9, anchor="se")
-
-        self.next_button = tk.Button(
-            self.botom_right_frame,
-            font=8,
-            text="Next",
-            command=self.get_step2,
+        self.back_measure_next_button(
+            self.get_id_page, self.measure_data, self.get_step2
         )
 
-        if self.progression >= self.step_number:
-            self.next_button.pack()
+        tk.mainloop()
 
     def get_step2(self):
         """
@@ -224,7 +295,7 @@ class wizard:
         self.root.title("Step 2 : Second static measure")
 
         self.top_frame = tk.Frame(self.root)
-        self.top_frame.place(relx=0.5, rely=0.1, anchor="center")
+        self.top_frame.place(relx=0.5, rely=0.05, anchor="center")
 
         label = tk.Label(
             self.top_frame,
@@ -235,45 +306,14 @@ class wizard:
 
         label2 = tk.Label(
             self.top_frame,
-            text="Click on 'Measure' when ready",
+            text="Click 'Measure' when ready and 'Next' when finish.",
             font=8,
         )
         label2.pack()
 
-        self.botom_left_frame = tk.Frame(self.root)
-        self.botom_left_frame.place(relx=0.1, rely=0.9, anchor="sw")
-
-        back_button = tk.Button(
-            self.botom_left_frame,
-            font=8,
-            text="Back",
-            command=self.get_step1,
+        self.back_measure_next_button(
+            self.get_step1, self.measure_data, self.get_step3
         )
-        back_button.pack()
-
-        self.botom_frame = tk.Frame(self.root)
-        self.botom_frame.place(relx=0.5, rely=0.9, anchor="s")
-
-        self.measure_button = tk.Button(
-            self.botom_frame,
-            font=8,
-            text="Measure",
-            command=self.measure_data,
-        )
-        self.measure_button.pack()
-
-        self.botom_right_frame = tk.Frame(self.root)
-        self.botom_right_frame.place(relx=0.9, rely=0.9, anchor="se")
-
-        self.next_button = tk.Button(
-            self.botom_right_frame,
-            font=8,
-            text="Next",
-            command=self.get_step3,
-        )
-
-        if self.progression >= self.step_number:
-            self.next_button.pack()
 
     def get_step3(self):
         """
@@ -293,7 +333,7 @@ class wizard:
         self.root.title("Step 3 : Dynamic measure")
 
         self.top_frame = tk.Frame(self.root)
-        self.top_frame.place(relx=0.5, rely=0.1, anchor="center")
+        self.top_frame.place(relx=0.5, rely=0.05, anchor="center")
 
         label = tk.Label(
             self.top_frame,
@@ -304,48 +344,64 @@ class wizard:
 
         label2 = tk.Label(
             self.top_frame,
-            text="Click on 'Measure' when ready",
+            text="Click 'Measure' when ready and 'Next' when finish.",
             font=8,
         )
         label2.pack()
 
-        self.botom_left_frame = tk.Frame(self.root)
-        self.botom_left_frame.place(relx=0.1, rely=0.9, anchor="sw")
-
-        back_button = tk.Button(
-            self.botom_left_frame,
-            font=8,
-            text="Back",
-            command=self.get_step2,
-        )
-        back_button.pack()
-
-        self.botom_frame = tk.Frame(self.root)
-        self.botom_frame.place(relx=0.5, rely=0.9, anchor="s")
-
-        self.measure_button = tk.Button(
-            self.botom_frame,
-            font=8,
-            text="Measure",
-            command=self.measure_data,
-        )
-        self.measure_button.pack()
-
-        self.botom_right_frame = tk.Frame(self.root)
-        self.botom_right_frame.place(relx=0.9, rely=0.9, anchor="se")
-
-        self.next_button = tk.Button(
-            self.botom_right_frame,
-            font=8,
-            text="Next",
-            command=self.get_step4,
+        self.back_measure_next_button(
+            self.get_step2, self.measure_data, self.get_step4
         )
 
-        if self.progression >= self.step_number:
-            self.next_button.pack()
+    def get_step4(
+        self,
+    ):  # Ajouter une étape avant qui explique comment placer la roue ?
+        self.step_number = 4
+        self.clear()
+        self.trial_name = f"GravityTrial{self.nb_gravity_trial+1}"
 
-    def get_step4(self):
-        print("ok")
+        self.root.title("Step 4 : Gravity measure")
+
+        self.top_frame = tk.Frame(self.root)
+        self.top_frame.place(relx=0.5, rely=0.80, anchor="center")
+
+        label_mass = tk.Label(
+            self.top_frame,
+            text="Enter the mass value",
+            font=8,
+        )
+        label_mass.grid(column=0, row=0)
+
+        mass_unity = tk.Label(
+            self.top_frame,
+            text="in kg",
+            font=8,
+        )
+        mass_unity.grid(column=2, row=0)
+
+        angle_unity = tk.Label(
+            self.top_frame,
+            text="in degree",
+            font=8,
+        )
+        angle_unity.grid(column=2, row=1)
+
+        label_angle = tk.Label(
+            self.top_frame,
+            text="Enter the angle position",
+            font=8,
+        )
+        label_angle.grid(column=0, row=1)
+
+        self.mass_entry = tk.Entry(self.top_frame, borderwidth=5, font=8)
+        self.mass_entry.grid(column=1, row=0)
+
+        self.angle_entry = tk.Entry(self.top_frame, borderwidth=5, font=8)
+        self.angle_entry.grid(column=1, row=1)
+
+        self.back_measure_next_button(
+            self.get_step3, self.measure_data, self.get_step4
+        )
 
 
 w = wizard()

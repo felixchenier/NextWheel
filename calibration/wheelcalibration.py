@@ -147,7 +147,7 @@ def get_z_axis_delsys_on_wheel(
         re-normalized.
 
     """
-    omega_dynamic -= np.tile(gyro_bias, (np.size(omega_dynamic, axis=0), 1))
+    omega_dynamic -= np.tile(gyro_bias, (np.shape(omega_dynamic)[0], 1))
     z_axis = normalize_vector(
         np.median(normalize_vector(omega_dynamic), axis=0)
     )
@@ -248,7 +248,7 @@ def calculate_calibration_matrix(FM: np.ndarray, V: np.ndarray) -> np.ndarray:
     return np.transpose(AT)
 
 
-def calculate_forces_moments(
+def calculate_forces_moments(  # probably gonna rewrite
     theta: float,
     acc_static: np.ndarray,
     acc_bias: np.ndarray,
@@ -291,7 +291,7 @@ def calculate_forces_moments(
     force_application_point = np.nadarray((3, 1))
     force_application_point[0] = 0.5 * D * np.cos(np.pi * theta / 180)
     force_application_point[1] = 0.5 * D * np.sin(np.pi * theta / 180)
-    force_application_point[2] = H
+    force_application_point[2] = H  # H or -H ?
 
     ref_grav = normalize_vector(np.median(acc_static - acc_bias, axis=0))
 
