@@ -14,20 +14,95 @@ from typing import Tuple
 
 class GlobalConfig:
     """
-    Global configuration of the instrumented wheel. This will be used to store data current configuration
+    Global configuration of the instrumented wheel. This will be used to store current configuration
     and calculate conversions from raw data.
     """
     def __init__(self):
-        self.adc_v_ref = 4.096
-        self.adc_in_max = 1.25 * self.adc_v_ref
-        self.adc_in_min = -1.25 * self.adc_v_ref
+        # IMU CONFIG
+        self.accel_range = 16
+        self.gyro_range = 2000
+        self.mag_range = 2500
+        self.imu_rate = 1000
+
+        # ADC CONFIG
+        self.adc_rate = 1000
+
+        # ACCORDING TO ADS8688 DATASHEET
+        self._adc_v_ref = 4.096
+        # ADC RANGING from [-5,5] V according to PCB design
+        self._adc_in_max = 1.25 * self._adc_v_ref
+        self._adc_in_min = -1.25 * self._adc_v_ref
+
+        # ACCORDING TO BMX160 DATASHEET
+        self._gravity_earth = 9.80665
+        self._accel_mg_lsb_2g = 0.000061035
+        self._accel_mg_lsb_4g = 0.000122070
+        self._accel_mg_lsb_8g = 0.000244141
+        self._accel_mg_lsb_16g = 0.000488281
+        self._gyro_sensitivity_125dps = 0.0038110
+        self._gyro_sensitivity_250dps = 0.0076220
+        self._gyro_sensitivity_500dps = 0.0152439
+        self._gyro_sensitivity_1000dps = 0.0304878
+        self._gyro_sensitivity_2000dps = 0.0609756
+        self._mag_ut_lsb = 0.3
+
+    def update_config(self, accel_range: int, gyro_range: int, mag_range: int,  imu_rate: int, adc_rate: int):
+        self.accel_range = accel_range
+        self.gyro_range = gyro_range
+        self.mag_range = mag_range
+        self.imu_rate = imu_rate
+        self.adc_rate = adc_rate
 
     def convert_adc_values(self, values: Tuple[int]) -> Tuple[float]:
         return tuple(self.convert_adc_value(value) for value in values)
 
     def convert_adc_value(self, value: int) -> float:
         # This is according to the 86888 datasheet
-        return float(value) * (self.adc_in_max - self.adc_in_min) / 65535. + self.adc_in_min
+        return float(value) * (self._adc_in_max - self._adc_in_min) / 65535. + self._adc_in_min
+
+    def convert_accel_values(self, values: Tuple[int]) -> Tuple[float]:
+        return tuple(self.convert_accel_value(value) for value in values)
+
+    def convert_accel_value(self, values: int) -> float:
+        if self.accel_range == 2:
+            return float(values) * self._accel_mg_lsb_2g * self._gravity_earth
+        elif self.accel_range == 4:
+            return float(values) * self._accel_mg_lsb_4g * self._gravity_earth
+        elif self.accel_range == 8:
+            return float(values) * self._accel_mg_lsb_8g * self._gravity_earth
+        elif self.accel_range == 16:
+            return float(values) * self._accel_mg_lsb_16g * self._gravity_earth
+        else:
+            print('Invalid accel range')
+            return 0
+
+    def convert_gyro_values(self, values: Tuple[int]) -> Tuple[float]:
+        return tuple(self.convert_gyro_value(value) for value in values)
+
+    def convert_gyro_value(self, values: int) -> float:
+        if self.gyro_range == 125:
+            return float(values) * self._gyro_sensitivity_125dps
+        elif self.gyro_range == 250:
+            return float(values) * self._gyro_sensitivity_250dps
+        elif self.gyro_range == 500:
+            return float(values) * self._gyro_sensitivity_500dps
+        elif self.gyro_range == 1000:
+            return float(values) * self._gyro_sensitivity_1000dps
+        elif self.gyro_range == 2000:
+            return float(values) * self._gyro_sensitivity_2000dps
+        else:
+            print('Invalid gyro range')
+            return 0
+
+    def convert_mag_values(self, values: Tuple[int]) -> Tuple[float]:
+        return tuple(self.convert_mag_value(value) for value in values)
+
+    def convert_mag_value(self, values: int) -> float:
+        if self.mag_range == 2500:
+            return float(values) * self._mag_ut_lsb
+        else:
+            print('Invalid mag range')
+            return 0
 
 
 class NextWheel:
@@ -106,8 +181,14 @@ class NextWheel:
 
         elif frame_type == 3:  # frame type of the IMU
             if len(message) == 18:
+                # Converting to m/s^2, deg/s and uT
+                acc_values = self._config.convert_accel_values(struct.unpack_from("<3h", message[:6]))
+                gyro_values = self._config.convert_gyro_values(struct.unpack_from("<3h", message[6:12]))
+                mag_values = self._config.convert_mag_values(struct.unpack_from("<3h", message[12:18]))
+
+                # NOTE + will concat the tuples
                 self._imu_values.append(
-                    (time, struct.unpack_from("<9h", message))
+                    (time, acc_values + gyro_values + mag_values)
                 )
 
                 if len(self._imu_values) > self.max_imu_samples:
@@ -215,9 +296,10 @@ class NextWheel:
                 self.TIME_ZERO = timestamp / 1e6
 
                 if len(message[10:]) == 20:
-                    self._config_values = struct.unpack_from(
-                        "<5I", message[10:]
-                    )
+                    (accel_range, gyro_range, mag_range, imu_sampling_rate, adc_sampling_rate) = \
+                        struct.unpack_from("<5I", message[10:])
+
+                    self._config.update_config(accel_range, gyro_range, mag_range, imu_sampling_rate, adc_sampling_rate)
 
             if frame_type == 255:
                 self.__parse_superframe(message[10:], data_size)
