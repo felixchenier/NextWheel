@@ -7,8 +7,7 @@
 class ADCDataFrame : public DataFrame
 {
 public:
-    // NOTE : We are only using 6 out of 8 channels
-    const static size_t NUM_ADC_CHANNELS = 6;
+    const static size_t NUM_ADC_CHANNELS = 8;
     const static size_t ADC_DATA_FRAME_SIZE = NUM_ADC_CHANNELS * sizeof(uint16_t);
 
     ADCDataFrame(uint64_t timestamp = DataFrame::getCurrentTimeStamp());

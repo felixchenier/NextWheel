@@ -9,6 +9,25 @@ import websocket
 import struct
 import threading
 import numpy as np
+from typing import Tuple
+
+
+class GlobalConfig:
+    """
+    Global configuration of the instrumented wheel. This will be used to store data current configuration
+    and calculate conversions from raw data.
+    """
+    def __init__(self):
+        self.adc_v_ref = 4.096
+        self.adc_in_max = 1.25 * self.adc_v_ref
+        self.adc_in_min = -1.25 * self.adc_v_ref
+
+    def convert_adc_values(self, values: Tuple[int]) -> Tuple[float]:
+        return tuple(self.convert_adc_value(value) for value in values)
+
+    def convert_adc_value(self, value: int) -> float:
+        # This is according to the 86888 datasheet
+        return float(value) * (self.adc_in_max - self.adc_in_min) / 65535. + self.adc_in_min
 
 
 class NextWheel:
@@ -39,11 +58,17 @@ class NextWheel:
         self.IP = IP
         self.HEADER_LENGTH = HEADER_LENGTH
         self.TIME_ZERO = 0
-
+        self.max_imu_samples = 0
+        self.max_analog_samples = 0
+        self.max_encoder_samples = 0
+        self.max_power_samples = 0
+        self.ws = None
         self._adc_values = []
         self._imu_values = []
         self._power_values = []
         self._encoder_values = []
+        self._mutex = threading.Lock()
+        self._config = GlobalConfig()
 
     def __extract_values(self, frame_type: int, message: bytes, time: float):
         """
@@ -71,18 +96,18 @@ class NextWheel:
 
         """
         if frame_type == 2:  # frame type of the ADC values
-            if len(message) == 32:
+            if len(message) == 16:
                 self._adc_values.append(
-                    (time, struct.unpack_from("<8f", message))
+                    (time, self._config.convert_adc_values(struct.unpack_from("<8H", message)))
                 )
 
                 if len(self._adc_values) > self.max_analog_samples:
                     self._adc_values.pop(0)
 
         elif frame_type == 3:  # frame type of the IMU
-            if len(message) == 36:
+            if len(message) == 18:
                 self._imu_values.append(
-                    (time, struct.unpack_from("<9f", message))
+                    (time, struct.unpack_from("<9h", message))
                 )
 
                 if len(self._imu_values) > self.max_imu_samples:
@@ -169,6 +194,9 @@ class NextWheel:
         None.
 
         """
+
+        self._mutex.acquire()
+
         if type(message) is bytes:
             (frame_type, timestamp, data_size) = struct.unpack_from(
                 "<BQB", message[0:10]
@@ -193,6 +221,8 @@ class NextWheel:
 
             if frame_type == 255:
                 self.__parse_superframe(message[10:], data_size)
+
+        self._mutex.release()
 
     def __on_open(self, ws):
         """Reaction of the WebSocketApp when the connection is open."""
@@ -263,6 +293,9 @@ class NextWheel:
                 - Encoder values
                 - Power values
         """
+
+        self._mutex.acquire()
+
         n_adc_values = len(self._adc_values)
         local_adc_values = [
             self._adc_values.pop(0) for _ in range(n_adc_values)
@@ -282,6 +315,8 @@ class NextWheel:
         local_power_values = [
             self._power_values.pop(0) for _ in range(n_power_values)
         ]
+
+        self._mutex.release()
 
         data = {
             "IMU": {
