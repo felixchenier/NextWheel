@@ -65,12 +65,13 @@ Once a WebSocket connection is established, the client and server exchange data 
 ### WebSocket Binary Message Format
 
 > Note 1: Bytes are ordered little endian (lsb first)
+> Note 2: Protocol optimized for more efficiency using raw data instead. Conversions need to occur in client code.
 
 | TYPE (uint8)   | TIMESTAMP (uint64)   | DATA SIZE (uint8)   | DATA (variable byte(s)) |
 |----------------|----------------------|---------------------|-------------------------|
 | 0=UNKNOWN      | INVALID              | 0 BYTE              | NONE                    |
 | 1=CONFIG       | UNIX MICROSECONDS    | 20 BYTES            | 5x UINT32 (See [ConfigData](lib/NextWheel/src/config/GlobalConfig.h)) |
-| 2=ADC          | UNIX MICROSECONDS    | 32 BYTES            | 8 CH x FLOAT32 (See [ADCDataFrame](lib/NextWheel/src/data/ADCDataFrame.h)) |
+| 2=ADC          | UNIX MICROSECONDS    | 12 BYTES            | 6 CH x UINT16 (See [ADCDataFrame](lib/NextWheel/src/data/ADCDataFrame.h)) |
 | 3=IMU          | UNIX MICROSECONDS    | 36 BYTES            | 9 FLOAT32 (AX,AY,AZ, GX,GY,GZ, MX,MY,MZ) (See [IMUDataFrame](lib/NextWheel/src/data/IMUDataFrame.h)) |
 | 4=POWER        | UNIX MICROSECONDS    | 13 BYTES            | 3 FLOAT32 (V,I,P) + FLAGS (uint8) (See [PowerDataFrame](lib/NextWheel/src/data/PowerDataFrame.h)) |
 | 5=RTC          | UNIX MICROSECONDS    | NOT IMPLEMENTED YET | NONE                    |
@@ -79,3 +80,11 @@ Once a WebSocket connection is established, the client and server exchange data 
 | 255=SUPERFRAME | UNIX MICROSECONDS    | NB INCLUDED FRAMES  | VARIABLE NUMBER OF FULL FRAMES |
 
 > Note 2: To avoid sending small packets with high overhead ratio (data size small vs websocket overhead), the [WebSocketServerTask](src/tasks/WebSocketServerTask.h) sends periodic superframes of type 255 at a rate of 20Hz, wich is the aggregation of all accumulated frames in a 50ms period. This allows to maximize the bandwidth and minimize the TCP/IP embedded stack overhead. Every data frame is timstamped, so we can recover all data chronologically.
+
+### ADC VALUE CONVERSION
+
+VREF = 4.096V
+RANGE (R1) = -1.25/+1.25
+out_max = 1.25 * VREF
+out_min = -1.25 * VREF
+CONVERSION = (float)x * (out_max - out_min) / 65535. + out_min;

@@ -7,8 +7,9 @@
 class ADCDataFrame : public DataFrame
 {
 public:
-    const static size_t NUM_ADC_CHANNELS = 8;
-    const static size_t ADC_DATA_FRAME_SIZE = NUM_ADC_CHANNELS * sizeof(float);
+    // NOTE : We are only using 6 out of 8 channels
+    const static size_t NUM_ADC_CHANNELS = 6;
+    const static size_t ADC_DATA_FRAME_SIZE = NUM_ADC_CHANNELS * sizeof(uint16_t);
 
     ADCDataFrame(uint64_t timestamp = DataFrame::getCurrentTimeStamp());
 
@@ -18,14 +19,14 @@ public:
 
     virtual DataFrame* clone() const override;
 
-    float getChannelValue(uint8_t channel);
+    uint16_t getChannelValue(uint8_t channel);
 
-    void setChannelValue(uint8_t channel, float value);
+    void setChannelValue(uint8_t channel, uint16_t value);
 
     virtual void print() override;
 
 private:
-    float m_data[NUM_ADC_CHANNELS];
+    uint16_t m_data[NUM_ADC_CHANNELS];
 };
 
 #endif  // _ADC_DATA_FRAME_H_
