@@ -37,6 +37,13 @@ void WebSocketServerTask::run(void* app)
             else if (param == "set_time")
             {
                 NextWheelApp::instance()->setTime(message);
+
+                //Printing current time
+                struct timeval current_time;
+                gettimeofday(&current_time, NULL);
+                struct tm* time_info = localtime(&current_time.tv_sec);
+                Serial.print("Current time: ");
+                Serial.println(String(asctime(time_info)));
             }
         });
 
