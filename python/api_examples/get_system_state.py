@@ -7,7 +7,9 @@ if __name__ == "__main__":
     nw = NextWheel("10.0.1.2")
     # nw.connect()
 
-    # Set device to current time (unix time)
-    ret = nw.set_time(str(int(datetime.now().timestamp())))
-    print(f'set_time returned code: {ret.status_code} text: {ret.text}')
+    # Get system state
+    ret = nw.get_system_state()
+    if ret.status_code == 200:
+        print(f'get_system_state returned code: {ret.status_code} json:', ret.json())
+
     # nw.close()

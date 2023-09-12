@@ -483,3 +483,32 @@ class NextWheel:
         """
         response = requests.get(f"http://{self.IP}/config")
         return response
+
+    def get_system_state(self) -> requests.Response:
+        """
+        Get the system state of the instrumented wheel.
+        :return:
+        response: requests.Response
+        """
+        response = requests.get(f"http://{self.IP}/system_state")
+        return response
+
+    def start_recording(self) -> requests.Response:
+        """
+        Start recording data on the instrumented wheel.
+        :return:
+        response: requests.Response
+        """
+        response = requests.get(f"http://{self.IP}/start_recording")
+        return response
+
+    def stop_recording(self) -> requests.Response:
+        """
+        Stop recording data on the instrumented wheel.
+        :return:
+        response: requests.Response
+        """
+        response = requests.get(f"http://{self.IP}/stop_recording")
+        return response
+
+

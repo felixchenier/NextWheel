@@ -614,8 +614,8 @@ void WebSocketServer::setupRESTAPI()
             }
             request->send(ret_code, "text/plain", ret_msg);
         });
+
     // URL: /config
- // URL: /config_update
     m_server.on(
         "/config",
         HTTP_GET,
@@ -624,7 +624,6 @@ void WebSocketServer::setupRESTAPI()
             Serial.println("get: /config");
 
             cJSON *root=cJSON_CreateObject();
-            cJSON_AddNumberToObject(root, "recording", SystemState::instance().getState().recording);
             cJSON_AddNumberToObject(root, "accelerometer_precision", GlobalConfig::instance().get_accel_range());
             cJSON_AddNumberToObject(root, "gyrometer_precision", GlobalConfig::instance().get_gyro_range());
             cJSON_AddNumberToObject(root, "imu_sampling_rate", GlobalConfig::instance().get_imu_sample_rate());
@@ -639,9 +638,82 @@ void WebSocketServer::setupRESTAPI()
             request->send(200, "application/json", json);
         });
 
+    // URL: /state
+    m_server.on(
+        "/system_state",
+        HTTP_GET,
+        [this](AsyncWebServerRequest* request)
+        {
+            Serial.println("get: /system_state");
+
+            cJSON *root=cJSON_CreateObject();
+            cJSON_AddNumberToObject(root, "recording", SystemState::instance().getState().recording);
+            cJSON_AddNumberToObject(root, "streaming", SystemState::instance().getState().streaming);
+            cJSON_AddStringToObject(root, "filename", SystemState::instance().getState().filename.c_str());
+            String json(cJSON_Print(root));
+
+            //Free memory
+            cJSON_free(root);
+
+            Serial.println(json);
+
+            request->send(200, "application/json", json);
+        });
 
     // URL: /start_recording
+    m_server.on(
+        "/start_recording",
+        HTTP_GET,
+        [this](AsyncWebServerRequest* request)
+        {
+            Serial.println("get: /start_recording");
+            int ret_code = 200;
+            String ret_msg = "OK";
+
+            if (SystemState::instance().getState().recording)
+            {
+                // Already recording
+                ret_code = 400;
+                ret_msg = "Already recording";
+            }
+            else
+            {
+                sendMessageEvent("recording", "start_recording");
+                //TODO record file name ?
+            }
+
+            request->send(ret_code, "text/plain", ret_msg);
+        });
+
+
+
     // URL: /stop_recording
+    m_server.on(
+        "/stop_recording",
+        HTTP_GET,
+        [this](AsyncWebServerRequest* request)
+        {
+            Serial.println("get: /stop_recording");
+            int ret_code = 200;
+            String ret_msg = "OK";
+
+            if (SystemState::instance().getState().recording)
+            {
+                 sendMessageEvent("recording", "stop_recording");
+
+            }
+            else
+            {
+                // Not recording
+                ret_code = 400;
+                ret_msg = "Not recording";
+            }
+
+            request->send(ret_code, "text/plain", ret_msg);
+        });
+
+
+
     // URL: /file_list
     // URL: /file_delete
     // URL: /file_download
