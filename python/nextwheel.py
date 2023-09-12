@@ -520,5 +520,22 @@ class NextWheel:
         response = requests.get(f"http://{self.IP}/file_list")
         return response
 
+    def file_download(self, filename: str, save_path: str, base_url: str = '/file_download') -> int:
+        """
+        Download a file from the instrumented wheel.
+        :param filename: The filename to download
+        :param save_path: Full path to save the file
+        :param base_url: Base url to download the file, default is /file_download
+        :return:
+            int: The size of the file
+        """
+        response = requests.get(f"http://{self.IP}{base_url}/{filename}")
+        if response.status_code == 200:
+            with open(save_path, 'wb') as f:
+                f.write(response.content)
+                # Return size...
+                return f.tell()
 
+        # filed download
+        return 0
 
