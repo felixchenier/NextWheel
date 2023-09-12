@@ -21,7 +21,7 @@
 #define PIN_SPI_MISO 19
 #define PIN_SPI_CLK  18
 #define PIN_SPI_CS1  5
-#define PIN_SPI_CS2  25  // WARNING - patch on prototype PCB
+#define PIN_SPI_CS2  25  // WARNING - patch on prototype PCB v1
 
 // SD Card 4 bits not on all default pins, SDMMC (SLOT1)
 // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/sdmmc_host.html
@@ -49,7 +49,7 @@
 
 // ENCODERS
 #define PIN_QUAD_ENCODER_A 35
-#define PIN_QUAD_ENCODER_B 34 // TODO - patch on prototype PCB, was on 0 initially
+#define PIN_QUAD_ENCODER_B 34 // WARNING - patch on prototype PCB v2, was on 0 initially
 
 // I2S
 #define PIN_I2S_SDATA    33

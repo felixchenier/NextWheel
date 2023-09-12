@@ -561,17 +561,17 @@ void WebSocketServer::setupRESTAPI()
                 AsyncWebParameter* p = request->getParam(i);
                 Serial.printf("_POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
 
-                if (p->isPost())
+                //if (p->isPost())
+                //{
+                if (p->name() == String("time"))
                 {
-                    if (p->name() == String("time"))
-                    {
-                        String time = p->value();
-                        sendMessageEvent("set_time", time);
-                    }
+                    String time = p->value();
+                    sendMessageEvent("set_time", time);
                 }
-                else {
-                    Serial.println("Not a post");
-                }
+//}
+               // else {
+                //    Serial.println("Not a post");
+                //}
             }
 
             request->send(200, "text/plain", "OK");
