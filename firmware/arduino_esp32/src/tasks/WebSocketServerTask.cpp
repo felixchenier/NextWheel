@@ -21,8 +21,8 @@ void WebSocketServerTask::run(void* app)
     m_server.onMessage(
         [this](String param, String message)
         {
-            // Serial.println("WebSocketServerTask::onMessage");
-            // Serial.print("Param: ");Serial.print(param);Serial.print(" Message: ");Serial.println(message);
+            Serial.println("WebSocketServerTask::onMessage");
+            Serial.print("Param: ");Serial.print(param);Serial.print(" Message: ");Serial.println(message);
             if (param == "recording")
             {
                 if (message == "start_recording")

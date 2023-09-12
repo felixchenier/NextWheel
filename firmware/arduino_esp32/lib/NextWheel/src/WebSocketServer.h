@@ -35,6 +35,7 @@ private:
     void setupNotFound();
     void setupPostForm();
     void setupConfigPostForm();
+    void setupRESTAPI();
 
     void sendMessageEvent(String param, String message);
     void onWsEvent(

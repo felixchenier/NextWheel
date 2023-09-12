@@ -31,14 +31,17 @@ void WebSocketServer::begin(const GlobalConfig::ConfigData &configData)
     // Setup the websocket
     setupWebSocket();
 
+    // Setup REST API
+    setupRESTAPI();
+
     // Setup static routes
-    setupStaticRoutes();
+    // setupStaticRoutes();
 
     // Setup post request
-    setupPostForm();
+    // setupPostForm();
 
     // Setup config post request
-    setupConfigPostForm();
+    // setupConfigPostForm();
 
     // Setup not found
     setupNotFound();
@@ -62,6 +65,7 @@ void WebSocketServer::setupWebSocket()
 
 void WebSocketServer::onMessage(WebSocketServerMessageEventHandler handler)
 {
+    Serial.print("WebSocketServer::onMessage: ");
     m_messageHandler = handler;
 }
 
@@ -376,9 +380,13 @@ void WebSocketServer::sendToAll(const uint8_t* data, size_t size)
 
 void WebSocketServer::sendMessageEvent(String param, String message)
 {
+    Serial.print("WebSocketServer::sendMessageEvent: ");
     if (m_messageHandler)
     {
         m_messageHandler(param, message);
+    }
+    else{
+        Serial.println("No message handler");
     }
 }
 
@@ -536,4 +544,36 @@ void WebSocketServer::registerWebsocketConnectedHandler(WebSocketServerWebsocket
 void WebSocketServer::registerWebsocketDisconnectedHandler(WebSocketServerWebsocketDisconnectedHandler handler)
 {
     m_websocketDisconnectedHandler = handler;
+}
+
+void WebSocketServer::setupRESTAPI()
+{
+    m_server.on(
+        "/config_set_time",
+        HTTP_POST,
+        [this](AsyncWebServerRequest* request)
+        {
+            Serial.println("setupConfigPostForm: /config_set_time");
+
+            int params = request->params();
+            for (auto i = 0; i < params; i++)
+            {
+                AsyncWebParameter* p = request->getParam(i);
+                Serial.printf("_POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
+
+                if (p->isPost())
+                {
+                    if (p->name() == String("time"))
+                    {
+                        String time = p->value();
+                        sendMessageEvent("set_time", time);
+                    }
+                }
+                else {
+                    Serial.println("Not a post");
+                }
+            }
+
+            request->send(200, "text/plain", "OK");
+        });
 }

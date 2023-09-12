@@ -10,6 +10,7 @@ import struct
 import threading
 import numpy as np
 from typing import Tuple
+import requests
 
 
 class GlobalConfig:
@@ -436,3 +437,19 @@ class NextWheel:
 
         """
         self.ws.close()
+
+    def set_time(self, unix_time: int):
+        """
+        Set the time of the instrumented wheel.
+
+        Parameters
+        ----------
+        unix_time : int
+            Unix time in seconds.
+
+        Returns
+        -------
+        None.
+
+        """
+        requests.post(f"http://{self.IP}/config_set_time", params={"time": unix_time})

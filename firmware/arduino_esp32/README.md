@@ -61,7 +61,7 @@ Default address : 0x40
 
 ADS8688  IDBTR
 
-### WiFi / WebSocket Protocol
+## WiFi / WebSocket Protocol
 
 Once a WebSocket connection is established, the client and server exchange data via the WebSocket protocol in binary format : application messages, using the HTTP protocol, are split into one or more frames, adding a little overhead that needs to be considered, especially if we send small amount of data at once.
 
@@ -183,4 +183,7 @@ class GlobalConfig:
 
 ### POWER VALUE CONVERSION
 
-Values are already converted on device. Size optimization of the binary stream was not very practical and useful for those values.
+Values are already converted on device. Size optimization of the binary stream was not very practical and useful for those low bandwidth values.
+
+
+## REST API

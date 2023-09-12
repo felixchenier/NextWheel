@@ -2,6 +2,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from nextwheel import NextWheel
+from datetime import datetime
 
 # ADC_LOG_FILENAME = "log_adc.csv"
 # IMU_LOG_FILENAME = "log_imu.csv"
@@ -120,6 +121,9 @@ if __name__ == "__main__":
     # websocket.enableTrace(True)  # Uncomment to print all received data
     nw = NextWheel("10.0.1.2")
     nw.connect()
+
+    # Set device to current time (unix time)
+    nw.set_time(str(int(datetime.now().timestamp())))
 
     ani = FuncAnimation(fig, update_plots, interval=100)
     plt.show()
