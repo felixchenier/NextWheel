@@ -5,7 +5,7 @@
 #include <sys/time.h>
 #include <config/GlobalConfig.h>
 #include <state/SystemState.h>
-
+#include <cJSON.h>
 
 
 WebSocketServer::WebSocketServer() : m_server(80), m_ws("/ws") {}
@@ -548,12 +548,40 @@ void WebSocketServer::registerWebsocketDisconnectedHandler(WebSocketServerWebsoc
 
 void WebSocketServer::setupRESTAPI()
 {
+    // URL: /config_set_time
     m_server.on(
         "/config_set_time",
         HTTP_POST,
         [this](AsyncWebServerRequest* request)
         {
-            Serial.println("setupConfigPostForm: /config_set_time");
+            Serial.println("post: /config_set_time");
+            int ret_code = 200;
+            String ret_msg = "OK";
+
+            int params = request->params();
+            for (auto i = 0; i < params; i++)
+            {
+                AsyncWebParameter* p = request->getParam(i);
+                Serial.printf("_POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
+                if (p->name() == String("time"))
+                {
+                    String time = p->value();
+                    sendMessageEvent("set_time", time);
+                }
+            }
+
+            request->send(ret_code, "text/plain", ret_msg);
+        });
+
+    // URL: /config_update
+    m_server.on(
+        "/config_update",
+        HTTP_POST,
+        [this](AsyncWebServerRequest* request)
+        {
+            Serial.println("post: /config_update");
+            int ret_code = 200;
+            String ret_msg = "OK";
 
             int params = request->params();
             for (auto i = 0; i < params; i++)
@@ -561,19 +589,62 @@ void WebSocketServer::setupRESTAPI()
                 AsyncWebParameter* p = request->getParam(i);
                 Serial.printf("_POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
 
-                //if (p->isPost())
-                //{
-                if (p->name() == String("time"))
-                {
-                    String time = p->value();
-                    sendMessageEvent("set_time", time);
+                if (p->name() == "accelerometer_precision") {
+                    GlobalConfig::instance().set_accel_range(p->value().toInt());
+                    Serial.printf("Setting accelerometer precision to %d\n", p->value().toInt());
                 }
-//}
-               // else {
-                //    Serial.println("Not a post");
-                //}
-            }
+                else if (p->name() == "gyrometer_precision") {
+                    GlobalConfig::instance().set_gyro_range(p->value().toInt());
+                    Serial.printf("Setting gyrometer precision to %d\n", p->value().toInt());
+                }
+                else if (p->name() == "imu_sampling_rate") {
+                    GlobalConfig::instance().set_imu_sample_rate(p->value().toInt());
+                    Serial.printf("Setting imu sampling rate to %d\n", p->value().toInt());
+                }
+                else if (p->name() == "adc_sampling_rate") {
+                    GlobalConfig::instance().set_adc_sample_rate(p->value().toInt());
+                    Serial.printf("Setting adc sampling rate to %d\n", p->value().toInt());
+                }
+                else {
+                    Serial.printf("Unknown parameter: %s\n", p->name().c_str());
+                    ret_msg = "Unknown parameter";
+                    ret_code = 400;
+                }
 
-            request->send(200, "text/plain", "OK");
+            }
+            request->send(ret_code, "text/plain", ret_msg);
         });
+    // URL: /config
+ // URL: /config_update
+    m_server.on(
+        "/config",
+        HTTP_GET,
+        [this](AsyncWebServerRequest* request)
+        {
+            Serial.println("get: /config");
+
+            cJSON *root=cJSON_CreateObject();
+            cJSON_AddNumberToObject(root, "recording", SystemState::instance().getState().recording);
+            cJSON_AddNumberToObject(root, "accelerometer_precision", GlobalConfig::instance().get_accel_range());
+            cJSON_AddNumberToObject(root, "gyrometer_precision", GlobalConfig::instance().get_gyro_range());
+            cJSON_AddNumberToObject(root, "imu_sampling_rate", GlobalConfig::instance().get_imu_sample_rate());
+            cJSON_AddNumberToObject(root, "adc_sampling_rate", GlobalConfig::instance().get_adc_sample_rate());
+            String json(cJSON_Print(root));
+
+            //Free memory
+            cJSON_free(root);
+
+            Serial.println(json);
+
+            request->send(200, "application/json", json);
+        });
+
+
+    // URL: /start_recording
+    // URL: /stop_recording
+    // URL: /file_list
+    // URL: /file_delete
+    // URL: /file_download
+
+
 }

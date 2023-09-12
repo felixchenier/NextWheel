@@ -438,7 +438,7 @@ class NextWheel:
         """
         self.ws.close()
 
-    def set_time(self, unix_time: int):
+    def set_time(self, unix_time: int) -> requests.Response:
         """
         Set the time of the instrumented wheel.
 
@@ -449,7 +449,37 @@ class NextWheel:
 
         Returns
         -------
-        None.
+        response : requests.Response
 
         """
-        requests.post(f"http://{self.IP}/config_set_time", params={"time": unix_time})
+        response = requests.post(f"http://{self.IP}/config_set_time", params={"time": unix_time})
+        return response
+
+    def set_sensors_params(self, adc_sampling_rate: int, imu_sampling_rate: int,
+                          accelerometer_precision: int, gyrometer_precision: int) -> requests.Response:
+        """
+        Set the parameters of the instrumented wheel.
+        :param adc_sampling_rate: valid values are : [120, 240, 480, 960, 1000, 2000] in Hz
+        :param imu_sampling_rate: valid values are: [60, 120, 240] in Hz
+        :param accelerometer_precision: valid values are: [2,4,8,16] in g
+        :param gyrometer_precision: valid values are [250, 500, 1000, 2000] dps (degrees per second)
+        :return:
+        response: requests.Response
+        """
+        # TODO Validate params? We assume it is verified in the ESP32 firmware
+
+        response = requests.post(f"http://{self.IP}/config_update",
+                                 params={"adc_sampling_rate": adc_sampling_rate,
+                                         "imu_sampling_rate": imu_sampling_rate,
+                                         "accelerometer_precision": accelerometer_precision,
+                                         "gyrometer_precision": gyrometer_precision})
+        return response
+
+    def get_sensors_params(self) -> requests.Response:
+        """
+        Get the parameters of the instrumented wheel sensors.
+        :return:
+        response: requests.Response
+        """
+        response = requests.get(f"http://{self.IP}/config")
+        return response
