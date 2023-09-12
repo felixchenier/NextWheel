@@ -32,6 +32,7 @@ private:
 
     void setupWebSocket();
     void setupStaticRoutes();
+    void setupDownloadRoute();
     void setupNotFound();
     void setupPostForm();
     void setupConfigPostForm();

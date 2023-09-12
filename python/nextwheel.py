@@ -511,4 +511,14 @@ class NextWheel:
         response = requests.get(f"http://{self.IP}/stop_recording")
         return response
 
+    def file_list(self) -> requests.Response:
+        """
+        Get the list of files on the instrumented wheel.
+        :return:
+        response: requests.Response
+        """
+        response = requests.get(f"http://{self.IP}/file_list")
+        return response
+
+
 

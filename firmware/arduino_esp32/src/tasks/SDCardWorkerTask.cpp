@@ -47,6 +47,9 @@ void SDCardWorkerTask::run(void* app)
 
     TickType_t lastGeneration = xTaskGetTickCount();
 
+    //Init SD CARD
+    m_sdCard.begin();
+
     while (1)
     {
         // 50 ms task
@@ -91,10 +94,6 @@ void SDCardWorkerTask::run(void* app)
                     // Already recording
                     if (isRecording())
                         continue;
-
-
-
-                    m_sdCard.begin();
 
                     // Make sure we close the file if we were already recording
                     resetLog();

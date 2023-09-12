@@ -31,6 +31,8 @@ void WebSocketServer::begin(const GlobalConfig::ConfigData &configData)
     // Setup the websocket
     setupWebSocket();
 
+    setupDownloadRoute();
+
     // Setup REST API
     setupRESTAPI();
 
@@ -715,8 +717,70 @@ void WebSocketServer::setupRESTAPI()
 
 
     // URL: /file_list
+    m_server.on(
+        "/file_list",
+        HTTP_GET,
+        [this](AsyncWebServerRequest* request)
+        {
+            Serial.println("get: /file_list");
+
+            cJSON *root=cJSON_CreateObject();
+
+            //File array
+            cJSON *file_array = cJSON_CreateArray();
+
+
+            File file_root = SD_MMC.open("/");
+            file_root.rewindDirectory();
+            File current_file = file_root.openNextFile();
+
+            while (current_file)
+            {
+                // Make shure it is a .dat file
+                std::string filename(current_file.name());
+                if (filename.find(".dat") < filename.size())
+                {
+                    //Single file object
+                    cJSON *file_object = cJSON_CreateObject();
+                    //Filename
+                    cJSON_AddStringToObject(file_object, "name", current_file.name());
+                    //Size
+                    cJSON_AddNumberToObject(file_object, "size", current_file.size());
+                    //Add to array
+                    cJSON_AddItemToArray(file_array, file_object);
+                }
+
+                //Next file
+                current_file = file_root.openNextFile();
+            }
+
+            //Close file
+            file_root.close();
+            file_root.rewindDirectory();
+
+
+            //Adding array to root object
+            cJSON_AddItemToObject(root, "files", file_array);
+            cJSON_AddStringToObject(root, "download_url", "/file_download");
+            cJSON_AddStringToObject(root, "delete_url", "/file_delete");
+
+            String json(cJSON_Print(root));
+
+            //Free memory
+            cJSON_free(root);
+
+            Serial.println(json);
+
+            request->send(200, "application/json", json);
+        });
+
+
     // URL: /file_delete
-    // URL: /file_download
+}
 
 
+void WebSocketServer::setupDownloadRoute()
+{
+    // Mounting SDCARD to /file_download to facilitate file download
+    m_server.serveStatic("/file_download", SD_MMC, "/");
 }
