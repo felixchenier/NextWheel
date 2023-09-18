@@ -190,10 +190,10 @@ Values are already converted on device. Size optimization of the binary stream w
 |-----|-----------|----|-----------|---|
 /config_set_time | POST | *time* (int) = unix timestamp | 200 (OK) |Set system time from unix timestamp
 /config_update | POST | accelerometer_precision (int)[], gyrometer_precision (int) [], imu_sampling_rate(int) [], adc_sampling_rate (int)[]| 200 (OK), 400 (Unknown parameter)| Set the sensor configuration
-/config | GET | None | JSON={"accelerometer_precision": value, "gyrometer_precision": value, "imu_sampling_rate": value, "adc_sampling_rate": value} | Get the current sensor configuration
-/system_state | GET | None
-/start_recording | GET | None
-/stop_recording | GET | None
-/file_list | GET | None
-/file_delete | GET |
-/file_download/{filename} | GET |
+/config | GET | None | 200, JSON={"accelerometer_precision": value, "gyrometer_precision": value, "imu_sampling_rate": value, "adc_sampling_rate": value} | Get the current sensor configuration.
+/system_state | GET | None | 200, JSON = {"recording": (bool) recording_flag, "streaming": (bool) streaming_flag, "filename": (string) recording_filename } | Return the current state of the system.
+/start_recording | GET | None | 200, "OK", 400, "Already recording." | Start recording on SDCard. File name will be automatically generated with current time.
+/stop_recording | GET | None | 200, "0K", 400, "Not recording." | Stop recording to SD Card.
+/file_list | GET | None | 200, JSON Dict containing {"files": [{"name": file_size(string), "size": file_size(int)}, ...], "download_url": url_for_file_download(string), "delete_url": url_for_file_delete(string)} | Get all the file information stored in the SD Card.
+/file_delete | GET | name (string) The name of the file | 200 (OK), 400 (Bad Parameter) | Delete the file from the SD CARD.
+/file_download/{filename} | GET | None | The file in binary format or 404 not found. | The file is is transfered from the SDCARD.
