@@ -776,8 +776,28 @@ void WebSocketServer::setupRESTAPI()
 
 
     // URL: /file_delete
+    m_server.on(
+        "/file_delete",
+        HTTP_GET,
+        [this](AsyncWebServerRequest* request)
+        {
+            int params = request->params();
+            for (auto i = 0; i < params; i++)
+            {
+                AsyncWebParameter* p = request->getParam(i);
+                if (p->name() == "file")
+                {
+                    String file = "/" + p->value();
+                    if (SD_MMC.exists(file))
+                    {
+                        SD_MMC.remove(file);
+                        request->send(200, "text/plain", "OK");
+                    }
+                }
+            }
+            request->send(400, "text/plain", "File not found");
+        });
 }
-
 
 void WebSocketServer::setupDownloadRoute()
 {

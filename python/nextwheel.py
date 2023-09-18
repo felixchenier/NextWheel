@@ -539,3 +539,13 @@ class NextWheel:
         # filed download
         return 0
 
+    def file_delete(self, filename: str) -> requests.Response:
+        """
+        Delete a file from the instrumented wheel.
+        :param filename: The filename to delete
+        :return:
+        response: requests.Response
+        """
+        response = requests.get(f"http://{self.IP}/file_delete", params={'file': filename})
+        return response
+
