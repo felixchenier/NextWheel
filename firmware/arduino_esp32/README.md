@@ -33,14 +33,12 @@ Steps:
 
 1. Modify [lib/NextWheel/src/config/WiFiConfig.h](lib/NextWheel/src/config/WiFiConfig.h) with your WiFi information.
 2. Go to the PlatformIO menu (left toolbar with alien icon)
-3. Click on *Platform/Build the Filesystem Image* (static files that are stored in the flash memory)
-4. Click on *Platform/Upload Filesystem Image*
-5. Click on *General/Build*
-6. Click on *General/Upload*
+3. Click on *General/Build*
+4. Click on *General/Upload*
 
 ## Running
 
-> Make sure J11 jumper is in the 2-3 position.
+> Make sure J11 jumper is in the 1-2 position. This will enable sound from the ESP32.
 
 ## Hardware
 
@@ -187,3 +185,15 @@ Values are already converted on device. Size optimization of the binary stream w
 
 
 ## REST API
+
+|**Url**   | **HTTP Method** |  **Param(s)**   | **Return** | **Description**   |
+|-----|-----------|----|-----------|---|
+/config_set_time | POST | *time* (int) = unix timestamp | 200 (OK) |Set system time from unix timestamp
+/config_update | POST | accelerometer_precision (int)[], gyrometer_precision (int) [], imu_sampling_rate(int) [], adc_sampling_rate (int)[]| 200 (OK), 400 (Unknown parameter)| Set the sensor configuration
+/config | GET | None | JSON={"accelerometer_precision": value, "gyrometer_precision": value, "imu_sampling_rate": value, "adc_sampling_rate": value} | Get the current sensor configuration
+/system_state | GET | None
+/start_recording | GET | None
+/stop_recording | GET | None
+/file_list | GET | None
+/file_delete | GET |
+/file_download/{filename} | GET |
