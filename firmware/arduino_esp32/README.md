@@ -36,6 +36,8 @@ Steps:
 3. Click on *General/Build*
 4. Click on *General/Upload*
 
+> Note from version 0.2, we are not serving web pages anymore and the data section of the flash is unused.
+
 ## Running
 
 > Make sure J11 jumper is in the 1-2 position. This will enable sound from the ESP32.
