@@ -28,8 +28,8 @@ void QuadEncoderSensorTask::run(void* app)
         // Reset counter
         // m_encoder.clearCount();
 
-        // Serial.print("encoder counts: ");
-        // Serial.println(count);
+        //Serial.print("encoder counts: ");
+        //Serial.println(count);
 
         // Update timestamp and value
         frame.setTimestamp(DataFrame::getCurrentTimeStamp());

@@ -5,6 +5,8 @@
 #include <sys/time.h>
 #include <config/GlobalConfig.h>
 #include <state/SystemState.h>
+#include <cJSON.h>
+
 
 WebSocketServer::WebSocketServer() : m_server(80), m_ws("/ws") {}
 
@@ -18,6 +20,7 @@ void WebSocketServer::begin(const GlobalConfig::ConfigData &configData)
     SPIFFS.begin();
 
     WiFi.begin(WIFI_DEFAULT_SSID, WIFI_DEFAULT_PASSWORD);
+      // put your setup code here, to run once:
     while (WiFi.status() != WL_CONNECTED)
     {
         delay(500);
@@ -28,14 +31,11 @@ void WebSocketServer::begin(const GlobalConfig::ConfigData &configData)
     // Setup the websocket
     setupWebSocket();
 
-    // Setup static routes
-    setupStaticRoutes();
+    // This is a static route to download files from SD card
+    setupDownloadRoute();
 
-    // Setup post request
-    setupPostForm();
-
-    // Setup config post request
-    setupConfigPostForm();
+    // Setup REST API
+    setupRESTAPI();
 
     // Setup not found
     setupNotFound();
@@ -59,231 +59,8 @@ void WebSocketServer::setupWebSocket()
 
 void WebSocketServer::onMessage(WebSocketServerMessageEventHandler handler)
 {
+    Serial.print("WebSocketServer::onMessage: ");
     m_messageHandler = handler;
-}
-
-void WebSocketServer::setupStaticRoutes()
-{
-    // Default static route
-    m_server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.htm");
-
-    // Main route
-    m_server.on(
-        "/main",
-        HTTP_GET,
-        [this](AsyncWebServerRequest* request)
-        {
-            SDCard sd;
-            sd.begin();
-
-            File html_file = SPIFFS.open("/main.htm", "r");
-            if (!html_file)
-            {
-                Serial.println("Failed to open main.htm");
-                request->send(404);
-                return;
-            }
-            uint8_t html_buffer[html_file.size()];
-            html_file.readBytes((char*)html_buffer, html_file.size());
-            request->send_P(
-                200,
-                PSTR("text/html"),
-                html_buffer,
-                html_file.size(),
-                std::bind(&WebSocketServer::onGlobalProcessor, this, std::placeholders::_1));
-            html_file.close();
-        });
-
-    // File listing route
-    m_server.on(
-        "/files",
-        HTTP_GET,
-        [this](AsyncWebServerRequest* request)
-        {
-            SDCard sd;
-            sd.begin();
-
-            File html_file = SPIFFS.open("/files.htm", "r");
-            if (!html_file)
-            {
-                Serial.println("Failed to open files.htm");
-                request->send(404);
-                return;
-            }
-            uint8_t html_buffer[html_file.size()];
-            html_file.readBytes((char*)html_buffer, html_file.size());
-            request->send_P(
-                200,
-                PSTR("text/html"),
-                html_buffer,
-                html_file.size(),
-                std::bind(&WebSocketServer::onFileProcessor, this, std::placeholders::_1));
-            html_file.close();
-        });
-
-    // Configuration route
-    m_server.on(
-        "/config",
-        HTTP_GET,
-        [this](AsyncWebServerRequest* request)
-        {
-            File html_file = SPIFFS.open("/config.htm", "r");
-            if (!html_file)
-            {
-                Serial.println("Failed to open config.htm");
-                request->send(404);
-                return;
-            }
-            uint8_t html_buffer[html_file.size()];
-            html_file.readBytes((char*)html_buffer, html_file.size());
-            request->send_P(
-                200,
-                PSTR("text/html"),
-                html_buffer,
-                html_file.size(),
-                std::bind(&WebSocketServer::onConfigProcessor, this, std::placeholders::_1));
-            html_file.close();
-        });
-
-    // Data route
-    m_server.on(
-        "/live",
-        HTTP_GET,
-        [this](AsyncWebServerRequest* request)
-        {
-            File html_file = SPIFFS.open("/live.htm", "r");
-            if (!html_file)
-            {
-                Serial.println("Failed to open live.htm");
-                request->send(404);
-                return;
-            }
-            uint8_t html_buffer[html_file.size()];
-            html_file.readBytes((char*)html_buffer, html_file.size());
-            request->send_P(
-                200,
-                PSTR("text/html"),
-                html_buffer,
-                html_file.size(),
-                std::bind(&WebSocketServer::onLiveProcessor, this, std::placeholders::_1));
-            html_file.close();
-        });
-
-    // File deletion route
-    m_server.on(
-        "/delete_file",
-        HTTP_GET,
-        [this](AsyncWebServerRequest* request)
-        {
-            int params = request->params();
-            for (auto i = 0; i < params; i++)
-            {
-                AsyncWebParameter* p = request->getParam(i);
-                if (p->name() == "file")
-                {
-                    String file = "/" + p->value();
-                    if (SD_MMC.exists(file))
-                    {
-                        SD_MMC.remove(file);
-                    }
-                }
-            }
-            request->redirect("/files");
-        });
-
-    // Mounting SDCARD to /download to facilitate file download
-    m_server.serveStatic("/download", SD_MMC, "/");
-}
-
-void WebSocketServer::setupConfigPostForm()
-{
-
-    m_server.on(
-        "/config_set_time",
-        HTTP_POST,
-        [this](AsyncWebServerRequest* request)
-        {
-            Serial.println("setupConfigPostForm: /config_set_time");
-
-            int params = request->params();
-            for (auto i = 0; i < params; i++)
-            {
-                AsyncWebParameter* p = request->getParam(i);
-
-                if (p->isPost())
-                {
-                    if (p->name() == "time")
-                    {
-                        String time = p->value();
-                        sendMessageEvent("set_time", time);
-                    }
-                }
-            }
-
-            request->send(200, "text/plain", "OK");
-        });
-
-
-    m_server.on(
-        "/config_update",
-        HTTP_POST,
-        [this](AsyncWebServerRequest* request)
-        {
-            Serial.println("setupConfigPostForm: /config_update");
-
-            int params = request->params();
-            for (auto i = 0; i < params; i++)
-            {
-                AsyncWebParameter* p = request->getParam(i);
-
-                if (p->isPost())
-                {
-                    Serial.printf("_POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
-
-                    if (p->name() == "accelerometer_precision") {
-                        GlobalConfig::instance().set_accel_range(p->value().toInt());
-                    }
-                    else if (p->name() == "gyrometer_precision") {
-                        GlobalConfig::instance().set_gyro_range(p->value().toInt());
-                    }
-                    else if (p->name() == "imu_sampling_rate") {
-                        GlobalConfig::instance().set_imu_sample_rate(p->value().toInt());
-                    }
-                    else if (p->name() == "adc_sampling_rate") {
-                        GlobalConfig::instance().set_adc_sample_rate(p->value().toInt());
-                    }
-                    else {
-                        Serial.printf("Unknown parameter: %s\n", p->name().c_str());
-                    }
-                }
-            }
-            request->send(200, "text/plain", "OK");
-        });
-}
-
-void WebSocketServer::setupPostForm()
-{
-    m_server.on(
-        "/recording",
-        HTTP_GET,
-        [this](AsyncWebServerRequest* request)
-        {
-            String message;
-
-            if (request->hasParam("recording"))
-            {
-                message = request->getParam("recording")->value();
-                sendMessageEvent(String("recording"), String(message));
-                // Serial.print("Recording received :");
-                // Serial.println(message);
-            }
-            else
-            {
-                message = "No message";
-            }
-
-            request->redirect("/main");
-        });
 }
 
 void WebSocketServer::setupNotFound()
@@ -373,9 +150,13 @@ void WebSocketServer::sendToAll(const uint8_t* data, size_t size)
 
 void WebSocketServer::sendMessageEvent(String param, String message)
 {
+    Serial.print("WebSocketServer::sendMessageEvent: ");
     if (m_messageHandler)
     {
         m_messageHandler(param, message);
+    }
+    else{
+        Serial.println("No message handler");
     }
 }
 
@@ -417,109 +198,6 @@ void WebSocketServer::onWsEvent(
     }
 }
 
-String WebSocketServer::onGlobalProcessor(const String &var)
-{
-    if (var == F("SYSTEMTIME"))
-    {
-        struct timeval current_time;
-        gettimeofday(&current_time, NULL);
-        struct tm* time_info = localtime(&current_time.tv_sec);
-        return String(asctime(time_info));
-    }
-    else if (var == F("SYSTEM_STATE_RECORDING"))
-    {
-        return String(SystemState::instance().getState().recording);
-    }
-    else if (var == F("SYSTEM_STATE_RECORDING_FILE"))
-    {
-        return String(SystemState::instance().getState().filename);
-    }
-    else if (var == F("SYSTEM_STATE_STREAMING"))
-    {
-        return String(SystemState::instance().getState().streaming);
-    }
-    else if (var == F("IMU_ACC_PRECISION"))
-    {
-        return String(GlobalConfig::instance().get_accel_range());
-    }
-    else if (var == F("IMU_GYR_PRECISION"))
-    {
-        return String(GlobalConfig::instance().get_gyro_range());
-    }
-    else if (var == F("IMU_SAMPLING_RATE"))
-    {
-        return String(GlobalConfig::instance().get_imu_sample_rate());
-    }
-    else if (var == F("ADC_SAMPLING_RATE")) {
-        return String(GlobalConfig::instance().get_adc_sample_rate());
-    }
-
-    return String();
-}
-
-String WebSocketServer::onFileProcessor(const String& var)
-{
-    if (var == F("URLLINK"))
-    {
-        String str;
-        File root = SD_MMC.open("/");
-        root.rewindDirectory();
-        File file = root.openNextFile();
-
-        while (file)
-        {
-            std::string filename(file.name());
-            if (filename.find(".dat") < filename.size())
-            {
-                // Begin row
-                str += "<tr>";
-
-                // Filename
-                str += "<td>";
-                str += "<a href=\"/download/";
-                str += file.name();
-                str += "\">";
-                str += file.name();
-                str += "</a>";
-                str += "</td>";
-                // Size
-                str += "<td>";
-                str += file.size();
-                str += "</td>";
-                // Delete
-                str += "<td>";
-                str += "<a href=\"/delete_file?file=";
-                str += file.name();
-                str += "\">";
-                str += "DELETE";
-                str += "</a>";
-                str += "</td>";
-
-                // End row
-                str += "</tr>\n";
-            }
-
-            file = root.openNextFile();
-        }
-
-        root.close();
-        root.rewindDirectory();
-        return str;
-    }
-
-    return onGlobalProcessor(var);
-}
-
-String WebSocketServer::onConfigProcessor(const String& var)
-{
-    return onGlobalProcessor(var);
-}
-
-String WebSocketServer::onLiveProcessor(const String& var)
-{
-    return onGlobalProcessor(var);
-}
-
 int WebSocketServer::webSocketClientCount()
 {
     return m_ws.count();
@@ -533,4 +211,261 @@ void WebSocketServer::registerWebsocketConnectedHandler(WebSocketServerWebsocket
 void WebSocketServer::registerWebsocketDisconnectedHandler(WebSocketServerWebsocketDisconnectedHandler handler)
 {
     m_websocketDisconnectedHandler = handler;
+}
+
+void WebSocketServer::setupRESTAPI()
+{
+    // URL: /config_set_time
+    m_server.on(
+        "/config_set_time",
+        HTTP_POST,
+        [this](AsyncWebServerRequest* request)
+        {
+            Serial.println("post: /config_set_time");
+            int ret_code = 200;
+            String ret_msg = "OK";
+
+            int params = request->params();
+            for (auto i = 0; i < params; i++)
+            {
+                AsyncWebParameter* p = request->getParam(i);
+                Serial.printf("_POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
+                if (p->name() == String("time"))
+                {
+                    String time = p->value();
+                    sendMessageEvent("set_time", time);
+                }
+            }
+
+            request->send(ret_code, "text/plain", ret_msg);
+        });
+
+    // URL: /config_update
+    m_server.on(
+        "/config_update",
+        HTTP_POST,
+        [this](AsyncWebServerRequest* request)
+        {
+            Serial.println("post: /config_update");
+            int ret_code = 200;
+            String ret_msg = "OK";
+
+            int params = request->params();
+            for (auto i = 0; i < params; i++)
+            {
+                AsyncWebParameter* p = request->getParam(i);
+                Serial.printf("_POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
+
+                if (p->name() == "accelerometer_precision") {
+                    GlobalConfig::instance().set_accel_range(p->value().toInt());
+                    Serial.printf("Setting accelerometer precision to %d\n", p->value().toInt());
+                }
+                else if (p->name() == "gyrometer_precision") {
+                    GlobalConfig::instance().set_gyro_range(p->value().toInt());
+                    Serial.printf("Setting gyrometer precision to %d\n", p->value().toInt());
+                }
+                else if (p->name() == "imu_sampling_rate") {
+                    GlobalConfig::instance().set_imu_sample_rate(p->value().toInt());
+                    Serial.printf("Setting imu sampling rate to %d\n", p->value().toInt());
+                }
+                else if (p->name() == "adc_sampling_rate") {
+                    GlobalConfig::instance().set_adc_sample_rate(p->value().toInt());
+                    Serial.printf("Setting adc sampling rate to %d\n", p->value().toInt());
+                }
+                else {
+                    Serial.printf("Unknown parameter: %s\n", p->name().c_str());
+                    ret_msg = "Unknown parameter";
+                    ret_code = 400;
+                }
+
+            }
+            request->send(ret_code, "text/plain", ret_msg);
+        });
+
+    // URL: /config
+    m_server.on(
+        "/config",
+        HTTP_GET,
+        [this](AsyncWebServerRequest* request)
+        {
+            Serial.println("get: /config");
+
+            cJSON *root=cJSON_CreateObject();
+            cJSON_AddNumberToObject(root, "accelerometer_precision", GlobalConfig::instance().get_accel_range());
+            cJSON_AddNumberToObject(root, "gyrometer_precision", GlobalConfig::instance().get_gyro_range());
+            cJSON_AddNumberToObject(root, "imu_sampling_rate", GlobalConfig::instance().get_imu_sample_rate());
+            cJSON_AddNumberToObject(root, "adc_sampling_rate", GlobalConfig::instance().get_adc_sample_rate());
+            String json(cJSON_Print(root));
+
+            //Free memory
+            cJSON_free(root);
+
+            Serial.println(json);
+
+            request->send(200, "application/json", json);
+        });
+
+    // URL: /state
+    m_server.on(
+        "/system_state",
+        HTTP_GET,
+        [this](AsyncWebServerRequest* request)
+        {
+            Serial.println("get: /system_state");
+
+            cJSON *root=cJSON_CreateObject();
+            cJSON_AddNumberToObject(root, "recording", SystemState::instance().getState().recording);
+            cJSON_AddNumberToObject(root, "streaming", SystemState::instance().getState().streaming);
+            cJSON_AddStringToObject(root, "filename", SystemState::instance().getState().filename.c_str());
+            String json(cJSON_Print(root));
+
+            //Free memory
+            cJSON_free(root);
+
+            Serial.println(json);
+
+            request->send(200, "application/json", json);
+        });
+
+    // URL: /start_recording
+    m_server.on(
+        "/start_recording",
+        HTTP_GET,
+        [this](AsyncWebServerRequest* request)
+        {
+            Serial.println("get: /start_recording");
+            int ret_code = 200;
+            String ret_msg = "OK";
+
+            if (SystemState::instance().getState().recording)
+            {
+                // Already recording
+                ret_code = 400;
+                ret_msg = "Already recording";
+            }
+            else
+            {
+                sendMessageEvent("recording", "start_recording");
+                //TODO record file name ?
+            }
+
+            request->send(ret_code, "text/plain", ret_msg);
+        });
+
+
+
+    // URL: /stop_recording
+    m_server.on(
+        "/stop_recording",
+        HTTP_GET,
+        [this](AsyncWebServerRequest* request)
+        {
+            Serial.println("get: /stop_recording");
+            int ret_code = 200;
+            String ret_msg = "OK";
+
+            if (SystemState::instance().getState().recording)
+            {
+                 sendMessageEvent("recording", "stop_recording");
+
+            }
+            else
+            {
+                // Not recording
+                ret_code = 400;
+                ret_msg = "Not recording";
+            }
+
+            request->send(ret_code, "text/plain", ret_msg);
+        });
+
+
+
+    // URL: /file_list
+    m_server.on(
+        "/file_list",
+        HTTP_GET,
+        [this](AsyncWebServerRequest* request)
+        {
+            Serial.println("get: /file_list");
+
+            cJSON *root=cJSON_CreateObject();
+
+            //File array
+            cJSON *file_array = cJSON_CreateArray();
+
+
+            File file_root = SD_MMC.open("/");
+            file_root.rewindDirectory();
+            File current_file = file_root.openNextFile();
+
+            while (current_file)
+            {
+                // Make shure it is a .dat file
+                std::string filename(current_file.name());
+                if (filename.find(".dat") < filename.size())
+                {
+                    //Single file object
+                    cJSON *file_object = cJSON_CreateObject();
+                    //Filename
+                    cJSON_AddStringToObject(file_object, "name", current_file.name());
+                    //Size
+                    cJSON_AddNumberToObject(file_object, "size", current_file.size());
+                    //Add to array
+                    cJSON_AddItemToArray(file_array, file_object);
+                }
+
+                //Next file
+                current_file = file_root.openNextFile();
+            }
+
+            //Close file
+            file_root.close();
+            file_root.rewindDirectory();
+
+
+            //Adding array to root object
+            cJSON_AddItemToObject(root, "files", file_array);
+            cJSON_AddStringToObject(root, "download_url", "/file_download");
+            cJSON_AddStringToObject(root, "delete_url", "/file_delete");
+
+            String json(cJSON_Print(root));
+
+            //Free memory
+            cJSON_free(root);
+
+            Serial.println(json);
+
+            request->send(200, "application/json", json);
+        });
+
+
+    // URL: /file_delete
+    m_server.on(
+        "/file_delete",
+        HTTP_GET,
+        [this](AsyncWebServerRequest* request)
+        {
+            int params = request->params();
+            for (auto i = 0; i < params; i++)
+            {
+                AsyncWebParameter* p = request->getParam(i);
+                if (p->name() == "file")
+                {
+                    String file = "/" + p->value();
+                    if (SD_MMC.exists(file))
+                    {
+                        SD_MMC.remove(file);
+                        request->send(200, "text/plain", "OK");
+                    }
+                }
+            }
+            request->send(400, "text/plain", "File not found");
+        });
+}
+
+void WebSocketServer::setupDownloadRoute()
+{
+    // Mounting SDCARD to /file_download to facilitate file download
+    m_server.serveStatic("/file_download", SD_MMC, "/");
 }

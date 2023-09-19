@@ -22,7 +22,7 @@ DataFrame* ADCDataFrame::clone() const
     return new ADCDataFrame(*this);
 }
 
-float ADCDataFrame::getChannelValue(uint8_t channel)
+uint16_t ADCDataFrame::getChannelValue(uint8_t channel)
 {
     if (channel >= 0 && channel < NUM_ADC_CHANNELS)
     {
@@ -31,7 +31,7 @@ float ADCDataFrame::getChannelValue(uint8_t channel)
     return 0;
 }
 
-void ADCDataFrame::setChannelValue(uint8_t channel, float value)
+void ADCDataFrame::setChannelValue(uint8_t channel, uint16_t value)
 {
     if (channel >= 0 && channel < NUM_ADC_CHANNELS)
     {

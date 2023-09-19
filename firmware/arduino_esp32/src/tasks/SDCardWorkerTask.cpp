@@ -47,6 +47,9 @@ void SDCardWorkerTask::run(void* app)
 
     TickType_t lastGeneration = xTaskGetTickCount();
 
+    //Init SD CARD
+    m_sdCard.begin();
+
     while (1)
     {
         // 50 ms task
@@ -86,13 +89,11 @@ void SDCardWorkerTask::run(void* app)
                     break;
                 case SDCARD_WORKER_TASK_COMMAND_START_RECORDING:
 
+                    Serial.println("SDCardWorkerTask::run: SDCARD_WORKER_TASK_COMMAND_START_RECORDING");
+
                     // Already recording
                     if (isRecording())
                         continue;
-
-
-                    Serial.println("SDCardWorkerTask::run: SDCARD_WORKER_TASK_COMMAND_START_RECORDING");
-                    m_sdCard.begin();
 
                     // Make sure we close the file if we were already recording
                     resetLog();
@@ -122,11 +123,13 @@ void SDCardWorkerTask::run(void* app)
                     }
                     break;
                 case SDCARD_WORKER_TASK_COMMAND_STOP_RECORDING:
+
+                    Serial.println("SDCardWorkerTask::run: SDCARD_WORKER_TASK_COMMAND_STOP_RECORDING");
                     if (!isRecording())
                         continue;
 
                     NextWheelApp::instance()->unregisterSensorTasksFromSDCardWorker();
-                    Serial.println("SDCardWorkerTask::run: SDCARD_WORKER_TASK_COMMAND_STOP_RECORDING");
+
                     if (m_file)
                     {
                         SystemState::instance().getState().recording = false;

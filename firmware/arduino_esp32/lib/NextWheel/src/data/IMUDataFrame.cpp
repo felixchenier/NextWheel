@@ -23,21 +23,21 @@ DataFrame* IMUDataFrame::clone() const
     return new IMUDataFrame(*this);
 }
 
-void IMUDataFrame::setAccel(float x, float y, float z)
+void IMUDataFrame::setAccel(int16_t x, int16_t y, int16_t z)
 {
     m_accel[0] = x;
     m_accel[1] = y;
     m_accel[2] = z;
 }
 
-void IMUDataFrame::setGyro(float x, float y, float z)
+void IMUDataFrame::setGyro(int16_t x, int16_t y, int16_t z)
 {
     m_gyro[0] = x;
     m_gyro[1] = y;
     m_gyro[2] = z;
 }
 
-void IMUDataFrame::setMag(float x, float y, float z)
+void IMUDataFrame::setMag(int16_t x, int16_t y, int16_t z)
 {
     m_mag[0] = x;
     m_mag[1] = y;

@@ -31,12 +31,11 @@ private:
     String m_currentRecordingFileName;
 
     void setupWebSocket();
-    void setupStaticRoutes();
+    void setupDownloadRoute();
     void setupNotFound();
-    void setupPostForm();
-    void setupConfigPostForm();
-
+    void setupRESTAPI();
     void sendMessageEvent(String param, String message);
+
     void onWsEvent(
         AsyncWebSocket* server,
         AsyncWebSocketClient* client,
@@ -45,10 +44,6 @@ private:
         uint8_t* data,
         size_t len);
 
-    String onGlobalProcessor(const String &var);
-    String onFileProcessor(const String& var);
-    String onConfigProcessor(const String& var);
-    String onLiveProcessor(const String& var);
     GlobalConfig::ConfigData m_configData;
 
     WebSocketServerWebsocketConnectedHandler m_websocketConnectedHandler;

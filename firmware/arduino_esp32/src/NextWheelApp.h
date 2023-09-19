@@ -46,6 +46,9 @@ public:
     void registerSensorTasksToWebSocketServer();
     void unregisterSensorTasksFromWebSocketServer();
 
+    bool button1Pressed();
+    bool button2Pressed();
+
 private:
     NextWheelApp();
 

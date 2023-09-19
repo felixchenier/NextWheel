@@ -1,9 +1,16 @@
 #include <Arduino.h>
 #include <NextWheel.h>
 #include "NextWheelApp.h"
+#include <esp_adc_cal.h>
+#include <driver/adc.h>
+extern "C" {
+    #include <esp_wifi.h>
+}
 
 void setup()
 {
+    esp_wifi_set_ps(WIFI_PS_NONE);
+
     // Serial must be initialized for prints to work
     Serial.begin(115200);
 
@@ -50,6 +57,18 @@ void loop()
         // IDLE loop.
         // 250 ms task
         vTaskDelayUntil(&lastGeneration, 250 / portTICK_RATE_MS);
+
+        if(NextWheelApp::instance()->button1Pressed())
+        {
+            Serial.println("Button 1 pressed");
+            NextWheelApp::instance()->startRecording();
+        }
+
+        if(NextWheelApp::instance()->button2Pressed())
+        {
+            Serial.println("Button 2 pressed");
+            NextWheelApp::instance()->stopRecording();
+        }
 
        //Serial.print("Free heap size: "); Serial.println(ESP.getFreeHeap());
     }

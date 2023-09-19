@@ -2,10 +2,7 @@
 
 Power::Power(unsigned char address) : m_i2c_address(address)
 {
-    // SET PIN AS INPUT
-    pinMode(PIN_EMERGENCY_STOP_LOW_POWER_N, INPUT);
     pinMode(PIN_ENABLE_SENSOR_POWER, OUTPUT);
-
     enableSensors(false);
 }
 
@@ -45,7 +42,9 @@ void Power::update(PowerDataFrame& frame)
 
 bool Power::isLowPower()
 {
-    return digitalRead(PIN_EMERGENCY_STOP_LOW_POWER_N) == LOW;
+    float voltage = m_ina220.getBusMilliVolts(0) / 1000.0;
+    // TODO verify this is the correct threshold
+    return voltage < 5.5;
 }
 
 bool Power::isSensorsEnabled()

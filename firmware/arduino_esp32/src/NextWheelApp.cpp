@@ -160,6 +160,16 @@ bool NextWheelApp::setTime(String time)
     return m_rtc.setTime(time);
 }
 
+bool NextWheelApp::button1Pressed()
+{
+    return m_buttons.button1Pressed();
+}
+
+bool NextWheelApp::button2Pressed()
+{
+    return m_buttons.button2Pressed();
+}
+
 namespace NextWheelInterrupts
 {
     // interrupts
