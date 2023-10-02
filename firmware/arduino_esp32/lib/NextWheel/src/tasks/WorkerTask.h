@@ -14,7 +14,7 @@ class WorkerTask : public Task {
             : Task(name, stackSize, priority), m_dataQueue(nullptr) {
 
             //50% more than what we need @ 2khz since tasks consuming data are working at 50Hz
-            m_dataQueue = xQueueCreate(150, sizeof(DataFramePtr));
+            m_dataQueue = xQueueCreate(200, sizeof(DataFramePtr));
 
         }
 

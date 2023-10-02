@@ -48,6 +48,9 @@ void loop()
         // Signal IP with LEDS... Not optimal but for works for now.
         if (currentIP != WiFi.localIP().toString())
         {
+            // Store new IP
+            currentIP = WiFi.localIP().toString();
+
             // Start of IP address
             NextWheelApp::instance()->getLEDS().setLED1(false);
             NextWheelApp::instance()->getLEDS().setLED2(false);
@@ -57,9 +60,6 @@ void loop()
             vTaskDelayUntil(&lastGeneration, 1000 / portTICK_RATE_MS);
             NextWheelApp::instance()->getLEDS().setLED1(false);
             NextWheelApp::instance()->getLEDS().setLED2(false);
-
-            // Store new IP
-            currentIP = WiFi.localIP().toString();
 
             Serial.print("IP address changed: ");
             Serial.println(currentIP);
@@ -140,6 +140,13 @@ void loop()
                 NextWheelApp::instance()->stopRecording();
             }
         }
-       Serial.print("Free heap size: "); Serial.println(ESP.getFreeHeap());
+
+       auto freeHeap = ESP.getFreeHeap();
+       if (freeHeap < 50000)
+       {
+            Serial.print("WARNING : Free heap size: ");
+            Serial.println(ESP.getFreeHeap());
+       }
+
     }
 }

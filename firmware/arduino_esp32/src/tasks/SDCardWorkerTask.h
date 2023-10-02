@@ -7,7 +7,7 @@
 
 class SDCardWorkerTask : public WorkerTask
 {
-    static const size_t SDCARD_WORKER_TASK_STACK_SIZE = 4000;
+    static const size_t SDCARD_WORKER_TASK_STACK_SIZE = 8000;
 
 public:
     enum SDCardWorkerTaskCommand
