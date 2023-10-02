@@ -24,6 +24,7 @@ public:
     void registerWebsocketConnectedHandler(WebSocketServerWebsocketConnectedHandler handler);
     void registerWebsocketDisconnectedHandler(WebSocketServerWebsocketDisconnectedHandler handler);
 
+
 private:
     AsyncWebServer m_server;
     AsyncWebSocket m_ws;

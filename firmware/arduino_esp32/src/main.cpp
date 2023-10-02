@@ -36,40 +36,108 @@ void loop()
     Serial.print("Main Loop: Executing on core ");
     Serial.println(xPortGetCoreID());
 
+    String currentIP = WiFi.localIP().toString();
+
     TickType_t lastGeneration = xTaskGetTickCount();
     while (1)
     {
         struct timeval timeval_now;
         gettimeofday(&timeval_now, NULL);
 
-        if (NextWheelApp::instance()->isRecording())
+        // Verify that the IP has changed...
+        // Signal IP with LEDS... Not optimal but for works for now.
+        if (currentIP != WiFi.localIP().toString())
         {
-            NextWheelApp::instance()->getLEDS().toggleLED1();
+            // Start of IP address
+            NextWheelApp::instance()->getLEDS().setLED1(false);
+            NextWheelApp::instance()->getLEDS().setLED2(false);
+            vTaskDelayUntil(&lastGeneration, 1000 / portTICK_RATE_MS);
+            NextWheelApp::instance()->getLEDS().setLED1(true);
+            NextWheelApp::instance()->getLEDS().setLED2(true);
+            vTaskDelayUntil(&lastGeneration, 1000 / portTICK_RATE_MS);
+            NextWheelApp::instance()->getLEDS().setLED1(false);
+            NextWheelApp::instance()->getLEDS().setLED2(false);
+
+            // Store new IP
+            currentIP = WiFi.localIP().toString();
+
+            Serial.print("IP address changed: ");
+            Serial.println(currentIP);
+
+            for (auto i = 0; i < currentIP.length(); i++)
+            {   // '.' separates the IP address
+
+                // Signal changing Digit
+                NextWheelApp::instance()->getLEDS().setLED1(true);
+                vTaskDelayUntil(&lastGeneration, 250 / portTICK_RATE_MS);
+                NextWheelApp::instance()->getLEDS().setLED1(false);
+
+                if (currentIP[i] != '.')
+                {
+                    auto val = String(currentIP[i]).toInt();
+                    Serial.print("Signaling"); Serial.println(val);
+                    for (auto j = 0; j < val; j++)
+                    {
+                        //Signal count with LED2
+                        NextWheelApp::instance()->getLEDS().setLED2(true);
+                        vTaskDelayUntil(&lastGeneration, 250 / portTICK_RATE_MS);
+                        NextWheelApp::instance()->getLEDS().setLED2(false);
+                        vTaskDelayUntil(&lastGeneration, 250 / portTICK_RATE_MS);
+                    }
+                }
+                else
+                {
+                    // Signal changing Digit
+                    NextWheelApp::instance()->getLEDS().setLED1(true);
+                    vTaskDelayUntil(&lastGeneration, 1000 / portTICK_RATE_MS);
+                    NextWheelApp::instance()->getLEDS().setLED1(false);
+                }
+
+                // Pause for each digit
+                vTaskDelayUntil(&lastGeneration, 1000 / portTICK_RATE_MS);
+            }
+
+            // End of IP address
+            NextWheelApp::instance()->getLEDS().setLED1(false);
+            NextWheelApp::instance()->getLEDS().setLED2(false);
+            vTaskDelayUntil(&lastGeneration, 1000 / portTICK_RATE_MS);
+            NextWheelApp::instance()->getLEDS().setLED1(true);
+            NextWheelApp::instance()->getLEDS().setLED2(true);
+            vTaskDelayUntil(&lastGeneration, 1000 / portTICK_RATE_MS);
+            NextWheelApp::instance()->getLEDS().setLED1(false);
+            NextWheelApp::instance()->getLEDS().setLED2(false);
         }
         else
         {
-            NextWheelApp::instance()->getLEDS().setLED1(false);
+            // Normal LED handling
+            if (NextWheelApp::instance()->isRecording())
+            {
+                NextWheelApp::instance()->getLEDS().toggleLED1();
+            }
+            else
+            {
+                NextWheelApp::instance()->getLEDS().setLED1(false);
+            }
+
+            // Blinking led2 for now...
+            NextWheelApp::instance()->getLEDS().toggleLED2();
+
+            // IDLE loop.
+            // 250 ms task
+            vTaskDelayUntil(&lastGeneration, 250 / portTICK_RATE_MS);
+
+            if(NextWheelApp::instance()->button1Pressed())
+            {
+                Serial.println("Button 1 pressed");
+                NextWheelApp::instance()->startRecording();
+            }
+
+            if(NextWheelApp::instance()->button2Pressed())
+            {
+                Serial.println("Button 2 pressed");
+                NextWheelApp::instance()->stopRecording();
+            }
         }
-
-        // Blinking led2 for now...
-        NextWheelApp::instance()->getLEDS().toggleLED2();
-
-        // IDLE loop.
-        // 250 ms task
-        vTaskDelayUntil(&lastGeneration, 250 / portTICK_RATE_MS);
-
-        if(NextWheelApp::instance()->button1Pressed())
-        {
-            Serial.println("Button 1 pressed");
-            NextWheelApp::instance()->startRecording();
-        }
-
-        if(NextWheelApp::instance()->button2Pressed())
-        {
-            Serial.println("Button 2 pressed");
-            NextWheelApp::instance()->stopRecording();
-        }
-
        //Serial.print("Free heap size: "); Serial.println(ESP.getFreeHeap());
     }
 }

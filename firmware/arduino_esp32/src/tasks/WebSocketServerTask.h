@@ -15,12 +15,14 @@ public:
     WebSocketServerTask();
     virtual void run(void* app) override;
 
+
 protected:
     void onMessage(String param, String message);
     void onWebsocketConnected();
     void onWebsocketDisconnected();
 
     WebSocketServer m_server;
+
 };
 
 #endif  // _WEBSOCKET_SERVER_TASK_H_

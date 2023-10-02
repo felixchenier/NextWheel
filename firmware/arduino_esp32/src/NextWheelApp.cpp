@@ -104,6 +104,7 @@ NextWheelApp::NextWheelApp()
 
     // First thing we set the system to current time
     m_rtc.begin();
+    m_rtc.printTime();
 
     // Initialize buttons
     // TODO disable buttons for now, interrupts are randomly generated because of noisy power suply.

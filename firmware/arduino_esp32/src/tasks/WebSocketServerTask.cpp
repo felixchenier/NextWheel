@@ -13,7 +13,6 @@ void WebSocketServerTask::run(void* app)
 {
     Serial.printf("WebSocketServerTask::run Priority: %li Core: %li \n", uxTaskPriorityGet(NULL), xPortGetCoreID());
 
-
     m_server.registerWebsocketConnectedHandler([this]() { this->onWebsocketConnected(); });
     m_server.registerWebsocketDisconnectedHandler([this]() { this->onWebsocketDisconnected(); });
 

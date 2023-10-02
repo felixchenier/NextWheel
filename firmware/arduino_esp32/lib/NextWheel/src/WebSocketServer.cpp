@@ -23,10 +23,12 @@ void WebSocketServer::begin(const GlobalConfig::ConfigData &configData)
       // put your setup code here, to run once:
     while (WiFi.status() != WL_CONNECTED)
     {
+        sendMessageEvent("wifi", "connecting");
         delay(500);
     }
     Serial.print("Connected to WiFi IP: ");
     Serial.println(WiFi.localIP());
+    sendMessageEvent("ip", WiFi.localIP().toString());
 
     // Setup the websocket
     setupWebSocket();
