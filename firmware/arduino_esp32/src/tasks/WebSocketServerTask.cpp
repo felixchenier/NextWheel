@@ -44,6 +44,14 @@ void WebSocketServerTask::run(void* app)
                 Serial.print("Current time: ");
                 Serial.println(String(asctime(time_info)));
             }
+            else if (param == "config")
+            {
+                if(message == "config_update")
+                {
+                    //Send config update event, not from ISR
+                    NextWheelApp::instance()->sendConfigUpdateEvent(false);
+                }
+            }
         });
 
     m_server.begin(GlobalConfig::instance().get());
@@ -52,6 +60,41 @@ void WebSocketServerTask::run(void* app)
 
     while (1)
     {
+
+         //First empty the command queue (timeout=0, not waiting)
+        //Loop while we have BASE_TASK_COMMAND_NONE --> 0
+        while(Task::BaseTaskCommand command = dequeueBaseCommand(0))
+        {
+            switch(command)
+            {
+                case Task::BASE_TASK_COMMAND_NONE:
+                    Serial.println("WebSocketServerTask::run: BASE_TASK_COMMAND_NONE");
+                    break;
+                case Task::BASE_TASK_CONFIG_UPDATED:
+                    Serial.println("WebSocketServerTask::run: BASE_TASK_CONFIG_UPDATED");
+
+                    // If file is not null means we are recording. We should update the configuration info from now.
+                    if (m_server.webSocketClientCount() > 0)
+                    {
+                        ConfigDataFrame configDataFrame(GlobalConfig::instance().get());
+                        m_server.sendToAll(configDataFrame);
+
+                        // Empty the queue (with old config!)
+                        while (DataFramePtr dataPtr = dequeue(0))
+                        {
+                            delete dataPtr;
+                        }
+                    }
+                    break;
+
+                default:
+                    Serial.print("WebSocketServerTask::run: Unknown command: ");
+                    Serial.println(command);
+                break;
+            }
+        }
+
+
         // 50 ms task
         vTaskDelayUntil(&lastGeneration, 50 / portTICK_RATE_MS);
 

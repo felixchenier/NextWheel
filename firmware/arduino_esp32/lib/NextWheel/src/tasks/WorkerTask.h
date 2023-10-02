@@ -9,6 +9,7 @@
 
 class WorkerTask : public Task {
     public:
+
         WorkerTask(const char* name, uint32_t stackSize=TASK_STACK_SIZE_DEFAULT, uint8_t priority=TASK_PRIORITY_DEFAULT)
             : Task(name, stackSize, priority), m_dataQueue(nullptr) {
 

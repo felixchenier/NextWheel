@@ -31,6 +31,9 @@ Task::Task(std::string taskName, uint16_t stackSize, uint8_t priority) {
 	m_taskData  = nullptr;
 	m_handle    = nullptr;
 	m_coreId	= tskNO_AFFINITY;
+
+	//Create command queue
+	m_baseCommandQueue = xQueueCreate(10, sizeof(BaseTaskCommand));
 } // Task
 
 Task::~Task() {
@@ -131,4 +134,26 @@ void Task::setName(std::string name) {
  */
 void Task::setCore(BaseType_t coreId) {
 	m_coreId = coreId;
+}
+
+bool Task::sendBaseCommandEvent(BaseTaskCommand command, bool from_isr)
+{
+    if (from_isr)
+    {
+        return xQueueSendFromISR(m_baseCommandQueue, &command, nullptr) == pdTRUE;
+    }
+    else
+    {
+        return xQueueSend(m_baseCommandQueue, &command, 0) == pdTRUE;
+    }
+}
+
+Task::BaseTaskCommand Task::dequeueBaseCommand(unsigned long timeout)
+{
+    BaseTaskCommand command = BASE_TASK_COMMAND_NONE;
+    if (xQueueReceive(m_baseCommandQueue, &command, timeout) != pdTRUE)
+    {
+        return BASE_TASK_COMMAND_NONE;
+    }
+    return command;
 }

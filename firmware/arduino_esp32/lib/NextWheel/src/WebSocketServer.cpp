@@ -281,6 +281,10 @@ void WebSocketServer::setupRESTAPI()
                 }
 
             }
+
+            //We should notify every task that we might have changed the config.
+            sendMessageEvent("config", "config_update");
+
             request->send(ret_code, "text/plain", ret_msg);
         });
 

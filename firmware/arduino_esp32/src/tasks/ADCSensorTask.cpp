@@ -30,6 +30,31 @@ void ADCSensorTask::run(void* app)
 
     while (1)
     {
+        //First empty the command queue (timeout=0, not waiting)
+        //Loop while we have BASE_TASK_COMMAND_NONE --> 0
+        while(Task::BaseTaskCommand command = dequeueBaseCommand(0))
+        {
+            switch(command)
+            {
+                case Task::BASE_TASK_COMMAND_NONE:
+                    Serial.println("ADCSensorTask::run: BASE_TASK_COMMAND_NONE");
+                    break;
+                case Task::BASE_TASK_CONFIG_UPDATED:
+                    Serial.println("ADCSensorTask::run: BASE_TASK_CONFIG_UPDATED");
+                    Serial.print("ADCSensorTask::run Updating ADC sample rate to : ");
+                    Serial.println(GlobalConfig::instance().get_adc_sample_rate());
+                    //Update configuration
+                    timerAlarmDisable(adc_timer);
+                    timerAlarmWrite(adc_timer, 1000000 / GlobalConfig::instance().get_adc_sample_rate(), true); // us timer calculation
+                    timerAlarmEnable(adc_timer);
+                    break;
+                default:
+                    Serial.print("ADCSensorTask::run: Unknown command: ");
+                    Serial.println(command);
+                break;
+            }
+        }
+
         // ADC update will be triggered by timer interrupt
         xSemaphoreTake(NextWheelInterrupts::g_adc_semaphore, portMAX_DELAY);
 
@@ -38,8 +63,6 @@ void ADCSensorTask::run(void* app)
 
         // Send data to registered queues
         sendData(frame);
-
-
     }
 
     timerAlarmDisable(adc_timer);

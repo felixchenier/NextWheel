@@ -40,6 +40,26 @@ void DACActuatorTask::run(void *)
     uint8_t stereo_buffer[4] = {0,0,0,0}; //Right, left
     while (1)
     {
+        //First empty the command queue (timeout=0, not waiting)
+        //Loop while we have BASE_TASK_COMMAND_NONE --> 0
+        while(Task::BaseTaskCommand command = dequeueBaseCommand(0))
+        {
+            switch(command)
+            {
+                case Task::BASE_TASK_COMMAND_NONE:
+                    Serial.println("DACActuatorTask::run: BASE_TASK_COMMAND_NONE");
+                    break;
+                case Task::BASE_TASK_CONFIG_UPDATED:
+                    Serial.println("DACActuatorTask::run: BASE_TASK_CONFIG_UPDATED");
+                    break;
+                default:
+                    Serial.print("DACActuatorTask::run: Unknown command: ");
+                    Serial.println(command);
+                break;
+            }
+        }
+
+
         uint16_t sample =  uint16_t(120.0 * sin(2 * M_PI * (double)frequency * (double)index++ / (double)sampling_rate) + 120.0);
         //uint16_t sample = 0;
         //Serial.printf("DACActuatorTask::run sample: i: %i %u \n", index, sample);

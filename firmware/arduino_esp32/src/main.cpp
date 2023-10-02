@@ -69,13 +69,14 @@ void loop()
 
                 // Signal changing Digit
                 NextWheelApp::instance()->getLEDS().setLED1(true);
-                vTaskDelayUntil(&lastGeneration, 250 / portTICK_RATE_MS);
+                vTaskDelayUntil(&lastGeneration, 500 / portTICK_RATE_MS);
                 NextWheelApp::instance()->getLEDS().setLED1(false);
+                vTaskDelayUntil(&lastGeneration, 500 / portTICK_RATE_MS);
 
                 if (currentIP[i] != '.')
                 {
                     auto val = String(currentIP[i]).toInt();
-                    Serial.print("Signaling"); Serial.println(val);
+                    Serial.print("Signaling: "); Serial.println(val);
                     for (auto j = 0; j < val; j++)
                     {
                         //Signal count with LED2
@@ -89,12 +90,13 @@ void loop()
                 {
                     // Signal changing Digit
                     NextWheelApp::instance()->getLEDS().setLED1(true);
-                    vTaskDelayUntil(&lastGeneration, 1000 / portTICK_RATE_MS);
+                    vTaskDelayUntil(&lastGeneration, 2000 / portTICK_RATE_MS);
                     NextWheelApp::instance()->getLEDS().setLED1(false);
+                    vTaskDelayUntil(&lastGeneration, 2000 / portTICK_RATE_MS);
                 }
 
                 // Pause for each digit
-                vTaskDelayUntil(&lastGeneration, 1000 / portTICK_RATE_MS);
+                //vTaskDelayUntil(&lastGeneration, 1000 / portTICK_RATE_MS);
             }
 
             // End of IP address

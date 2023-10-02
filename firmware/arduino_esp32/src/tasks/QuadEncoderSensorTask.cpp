@@ -19,6 +19,25 @@ void QuadEncoderSensorTask::run(void* app)
 
     while (1)
     {
+        //First empty the command queue (timeout=0, not waiting)
+        //Loop while we have BASE_TASK_COMMAND_NONE --> 0
+        while(Task::BaseTaskCommand command = dequeueBaseCommand(0))
+        {
+            switch(command)
+            {
+                case Task::BASE_TASK_COMMAND_NONE:
+                    Serial.println("QuadEncoderSensorTask::run: BASE_TASK_COMMAND_NONE");
+                    break;
+                case Task::BASE_TASK_CONFIG_UPDATED:
+                    Serial.println("QuadEncoderSensorTask::run: BASE_TASK_CONFIG_UPDATED");
+                    break;
+                default:
+                    Serial.print("QuadEncoderSensorTask::run: Unknown command: ");
+                    Serial.println(command);
+                break;
+            }
+        }
+
         // 1000 ms task
         vTaskDelayUntil(&lastGeneration, 1000 / portTICK_RATE_MS);
 

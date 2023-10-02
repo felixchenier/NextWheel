@@ -19,9 +19,6 @@ void NextWheelApp::begin()
     m_sdCardWorkerTask.setCore(1);
     m_sdCardWorkerTask.setPriority(TASK_PRIORITY_HIGH);
 
-    // m_printWorkerTask.setCore(0);
-    // m_printWorkerTask.setPriority(TASK_PRIORITY_IDLE);
-
     m_webSocketServerTask.setCore(0);
     m_webSocketServerTask.setPriority(TASK_PRIORITY_MEDIUM);
 
@@ -45,7 +42,7 @@ void NextWheelApp::start()
 {
     Serial.println("Starting worker tasks");
     m_sdCardWorkerTask.start(this);
-    // m_printWorkerTask.start(nullptr);
+
 
 #ifndef NEXTWHEEL_DISABLE_WIFI
     m_webSocketServerTask.start(this);
@@ -170,6 +167,22 @@ bool NextWheelApp::button2Pressed()
 {
     return m_buttons.button2Pressed();
 }
+
+void NextWheelApp::sendConfigUpdateEvent(bool from_isr)
+{
+    //Each task should receive the config update event
+    // Actuators
+    m_dacTask.sendBaseCommandEvent(Task::BASE_TASK_CONFIG_UPDATED, from_isr);
+    // Sensors
+    m_adcTask.sendBaseCommandEvent(Task::BASE_TASK_CONFIG_UPDATED, from_isr);
+    m_imuTask.sendBaseCommandEvent(Task::BASE_TASK_CONFIG_UPDATED, from_isr);
+    m_powerTask.sendBaseCommandEvent(Task::BASE_TASK_CONFIG_UPDATED, from_isr);
+    m_quadEncoderTask.sendBaseCommandEvent(Task::BASE_TASK_CONFIG_UPDATED, from_isr);
+    // Workers
+    m_sdCardWorkerTask.sendBaseCommandEvent(Task::BASE_TASK_CONFIG_UPDATED, from_isr);
+    m_webSocketServerTask.sendBaseCommandEvent(Task::BASE_TASK_CONFIG_UPDATED, from_isr);
+}
+
 
 namespace NextWheelInterrupts
 {

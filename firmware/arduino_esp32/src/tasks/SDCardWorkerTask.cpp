@@ -10,7 +10,7 @@ SDCardWorkerTask::SDCardWorkerTask()
       m_file(nullptr),
       m_bytesWritten(0)
 {
-    m_commandQueue = xQueueCreate(100, sizeof(SDCardWorkerTaskCommand));
+    m_commandQueue = xQueueCreate(10, sizeof(SDCardWorkerTaskCommand));
 }
 
 bool SDCardWorkerTask::sendCommandEvent(SDCardWorkerTaskCommand command, bool from_isr)
@@ -52,6 +52,39 @@ void SDCardWorkerTask::run(void* app)
 
     while (1)
     {
+        //First empty the command queue (timeout=0, not waiting)
+        //Loop while we have BASE_TASK_COMMAND_NONE --> 0
+        while(Task::BaseTaskCommand command = dequeueBaseCommand(0))
+        {
+            switch(command)
+            {
+                case Task::BASE_TASK_COMMAND_NONE:
+                    Serial.println("SDCardWorkerTask::run: BASE_TASK_COMMAND_NONE");
+                    break;
+                case Task::BASE_TASK_CONFIG_UPDATED:
+                    Serial.println("SDCardWorkerTask::run: BASE_TASK_CONFIG_UPDATED");
+
+                    // If file is not null means we are recording. We should update the configuration info from now.
+                    if (m_file)
+                    {
+                        ConfigDataFrame configDataFrame(GlobalConfig::instance().get());
+                        m_sdCard.writeToLogFile(m_file, configDataFrame);
+
+                        // Empty the queue (with old config!)
+                        while (DataFramePtr dataPtr = dequeue(0))
+                        {
+                            delete dataPtr;
+                        }
+                    }
+                    break;
+
+                default:
+                    Serial.print("SDCardWorkerTask::run: Unknown command: ");
+                    Serial.println(command);
+                break;
+            }
+        }
+
         // 50 ms task
         vTaskDelayUntil(&lastGeneration, 50 / portTICK_RATE_MS);
 

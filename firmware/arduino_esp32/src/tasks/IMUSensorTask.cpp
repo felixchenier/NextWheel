@@ -37,6 +37,34 @@ void IMUSensorTask::run(void* app)
 
     while (1)
     {
+        //First empty the command queue (timeout=0, not waiting)
+        //Loop while we have BASE_TASK_COMMAND_NONE --> 0
+        while(Task::BaseTaskCommand command = dequeueBaseCommand(0))
+        {
+            switch(command)
+            {
+                case Task::BASE_TASK_COMMAND_NONE:
+                    Serial.println("IMUSensorTask::run: BASE_TASK_COMMAND_NONE");
+                    break;
+                case Task::BASE_TASK_CONFIG_UPDATED:
+                    Serial.println("IMUSensorTask::run: BASE_TASK_CONFIG_UPDATED");
+                    timerAlarmDisable(imu_timer);
+                    //update sampling rate
+                    timerAlarmWrite(imu_timer, 1000000 / GlobalConfig::instance().get_imu_sample_rate(), true); // us timer calculation
+                     imu.begin(
+                        (IMU::IMU_ACCEL_RANGE)GlobalConfig::instance().get_accel_range(),
+                        (IMU::IMU_GYRO_RANGE)GlobalConfig::instance().get_gyro_range());
+                    timerAlarmEnable(imu_timer);
+                    break;
+                default:
+                    Serial.print("IMUSensorTask::run: Unknown command: ");
+                    Serial.println(command);
+                break;
+            }
+        }
+
+
+
         // IMU update will be triggered by timer interrupt
         xSemaphoreTake(NextWheelInterrupts::g_imu_semaphore, portMAX_DELAY);
 

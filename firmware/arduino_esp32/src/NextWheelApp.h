@@ -12,7 +12,6 @@
 #include "tasks/ADCSensorTask.h"
 #include "tasks/IMUSensorTask.h"
 #include "tasks/PowerSensorTask.h"
-#include "tasks/PrintWorkerTask.h"
 #include "tasks/WebSocketServerTask.h"
 #include "tasks/SDCardWorkerTask.h"
 #include "tasks/DACActuatorTask.h"
@@ -38,6 +37,8 @@ public:
     bool startRecording(bool from_isr = false);
 
     bool stopRecording(bool from_isr = false);
+
+    void sendConfigUpdateEvent(bool from_isr = false);
 
     bool setTime(String time);
 
@@ -72,7 +73,6 @@ private:
     QuadEncoderSensorTask m_quadEncoderTask;
 
     // Workers
-    // PrintWorkerTask m_printWorkerTask;
     SDCardWorkerTask m_sdCardWorkerTask;
     WebSocketServerTask m_webSocketServerTask;
 
