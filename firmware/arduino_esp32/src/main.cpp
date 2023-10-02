@@ -140,6 +140,6 @@ void loop()
                 NextWheelApp::instance()->stopRecording();
             }
         }
-       //Serial.print("Free heap size: "); Serial.println(ESP.getFreeHeap());
+       Serial.print("Free heap size: "); Serial.println(ESP.getFreeHeap());
     }
 }
