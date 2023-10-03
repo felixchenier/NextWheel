@@ -68,7 +68,7 @@ void SDCardWorkerTask::run(void* app)
                     if (m_file)
                     {
                         ConfigDataFrame configDataFrame(GlobalConfig::instance().get());
-                        m_sdCard.writeToLogFile(m_file, configDataFrame);
+                        m_bytesWritten += m_sdCard.writeToLogFile(m_file, configDataFrame);
 
                         // Empty the queue (with old config!)
                         while (DataFramePtr dataPtr = dequeue(0))
@@ -104,7 +104,8 @@ void SDCardWorkerTask::run(void* app)
             delete dataPtr;
         }
 
-        // Serial.print("SDCardWorkerTask::run() dequeued ");Serial.print(count);Serial.println(" frames");
+        //Serial.printf("SDCardWorkerTask::run() dequeued : %i frames written: %li\n", count, m_bytesWritten);
+
 
         // Make sure write is complete
         if (m_file)
@@ -149,7 +150,7 @@ void SDCardWorkerTask::run(void* app)
 
                         // Write config (first data object in the file)
                         ConfigDataFrame configDataFrame(GlobalConfig::instance().get());
-                        m_sdCard.writeToLogFile(m_file, configDataFrame);
+                        m_bytesWritten += m_sdCard.writeToLogFile(m_file, configDataFrame);
 
                         // Allowing messages only if file opened successfully
                         NextWheelApp::instance()->registerSensorTasksToSDCardWorker();

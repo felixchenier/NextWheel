@@ -21,23 +21,35 @@ int example_i2s_dac_data_scale(uint8_t* d_buff, uint8_t* s_buff, uint32_t len)
 DACActuatorTask::DACActuatorTask(const char* name, uint32_t stackSize, uint8_t priority)
     : Task(name, stackSize, priority)
 {
+#ifdef _USE_INTERNAL_DAC_
     m_dac.setup();
+#else
+    //Standard PWM init
+    //enable PWM ouput on GPIO25
+    ledcSetup(0, 2000, 8);
+    ledcAttachPin(PIN_SPI_CS2, 0);
+    ledcWrite(0,0); // Ch:0, Duty:0
+
+#endif
 }
 
 void DACActuatorTask::run(void *)
 {
     Serial.printf("DACActuatorTask::run Priority: %li Core: %li \n", uxTaskPriorityGet(NULL), xPortGetCoreID());
+
+#ifdef _USE_INTERNAL_DAC_
     const uint32_t sampling_rate = m_dac.getSampleRate();
     const uint32_t frequency = 400;
-    TickType_t lastGeneration = xTaskGetTickCount();
-    uint32_t tick_increment = portTICK_RATE_MS * 1;
-    Serial.print("DACActuatorTask tick_increment: ");
-    Serial.println(tick_increment);
-
-
     size_t index = 0;
-
     uint8_t stereo_buffer[4] = {0,0,0,0}; //Right, left
+
+#else
+    //Standard PWM
+    TickType_t lastGeneration = xTaskGetTickCount();
+#endif
+
+    //Common part, read base commnd
+
     while (1)
     {
         //First empty the command queue (timeout=0, not waiting)
@@ -59,6 +71,7 @@ void DACActuatorTask::run(void *)
             }
         }
 
+#ifdef _USE_INTERNAL_DAC_
 
         uint16_t sample =  uint16_t(120.0 * sin(2 * M_PI * (double)frequency * (double)index++ / (double)sampling_rate) + 120.0);
         //uint16_t sample = 0;
@@ -76,5 +89,13 @@ void DACActuatorTask::run(void *)
         //Write to DAC (will wait if buffer is full)
         // Only using right channel
         m_dac.writeFrame(stereo_buffer, sizeof(stereo_buffer) / 2);
-    }
-}
+
+#else
+     // 1000 ms task
+    vTaskDelayUntil(&lastGeneration, 1000 / portTICK_RATE_MS);
+    ledcWrite(0,128);
+
+#endif
+
+    }// while(1)
+} // run
