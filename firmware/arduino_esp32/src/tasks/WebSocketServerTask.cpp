@@ -61,7 +61,7 @@ void WebSocketServerTask::run(void* app)
     while (1)
     {
 
-         //First empty the command queue (timeout=0, not waiting)
+        //First empty the command queue (timeout=0, not waiting)
         //Loop while we have BASE_TASK_COMMAND_NONE --> 0
         while(Task::BaseTaskCommand command = dequeueBaseCommand(0))
         {
@@ -94,45 +94,43 @@ void WebSocketServerTask::run(void* app)
             }
         }
 
-
-        // 50 ms task
-        vTaskDelayUntil(&lastGeneration, 50 / portTICK_RATE_MS);
-
-        unsigned int count = 0;
+       // Then dequeue all data frames and send them to the websocket
         size_t total_payload_size = 0;
         std::list<DataFramePtr> dataPtrs;
 
-        // Dequeue all values (one shot), no timeout
+        // Dequeue all values (one shot,), no timeout
+        //Make sure we have maximum payload of approximately 1400 bytes
+        //Otherwize the IP stack will have to fragment the packet and we will have a lot of overhead
         while (DataFramePtr dataPtr = dequeue(0))
         {
-            // m_ws.send(dataPtr->getData(), dataPtr->getSize());
-            count++;
-            total_payload_size += dataPtr->getTotalSize();
             if (m_server.webSocketClientCount() > 0)
             {
+                total_payload_size += dataPtr->getTotalSize();
                 dataPtrs.push_back(dataPtr);
+
+                // Enough data for one transmission ?
+                if (total_payload_size > 1400)
+                {
+                    break;
+                }
             }
             else
             {
                 delete dataPtr;
             }
         }
-        //Serial.print("WebSocketServerTask::run count: ");
-        //Serial.print(count);Serial.print(" total_payload_size:");Serial.println(total_payload_size);
-        //  Serial.println();
-        //  Serial.print("Sent ");Serial.print(count);Serial.println(" frames") ;
-        //  Serial.print("Total payload size: ");Serial.println(total_payload_size);
 
-
+        // Any clients ?
         if (m_server.webSocketClientCount() > 0)
         {
             // uint8_t* super_frame = new uint8_t[total_payload_size + DataFrame::HEADER_SIZE];
+            // Serial.printf("Should allocate %i bytes\n", total_payload_size + DataFrame::HEADER_SIZE);
             uint8_t super_frame[total_payload_size + DataFrame::HEADER_SIZE];  // Allocate on stack
             uint64_t timestamp = DataFrame::getCurrentTimeStamp();
 
             super_frame[0] = 255;
             memcpy(super_frame + 1, &timestamp, sizeof(uint64_t));
-            super_frame[9] = count;
+            super_frame[9] = dataPtrs.size();
 
             size_t offset = DataFrame::HEADER_SIZE;
             for (auto dataPtr : dataPtrs)
@@ -142,10 +140,24 @@ void WebSocketServerTask::run(void* app)
                 delete dataPtr;
             }
 
+            // Send to all websockets
             m_server.sendToAll(super_frame, total_payload_size + DataFrame::HEADER_SIZE);
-            // delete[] super_frame;
+
+            if (total_payload_size < 1400) {
+                // Sleep for a while since we did not fill a full packet
+                vTaskDelayUntil(&lastGeneration, 50 / portTICK_RATE_MS);
+            }
+            else {
+                // Quick sleep, will get back to work soon to continue sending remaining frames.
+                vTaskDelayUntil(&lastGeneration, 10 / portTICK_RATE_MS);
+            }
         }
-    }
+        else
+        {
+            // Sleep for a while
+            vTaskDelayUntil(&lastGeneration, 100 / portTICK_RATE_MS);
+        }
+    } // while(1)
 }
 
 void WebSocketServerTask::onMessage(String param, String message)

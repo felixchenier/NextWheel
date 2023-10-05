@@ -31,7 +31,6 @@ void PowerSensorTask::run(void* app)
             }
         }
 
-
         // 1000 ms task
         vTaskDelayUntil(&lastGeneration, 1000 / portTICK_RATE_MS);
 
