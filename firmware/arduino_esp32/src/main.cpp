@@ -3,8 +3,9 @@
 #include "NextWheelApp.h"
 #include <esp_adc_cal.h>
 #include <driver/adc.h>
-extern "C" {
-    #include <esp_wifi.h>
+extern "C"
+{
+#include <esp_wifi.h>
 }
 
 void setup()
@@ -25,7 +26,7 @@ void setup()
     NextWheelApp::instance()->start();
 }
 
-void signal_start_end_of_ip_signal(TickType_t &lastGeneration)
+void signal_start_end_of_ip_signal(TickType_t& lastGeneration)
 {
     // Signal Start of IP address
     NextWheelApp::instance()->getLEDS().setLED1(false);
@@ -38,7 +39,7 @@ void signal_start_end_of_ip_signal(TickType_t &lastGeneration)
     NextWheelApp::instance()->getLEDS().setLED2(false);
 }
 
-void signal_start_of_digit_with_led_1(TickType_t &lastGeneration)
+void signal_start_of_digit_with_led_1(TickType_t& lastGeneration)
 {
     NextWheelApp::instance()->getLEDS().setLED1(true);
     vTaskDelayUntil(&lastGeneration, 500 / portTICK_RATE_MS);
@@ -46,9 +47,9 @@ void signal_start_of_digit_with_led_1(TickType_t &lastGeneration)
     vTaskDelayUntil(&lastGeneration, 500 / portTICK_RATE_MS);
 }
 
-void signal_digit_value_with_led_2(TickType_t &lastGeneration, uint8_t val)
+void signal_digit_value_with_led_2(TickType_t& lastGeneration, uint8_t val)
 {
-    //Serial.print("Signaling: "); Serial.println(val);
+    // Serial.print("Signaling: "); Serial.println(val);
     for (auto j = 0; j < val; j++)
     {
         // Signal changing Digit
@@ -65,8 +66,8 @@ void loop()
     // WiFi, BLE runs on core 0
     // Default loop priority is TASK_PRIORITY_LOWEST (1)
 
-    //Set Task To High Priority!
-    //Buttons are very high priority to start / stop recordings...
+    // Set Task To High Priority!
+    // Buttons are very high priority to start / stop recordings...
     vTaskPrioritySet(NULL, TASK_PRIORITY_HIGHEST);
     Serial.print("Main Loop: priority = ");
     Serial.println(uxTaskPriorityGet(NULL));
@@ -135,29 +136,29 @@ void loop()
             // Blinking led2 for now...
             NextWheelApp::instance()->getLEDS().toggleLED2();
 
-            // IDLE loop.
-            // 250 ms task
-            vTaskDelayUntil(&lastGeneration, 250 / portTICK_RATE_MS);
 
-            if(NextWheelApp::instance()->button1Pressed())
+            if (NextWheelApp::instance()->button1Pressed())
             {
                 Serial.println("Button 1 pressed");
                 NextWheelApp::instance()->startRecording();
             }
 
-            if(NextWheelApp::instance()->button2Pressed())
+            if (NextWheelApp::instance()->button2Pressed())
             {
                 Serial.println("Button 2 pressed");
                 NextWheelApp::instance()->stopRecording();
             }
         }
 
-       auto freeHeap = ESP.getFreeHeap();
-       if (freeHeap < 50000)
-       {
+        auto freeHeap = ESP.getFreeHeap();
+        if (freeHeap < 50000)
+        {
             Serial.print("WARNING : Free heap size: ");
             Serial.println(ESP.getFreeHeap());
-       }
+        }
 
+        // IDLE loop.
+        // 250 ms task
+        vTaskDelayUntil(&lastGeneration, 250 / portTICK_RATE_MS);
     }
 }
