@@ -168,3 +168,8 @@ void WebSocketServerTask::onWebsocketDisconnected()
     Serial.println("WebSocketServerTask::onWebsocketDisconnected");
     NextWheelApp::instance()->unregisterSensorTasksFromWebSocketServer();
 }
+
+bool WebSocketServerTask::isWebSocketConnected()
+{
+    return m_server.webSocketClientCount() > 0;
+}

@@ -14,6 +14,7 @@ class WebSocketServerTask : public WorkerTask
 public:
     WebSocketServerTask();
     virtual void run(void* app) override;
+    bool isWebSocketConnected();
 
 
 protected:

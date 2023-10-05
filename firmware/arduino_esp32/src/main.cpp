@@ -123,7 +123,7 @@ void loop()
         }
         else
         {
-            // Normal LED handling
+            // LED1 - Recording
             if (NextWheelApp::instance()->isRecording())
             {
                 NextWheelApp::instance()->getLEDS().toggleLED1();
@@ -133,9 +133,15 @@ void loop()
                 NextWheelApp::instance()->getLEDS().setLED1(false);
             }
 
-            // Blinking led2 for now...
-            NextWheelApp::instance()->getLEDS().toggleLED2();
-
+            // LED 2 - Streaming (WebSocket)
+            if (NextWheelApp::instance()->isStreaming())
+            {
+                NextWheelApp::instance()->getLEDS().toggleLED2();
+            }
+            else
+            {
+                NextWheelApp::instance()->getLEDS().setLED2(true);
+            }
 
             if (NextWheelApp::instance()->button1Pressed())
             {

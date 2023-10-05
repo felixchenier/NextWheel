@@ -64,6 +64,11 @@ bool NextWheelApp::isRecording()
     return m_sdCardWorkerTask.isRecording();
 }
 
+bool NextWheelApp::isStreaming()
+{
+    return m_webSocketServerTask.isWebSocketConnected();
+}
+
 LEDS& NextWheelApp::getLEDS()
 {
     return m_leds;

@@ -30,6 +30,8 @@ public:
 
     bool isRecording();
 
+    bool isStreaming();
+
     LEDS& getLEDS();
 
     RTC& getRTC();
