@@ -25,11 +25,49 @@ void setup()
     NextWheelApp::instance()->start();
 }
 
+void signal_start_end_of_ip_signal(TickType_t &lastGeneration)
+{
+    // Signal Start of IP address
+    NextWheelApp::instance()->getLEDS().setLED1(false);
+    NextWheelApp::instance()->getLEDS().setLED2(false);
+    vTaskDelayUntil(&lastGeneration, 1000 / portTICK_RATE_MS);
+    NextWheelApp::instance()->getLEDS().setLED1(true);
+    NextWheelApp::instance()->getLEDS().setLED2(true);
+    vTaskDelayUntil(&lastGeneration, 1000 / portTICK_RATE_MS);
+    NextWheelApp::instance()->getLEDS().setLED1(false);
+    NextWheelApp::instance()->getLEDS().setLED2(false);
+}
+
+void signal_start_of_digit_with_led_1(TickType_t &lastGeneration)
+{
+    NextWheelApp::instance()->getLEDS().setLED1(true);
+    vTaskDelayUntil(&lastGeneration, 500 / portTICK_RATE_MS);
+    NextWheelApp::instance()->getLEDS().setLED1(false);
+    vTaskDelayUntil(&lastGeneration, 500 / portTICK_RATE_MS);
+}
+
+void signal_digit_value_with_led_2(TickType_t &lastGeneration, uint8_t val)
+{
+    //Serial.print("Signaling: "); Serial.println(val);
+    for (auto j = 0; j < val; j++)
+    {
+        // Signal changing Digit
+        NextWheelApp::instance()->getLEDS().setLED2(true);
+        vTaskDelayUntil(&lastGeneration, 500 / portTICK_RATE_MS);
+        NextWheelApp::instance()->getLEDS().setLED2(false);
+        vTaskDelayUntil(&lastGeneration, 500 / portTICK_RATE_MS);
+    }
+}
+
 void loop()
 {
     // Note Arduino (loop) runs on core 1
     // WiFi, BLE runs on core 0
     // Default loop priority is TASK_PRIORITY_LOWEST (1)
+
+    //Set Task To High Priority!
+    //Buttons are very high priority to start / stop recordings...
+    vTaskPrioritySet(NULL, TASK_PRIORITY_HIGHEST);
     Serial.print("Main Loop: priority = ");
     Serial.println(uxTaskPriorityGet(NULL));
 
@@ -50,64 +88,37 @@ void loop()
         {
             // Store new IP
             currentIP = WiFi.localIP().toString();
-
-            // Start of IP address
-            NextWheelApp::instance()->getLEDS().setLED1(false);
-            NextWheelApp::instance()->getLEDS().setLED2(false);
-            vTaskDelayUntil(&lastGeneration, 1000 / portTICK_RATE_MS);
-            NextWheelApp::instance()->getLEDS().setLED1(true);
-            NextWheelApp::instance()->getLEDS().setLED2(true);
-            vTaskDelayUntil(&lastGeneration, 1000 / portTICK_RATE_MS);
-            NextWheelApp::instance()->getLEDS().setLED1(false);
-            NextWheelApp::instance()->getLEDS().setLED2(false);
-
             Serial.print("IP address changed: ");
             Serial.println(currentIP);
 
-            for (auto i = 0; i < currentIP.length(); i++)
-            {   // '.' separates the IP address
 
-                // Signal changing Digit
-                NextWheelApp::instance()->getLEDS().setLED1(true);
-                vTaskDelayUntil(&lastGeneration, 500 / portTICK_RATE_MS);
-                NextWheelApp::instance()->getLEDS().setLED1(false);
-                vTaskDelayUntil(&lastGeneration, 500 / portTICK_RATE_MS);
+            signal_start_end_of_ip_signal(lastGeneration);
 
-                if (currentIP[i] != '.')
-                {
-                    auto val = String(currentIP[i]).toInt();
-                    Serial.print("Signaling: "); Serial.println(val);
-                    for (auto j = 0; j < val; j++)
-                    {
-                        //Signal count with LED2
-                        NextWheelApp::instance()->getLEDS().setLED2(true);
-                        vTaskDelayUntil(&lastGeneration, 250 / portTICK_RATE_MS);
-                        NextWheelApp::instance()->getLEDS().setLED2(false);
-                        vTaskDelayUntil(&lastGeneration, 250 / portTICK_RATE_MS);
-                    }
-                }
-                else
-                {
-                    // Signal changing Digit
-                    NextWheelApp::instance()->getLEDS().setLED1(true);
-                    vTaskDelayUntil(&lastGeneration, 2000 / portTICK_RATE_MS);
-                    NextWheelApp::instance()->getLEDS().setLED1(false);
-                    vTaskDelayUntil(&lastGeneration, 2000 / portTICK_RATE_MS);
-                }
+            // Iterate through each byte of the IP address
+            for (auto byte_nb = 0; byte_nb < 4; byte_nb++)
+            {
+                uint8_t ip_val = WiFi.localIP()[byte_nb];
 
-                // Pause for each digit
-                //vTaskDelayUntil(&lastGeneration, 1000 / portTICK_RATE_MS);
+                // Signal 100th
+                signal_start_of_digit_with_led_1(lastGeneration);
+                signal_digit_value_with_led_2(lastGeneration, ip_val / 100);
+
+                // Signal 10th
+                signal_start_of_digit_with_led_1(lastGeneration);
+                signal_digit_value_with_led_2(lastGeneration, (ip_val % 100) / 10);
+
+                // Signal unit
+                signal_start_of_digit_with_led_1(lastGeneration);
+                signal_digit_value_with_led_2(lastGeneration, ip_val % 10);
+
+
+                // Pause for each digit (.)
+                vTaskDelayUntil(&lastGeneration, 1000 / portTICK_RATE_MS);
             }
 
+
             // End of IP address
-            NextWheelApp::instance()->getLEDS().setLED1(false);
-            NextWheelApp::instance()->getLEDS().setLED2(false);
-            vTaskDelayUntil(&lastGeneration, 1000 / portTICK_RATE_MS);
-            NextWheelApp::instance()->getLEDS().setLED1(true);
-            NextWheelApp::instance()->getLEDS().setLED2(true);
-            vTaskDelayUntil(&lastGeneration, 1000 / portTICK_RATE_MS);
-            NextWheelApp::instance()->getLEDS().setLED1(false);
-            NextWheelApp::instance()->getLEDS().setLED2(false);
+            signal_start_end_of_ip_signal(lastGeneration);
         }
         else
         {
