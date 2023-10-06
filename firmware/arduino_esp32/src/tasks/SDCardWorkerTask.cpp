@@ -88,28 +88,46 @@ void SDCardWorkerTask::run(void* app)
         // 50 ms task
         vTaskDelayUntil(&lastGeneration, 50 / portTICK_RATE_MS);
 
-        int count = 0;
+        size_t total_payload_size = 0;
+        std::list<DataFramePtr> dataPtrs;
+
         // Dequeue all data values (one shot), no timeout
         while (DataFramePtr dataPtr = dequeue(0))
         {
-            // Writing to log file if it is open
             if (m_file)
             {
-                m_bytesWritten += m_sdCard.writeToLogFile(m_file, *dataPtr);
+                total_payload_size += dataPtr->getTotalSize();
+                dataPtrs.push_back(dataPtr);
+
+                // Make sure we do not overflow the stack with more than 4K of data
+                // Will be allocated next..
+                if (total_payload_size > 4096)
+                {
+                    break;
+                }
             }
-
-            count++;
-
-            // Mandatory to delete, otherwise the memory will be leaked
-            delete dataPtr;
+            else
+            {
+                delete dataPtr;
+            }
         }
-
-        //Serial.printf("SDCardWorkerTask::run() dequeued : %i frames written: %li\n", count, m_bytesWritten);
-
-
+        // Enough data for one transmission ?
         // Make sure write is complete
         if (m_file)
         {
+            // Serial.printf("Writing %li bytes to file\n", total_payload_size);
+            //allocate buffer on stack
+            uint8_t buffer[total_payload_size];
+            size_t offset = 0;
+            for (auto dataPtr : dataPtrs)
+            {
+                dataPtr->serialize(buffer + offset, dataPtr->getTotalSize());
+                offset += dataPtr->getTotalSize();
+                delete dataPtr;
+            }
+            // Write everything to file all at once
+            m_bytesWritten += m_sdCard.writeToLogFile(m_file, buffer, total_payload_size);
+            // Make sure we flush the file to SDCard
             m_file.flush();
         }
 
