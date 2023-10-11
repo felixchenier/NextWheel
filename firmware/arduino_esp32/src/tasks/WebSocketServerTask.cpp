@@ -101,7 +101,7 @@ void WebSocketServerTask::run(void* app)
         // Dequeue all values (one shot,), no timeout
         //Make sure we have maximum payload of approximately 1400 bytes
         //Otherwize the IP stack will have to fragment the packet and we will have a lot of overhead
-        while (DataFramePtr dataPtr = dequeue(0))
+        while (DataFramePtr dataPtr = dequeue(50 / portTICK_RATE_MS))
         {
             if (m_server.webSocketClientCount() > 0)
             {
@@ -109,6 +109,7 @@ void WebSocketServerTask::run(void* app)
                 dataPtrs.push_back(dataPtr);
 
                 // Enough data for one transmission ?
+                // Size 1400 is selected to avoid IP fragmentation
                 if (total_payload_size > 1400)
                 {
                     break;
@@ -121,7 +122,7 @@ void WebSocketServerTask::run(void* app)
         }
 
         // Any clients ?
-        if (m_server.webSocketClientCount() > 0)
+        if (m_server.webSocketClientCount() > 0 && dataPtrs.size() > 0)
         {
             // uint8_t* super_frame = new uint8_t[total_payload_size + DataFrame::HEADER_SIZE];
             // Serial.printf("Should allocate %i bytes\n", total_payload_size + DataFrame::HEADER_SIZE);
@@ -143,14 +144,9 @@ void WebSocketServerTask::run(void* app)
             // Send to all websockets
             m_server.sendToAll(super_frame, total_payload_size + DataFrame::HEADER_SIZE);
 
-            if (total_payload_size < 1400) {
-                // Sleep for a while since we did not fill a full packet
-                vTaskDelayUntil(&lastGeneration, 50 / portTICK_RATE_MS);
-            }
-            else {
-                // Quick sleep, will get back to work soon to continue sending remaining frames.
-                vTaskDelayUntil(&lastGeneration, 10 / portTICK_RATE_MS);
-            }
+            // Quick sleep, will get back to work soon to continue sending remaining frames.
+            // vTaskDelayUntil(&lastGeneration, 50 / portTICK_RATE_MS);
+
         }
         else
         {

@@ -3,6 +3,9 @@
 #include "NextWheelApp.h"
 #include <esp_adc_cal.h>
 #include <driver/adc.h>
+
+
+
 extern "C"
 {
 #include <esp_wifi.h>
@@ -78,6 +81,11 @@ void loop()
     String currentIP = WiFi.localIP().toString();
 
     TickType_t lastGeneration = xTaskGetTickCount();
+
+    TaskHandle_t idleTaskCore0, idleTaskCore1;
+    idleTaskCore0 = xTaskGetIdleTaskHandleForCPU(0);
+    idleTaskCore1 = xTaskGetIdleTaskHandleForCPU(1);
+
     while (1)
     {
         struct timeval timeval_now;
@@ -162,6 +170,9 @@ void loop()
             Serial.print("WARNING : Free heap size: ");
             Serial.println(ESP.getFreeHeap());
         }
+
+
+        //CPU Usage (approximation)
 
         // IDLE loop.
         // 250 ms task
