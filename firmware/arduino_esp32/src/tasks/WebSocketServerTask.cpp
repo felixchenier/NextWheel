@@ -1,4 +1,7 @@
+#if 0
+
 #include "WebSocketServerTask.h"
+
 #include "config/GlobalConfig.h"
 #include "NextWheelApp.h"
 #include <esp_task_wdt.h>
@@ -144,6 +147,7 @@ void WebSocketServerTask::run(void* app)
             // Send to all websockets
             m_server.sendToAll(super_frame, total_payload_size + DataFrame::HEADER_SIZE);
 
+
             // Quick sleep, will get back to work soon to continue sending remaining frames.
             // vTaskDelayUntil(&lastGeneration, 50 / portTICK_RATE_MS);
 
@@ -181,3 +185,5 @@ bool WebSocketServerTask::isWebSocketConnected()
 {
     return m_server.webSocketClientCount() > 0;
 }
+
+#endif

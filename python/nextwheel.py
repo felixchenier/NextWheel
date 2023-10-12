@@ -352,7 +352,7 @@ class NextWheel:
         self.max_power_samples = max_power_samples
 
         self.ws = websocket.WebSocketApp(
-            f"ws://{self.IP}/ws",
+            f"ws://{self.IP}:81/",
             on_open=self.__on_open,
             on_message=self.__on_message,
             on_error=self.__on_error,
@@ -529,7 +529,8 @@ class NextWheel:
         :return:
             int: The size of the file
         """
-        response = requests.get(f"http://{self.IP}{base_url}/{filename}")
+        param = {'file': filename}
+        response = requests.get(f"http://{self.IP}{base_url}", params=param, stream=True)
         if response.status_code == 200:
             with open(save_path, 'wb') as f:
                 f.write(response.content)

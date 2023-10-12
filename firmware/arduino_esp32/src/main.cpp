@@ -3,7 +3,7 @@
 #include "NextWheelApp.h"
 #include <esp_adc_cal.h>
 #include <driver/adc.h>
-
+#include <WiFi.h>
 
 
 extern "C"

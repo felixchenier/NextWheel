@@ -1,6 +1,8 @@
 #ifndef _WEBSOCKET_SERVER_TASK_H_
 #define _WEBSOCKET_SERVER_TASK_H_
 
+#if 0
+
 #include "config/WiFiConfig.h"
 #include "tasks/WorkerTask.h"
 #include "WebSocketServer.h"
@@ -25,5 +27,7 @@ protected:
     WebSocketServer m_server;
 
 };
+
+#endif
 
 #endif  // _WEBSOCKET_SERVER_TASK_H_

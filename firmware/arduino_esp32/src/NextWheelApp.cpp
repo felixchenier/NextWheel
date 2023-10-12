@@ -17,11 +17,11 @@ void NextWheelApp::begin()
     // Sensors must be enabled
     // Must be first
     m_sdCardWorkerTask.setCore(0);
-    m_sdCardWorkerTask.setPriority(TASK_PRIORITY_HIGHEST);
+    m_sdCardWorkerTask.setPriority(TASK_PRIORITY_HIGH);
 
     // SAME CORE AS WiFi, BLE
     m_webSocketServerTask.setCore(0);
-    m_webSocketServerTask.setPriority(TASK_PRIORITY_MEDIUM);
+    m_webSocketServerTask.setPriority(TASK_PRIORITY_LOW);
 
     m_adcTask.setCore(1);
     m_adcTask.setPriority(TASK_PRIORITY_HIGHEST);

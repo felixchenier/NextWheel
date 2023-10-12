@@ -23,6 +23,7 @@ public:
     void onMessage(WebSocketServerMessageEventHandler handler);
     void registerWebsocketConnectedHandler(WebSocketServerWebsocketConnectedHandler handler);
     void registerWebsocketDisconnectedHandler(WebSocketServerWebsocketDisconnectedHandler handler);
+    void pingAll();
 
 
 private:

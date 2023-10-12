@@ -475,3 +475,9 @@ void WebSocketServer::setupDownloadRoute()
     // Mounting SDCARD to /file_download to facilitate file download
     m_server.serveStatic("/file_download", SD_MMC, "/");
 }
+
+void WebSocketServer::pingAll()
+{
+    m_ws.binaryAll((const char*)nullptr, 0);
+    m_ws.pingAll();
+}
