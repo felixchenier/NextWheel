@@ -45,21 +45,25 @@ void signal_start_end_of_ip_signal(TickType_t& lastGeneration)
 void signal_start_of_digit_with_led_1(TickType_t& lastGeneration)
 {
     NextWheelApp::instance()->getLEDS().setLED1(true);
-    vTaskDelayUntil(&lastGeneration, 500 / portTICK_RATE_MS);
+    vTaskDelayUntil(&lastGeneration, 100 / portTICK_RATE_MS);
     NextWheelApp::instance()->getLEDS().setLED1(false);
-    vTaskDelayUntil(&lastGeneration, 500 / portTICK_RATE_MS);
+    vTaskDelayUntil(&lastGeneration, 200 / portTICK_RATE_MS);
 }
 
 void signal_digit_value_with_led_2(TickType_t& lastGeneration, uint8_t val)
 {
     // Serial.print("Signaling: "); Serial.println(val);
-    for (auto j = 0; j < val; j++)
-    {
-        // Signal changing Digit
-        NextWheelApp::instance()->getLEDS().setLED2(true);
-        vTaskDelayUntil(&lastGeneration, 500 / portTICK_RATE_MS);
-        NextWheelApp::instance()->getLEDS().setLED2(false);
-        vTaskDelayUntil(&lastGeneration, 500 / portTICK_RATE_MS);
+    if (val == 0) {
+        vTaskDelayUntil(&lastGeneration, 300 / portTICK_RATE_MS);
+    } else {
+        for (auto j = 0; j < val; j++)
+        {
+            // Signal changing Digit
+            NextWheelApp::instance()->getLEDS().setLED2(true);
+            vTaskDelayUntil(&lastGeneration, 100 / portTICK_RATE_MS);
+            NextWheelApp::instance()->getLEDS().setLED2(false);
+            vTaskDelayUntil(&lastGeneration, 200 / portTICK_RATE_MS);
+        }
     }
 }
 
