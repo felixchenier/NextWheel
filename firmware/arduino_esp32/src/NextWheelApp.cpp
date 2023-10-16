@@ -16,14 +16,12 @@ void NextWheelApp::begin()
 {
     // Sensors must be enabled
     // Must be first
-    m_sdCardWorkerTask.setCore(1);
+    m_sdCardWorkerTask.setCore(0);
     m_sdCardWorkerTask.setPriority(TASK_PRIORITY_HIGH);
 
-    // m_printWorkerTask.setCore(0);
-    // m_printWorkerTask.setPriority(TASK_PRIORITY_IDLE);
-
+    // SAME CORE AS WiFi, BLE
     m_webSocketServerTask.setCore(0);
-    m_webSocketServerTask.setPriority(TASK_PRIORITY_MEDIUM);
+    m_webSocketServerTask.setPriority(TASK_PRIORITY_LOW);
 
     m_adcTask.setCore(1);
     m_adcTask.setPriority(TASK_PRIORITY_HIGHEST);
@@ -45,7 +43,7 @@ void NextWheelApp::start()
 {
     Serial.println("Starting worker tasks");
     m_sdCardWorkerTask.start(this);
-    // m_printWorkerTask.start(nullptr);
+
 
 #ifndef NEXTWHEEL_DISABLE_WIFI
     m_webSocketServerTask.start(this);
@@ -65,6 +63,11 @@ void NextWheelApp::start()
 bool NextWheelApp::isRecording()
 {
     return m_sdCardWorkerTask.isRecording();
+}
+
+bool NextWheelApp::isStreaming()
+{
+    return m_webSocketServerTask.isWebSocketConnected();
 }
 
 LEDS& NextWheelApp::getLEDS()
@@ -104,6 +107,7 @@ NextWheelApp::NextWheelApp()
 
     // First thing we set the system to current time
     m_rtc.begin();
+    m_rtc.printTime();
 
     // Initialize buttons
     // TODO disable buttons for now, interrupts are randomly generated because of noisy power suply.
@@ -169,6 +173,22 @@ bool NextWheelApp::button2Pressed()
 {
     return m_buttons.button2Pressed();
 }
+
+void NextWheelApp::sendConfigUpdateEvent(bool from_isr)
+{
+    //Each task should receive the config update event
+    // Actuators
+    m_dacTask.sendBaseCommandEvent(Task::BASE_TASK_CONFIG_UPDATED, from_isr);
+    // Sensors
+    m_adcTask.sendBaseCommandEvent(Task::BASE_TASK_CONFIG_UPDATED, from_isr);
+    m_imuTask.sendBaseCommandEvent(Task::BASE_TASK_CONFIG_UPDATED, from_isr);
+    m_powerTask.sendBaseCommandEvent(Task::BASE_TASK_CONFIG_UPDATED, from_isr);
+    m_quadEncoderTask.sendBaseCommandEvent(Task::BASE_TASK_CONFIG_UPDATED, from_isr);
+    // Workers
+    m_sdCardWorkerTask.sendBaseCommandEvent(Task::BASE_TASK_CONFIG_UPDATED, from_isr);
+    m_webSocketServerTask.sendBaseCommandEvent(Task::BASE_TASK_CONFIG_UPDATED, from_isr);
+}
+
 
 namespace NextWheelInterrupts
 {

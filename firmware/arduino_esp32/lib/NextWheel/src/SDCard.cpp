@@ -126,3 +126,21 @@ size_t SDCard::writeToLogFile(File file, const DataFrame& frame)
 
     return written;
 }
+
+size_t SDCard::writeToLogFile(File file, const uint8_t* data, size_t len)
+{
+    if (!file)
+    {
+        Serial.println("Failed to open file for writing");
+        return 0;
+    }
+
+    // Write to file
+    size_t written = file.write(data, len);
+    if (written != len)
+    {
+        Serial.println("Failed to write to file");
+    }
+
+    return written;
+}

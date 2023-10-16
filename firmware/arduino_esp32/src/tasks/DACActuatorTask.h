@@ -5,7 +5,11 @@
 #include <Arduino.h>
 #include <freertos/queue.h>
 #include "Task.h"
-#include "DAC.h"
+
+#ifdef _USE_INTERNAL_DAC_
+    #include "DAC.h"
+#endif
+
 
 class DACActuatorTask: public Task {
 
@@ -15,8 +19,9 @@ class DACActuatorTask: public Task {
 
     private:
 
+#ifdef _USE_INTERNAL_DAC_
     DAC m_dac;
-
+#endif
 };
 
 #endif // _DAC_ACTUATOR_TASK_H_

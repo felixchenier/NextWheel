@@ -12,6 +12,7 @@ public:
     void begin();
     void update();
     bool setTime(String time);
+    void printTime();
 
 private:
     MCP7940_Class m_mcp7940;

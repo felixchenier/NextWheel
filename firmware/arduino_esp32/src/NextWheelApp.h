@@ -12,8 +12,7 @@
 #include "tasks/ADCSensorTask.h"
 #include "tasks/IMUSensorTask.h"
 #include "tasks/PowerSensorTask.h"
-#include "tasks/PrintWorkerTask.h"
-#include "tasks/WebSocketServerTask.h"
+#include "tasks/WebSocketServerTask_v2.h"
 #include "tasks/SDCardWorkerTask.h"
 #include "tasks/DACActuatorTask.h"
 #include "tasks/QuadEncoderSensorTask.h"
@@ -31,6 +30,8 @@ public:
 
     bool isRecording();
 
+    bool isStreaming();
+
     LEDS& getLEDS();
 
     RTC& getRTC();
@@ -38,6 +39,8 @@ public:
     bool startRecording(bool from_isr = false);
 
     bool stopRecording(bool from_isr = false);
+
+    void sendConfigUpdateEvent(bool from_isr = false);
 
     bool setTime(String time);
 
@@ -72,9 +75,9 @@ private:
     QuadEncoderSensorTask m_quadEncoderTask;
 
     // Workers
-    // PrintWorkerTask m_printWorkerTask;
     SDCardWorkerTask m_sdCardWorkerTask;
-    WebSocketServerTask m_webSocketServerTask;
+    //WebSocketServerTask m_webSocketServerTask;
+    WebSocketServerTask_v2 m_webSocketServerTask;
 
     SemaphoreHandle_t m_queueMutex;
 };

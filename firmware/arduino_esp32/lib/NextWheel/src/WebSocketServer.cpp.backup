@@ -23,10 +23,12 @@ void WebSocketServer::begin(const GlobalConfig::ConfigData &configData)
       // put your setup code here, to run once:
     while (WiFi.status() != WL_CONNECTED)
     {
+        sendMessageEvent("wifi", "connecting");
         delay(500);
     }
     Serial.print("Connected to WiFi IP: ");
     Serial.println(WiFi.localIP());
+    sendMessageEvent("ip", WiFi.localIP().toString());
 
     // Setup the websocket
     setupWebSocket();
@@ -279,6 +281,10 @@ void WebSocketServer::setupRESTAPI()
                 }
 
             }
+
+            //We should notify every task that we might have changed the config.
+            sendMessageEvent("config", "config_update");
+
             request->send(ret_code, "text/plain", ret_msg);
         });
 
@@ -468,4 +474,10 @@ void WebSocketServer::setupDownloadRoute()
 {
     // Mounting SDCARD to /file_download to facilitate file download
     m_server.serveStatic("/file_download", SD_MMC, "/");
+}
+
+void WebSocketServer::pingAll()
+{
+    m_ws.binaryAll((const char*)nullptr, 0);
+    m_ws.pingAll();
 }

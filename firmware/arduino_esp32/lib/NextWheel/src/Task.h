@@ -9,6 +9,7 @@
 #define COMPONENTS_CPP_UTILS_TASK_H_
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
+#include <freertos/queue.h>
 #include <string>
 /**
  * @brief Encapsulate a runnable task.
@@ -33,6 +34,18 @@
  */
 class Task {
 public:
+
+
+	/**
+	 * @brief The commands that every base task should handle. Default behavior would be to ignore.
+	 *
+	 */
+	enum BaseTaskCommand
+	{
+		BASE_TASK_COMMAND_NONE = 0,
+		BASE_TASK_CONFIG_UPDATED = 1
+	};
+
 	Task(std::string taskName = "Task", uint16_t stackSize = 10000, uint8_t priority = 5);
 	virtual ~Task();
 	void setStackSize(uint16_t stackSize);
@@ -53,6 +66,12 @@ public:
 	virtual void run(void* data) = 0; // Make run pure virtual
 	static void delay(int ms);
 
+	bool sendBaseCommandEvent(BaseTaskCommand command, bool from_isr = false);
+
+protected:
+
+	BaseTaskCommand dequeueBaseCommand(unsigned long timeout);
+
 private:
 	xTaskHandle m_handle;
 	void*       m_taskData;
@@ -61,6 +80,7 @@ private:
 	uint16_t    m_stackSize;
 	uint8_t     m_priority;
 	BaseType_t  m_coreId;
+	QueueHandle_t m_baseCommandQueue;
 
 };
 

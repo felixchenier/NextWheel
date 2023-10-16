@@ -20,10 +20,30 @@ void Buttons::setup_buttons_interrupt()
 
 bool Buttons::button1Pressed()
 {
-    return digitalRead(PIN_BUTTON_1) == HIGH;
+    //Debouncing
+    int count = 0;
+    for (int i = 0; i < 10; i++)
+    {
+        if (digitalRead(PIN_BUTTON_1) == HIGH)
+        {
+            count++;
+        }
+    }
+    // More than 50% of the time, the button is pressed
+    return count > 5;
 }
 
 bool Buttons::button2Pressed()
 {
-    return digitalRead(PIN_BUTTON_2) == HIGH;
+    //Debouncing
+    int count = 0;
+    for (int i = 0; i < 10; i++)
+    {
+        if (digitalRead(PIN_BUTTON_2) == HIGH)
+        {
+            count++;
+        }
+    }
+    // More than 50% of the time, the button is pressed
+    return count > 5;
 }

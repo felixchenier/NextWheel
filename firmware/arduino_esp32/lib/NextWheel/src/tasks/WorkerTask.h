@@ -9,9 +9,11 @@
 
 class WorkerTask : public Task {
     public:
+
         WorkerTask(const char* name, uint32_t stackSize=TASK_STACK_SIZE_DEFAULT, uint8_t priority=TASK_PRIORITY_DEFAULT)
             : Task(name, stackSize, priority), m_dataQueue(nullptr) {
 
+            //50% more than what we need @ 2khz since tasks consuming data are working at 50Hz
             m_dataQueue = xQueueCreate(200, sizeof(DataFramePtr));
 
         }

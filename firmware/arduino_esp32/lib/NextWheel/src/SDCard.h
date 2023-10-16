@@ -17,6 +17,7 @@ public:
     void listDir(const char* dirname, uint8_t levels);
     File openNewLogFile(const char* filename);
     size_t writeToLogFile(File file, const DataFrame& frame);
+    size_t writeToLogFile(File file, const uint8_t* data, size_t len);
 };
 
 #endif  // _SDCARD_H_
