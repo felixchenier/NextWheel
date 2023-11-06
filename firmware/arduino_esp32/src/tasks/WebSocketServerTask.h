@@ -1,13 +1,16 @@
 #ifndef _WEBSOCKET_SERVER_TASK_H_
 #define _WEBSOCKET_SERVER_TASK_H_
 
-#if 0
-
 #include "config/WiFiConfig.h"
 #include "tasks/WorkerTask.h"
-#include "WebSocketServer.h"
+#include <NextWheel.h>
+#include <data/DataFrame.h>
+#include <data/ConfigDataFrame.h>
 #include <string.h>
 #include <list>
+#include <WebSocketsServer.h>
+#include <WebServer.h>
+
 
 class WebSocketServerTask : public WorkerTask
 {
@@ -23,11 +26,11 @@ protected:
     void onMessage(String param, String message);
     void onWebsocketConnected();
     void onWebsocketDisconnected();
+    void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length);
+    void setupRESTAPI();
 
-    WebSocketServer m_server;
-
+    WebSocketsServer m_webSocketServer;
+    WebServer m_webServer;
 };
-
-#endif
 
 #endif  // _WEBSOCKET_SERVER_TASK_H_

@@ -12,7 +12,7 @@
 #include "tasks/ADCSensorTask.h"
 #include "tasks/IMUSensorTask.h"
 #include "tasks/PowerSensorTask.h"
-#include "tasks/WebSocketServerTask_v2.h"
+#include "tasks/WebSocketServerTask.h"
 #include "tasks/SDCardWorkerTask.h"
 #include "tasks/DACActuatorTask.h"
 #include "tasks/QuadEncoderSensorTask.h"
@@ -77,7 +77,7 @@ private:
     // Workers
     SDCardWorkerTask m_sdCardWorkerTask;
     //WebSocketServerTask m_webSocketServerTask;
-    WebSocketServerTask_v2 m_webSocketServerTask;
+    WebSocketServerTask m_webSocketServerTask;
 
     SemaphoreHandle_t m_queueMutex;
 };
