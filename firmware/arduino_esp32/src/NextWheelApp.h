@@ -52,6 +52,13 @@ public:
     bool button1Pressed();
     bool button2Pressed();
 
+    void playStartRecordingSound(bool from_isr = false);
+    void playStopRecordingSound(bool from_isr = false);
+    void playStartStreamingSound(bool from_isr = false);
+    void playStopStreamingSound(bool from_isr = false);
+    void playLowBatterySound(bool from_isr = false);
+
+
 private:
     NextWheelApp();
 

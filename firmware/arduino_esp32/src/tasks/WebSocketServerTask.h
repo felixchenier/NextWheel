@@ -23,9 +23,7 @@ public:
 
 
 protected:
-    void onMessage(String param, String message);
-    void onWebsocketConnected();
-    void onWebsocketDisconnected();
+
     void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length);
     void setupRESTAPI();
 

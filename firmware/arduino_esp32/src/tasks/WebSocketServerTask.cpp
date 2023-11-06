@@ -131,27 +131,6 @@ void WebSocketServerTask::run(void* app)
     }  // while(1)
 }
 
-void WebSocketServerTask::onMessage(String param, String message)
-{
-    Serial.println("WebSocketServerTask::onMessage");
-    Serial.print("Param: ");
-    Serial.print(param);
-    Serial.print(" Message: ");
-    Serial.println(message);
-}
-
-void WebSocketServerTask::onWebsocketConnected()
-{
-    Serial.println("WebSocketServerTask::onWebsocketConnected");
-    NextWheelApp::instance()->registerSensorTasksToWebSocketServer();
-}
-
-void WebSocketServerTask::onWebsocketDisconnected()
-{
-    Serial.println("WebSocketServerTask::onWebsocketDisconnected");
-    NextWheelApp::instance()->unregisterSensorTasksFromWebSocketServer();
-}
-
 bool WebSocketServerTask::isWebSocketConnected()
 {
     return m_webSocketServer.connectedClients() > 0;
@@ -163,12 +142,14 @@ void WebSocketServerTask::webSocketEvent(uint8_t num, WStype_t type, uint8_t* pa
     {
         case WStype_DISCONNECTED:
             Serial.printf("[%u] Disconnected!\n", num);
+            NextWheelApp::instance()->playStopStreamingSound();
             NextWheelApp::instance()->unregisterSensorTasksFromWebSocketServer();
             break;
         case WStype_CONNECTED:
         {
             IPAddress ip = m_webSocketServer.remoteIP(num);
             Serial.printf("[%u] Connected from %d.%d.%d.%d url: %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
+            NextWheelApp::instance()->playStartStreamingSound();
 
             // Send the current configuration
             ConfigDataFrame configDataFrame(GlobalConfig::instance().get());
