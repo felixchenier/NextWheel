@@ -1,9 +1,6 @@
 #include "SystemState.h"
 
-SystemState::SystemState()
-{
-
-}
+SystemState::SystemState() {}
 
 // Singleton instance
 SystemState& SystemState::instance()

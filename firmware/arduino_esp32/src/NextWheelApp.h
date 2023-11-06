@@ -83,7 +83,7 @@ private:
 
     // Workers
     SDCardWorkerTask m_sdCardWorkerTask;
-    //WebSocketServerTask m_webSocketServerTask;
+    // WebSocketServerTask m_webSocketServerTask;
     WebSocketServerTask m_webSocketServerTask;
 
     SemaphoreHandle_t m_queueMutex;

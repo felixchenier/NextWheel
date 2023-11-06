@@ -54,7 +54,7 @@ DACActuatorTask::DACActuatorTask(const char* name, uint32_t stackSize, uint8_t p
 #endif
 }
 
-bool DACActuatorTask::dequeueSound(uint32_t *sound, unsigned long timeout)
+bool DACActuatorTask::dequeueSound(uint32_t* sound, unsigned long timeout)
 {
     if (xQueueReceive(m_soundQueue, sound, timeout) != pdTRUE)
     {
@@ -173,7 +173,7 @@ void DACActuatorTask::run(void*)
                 uint32_t frequency = sound_to_play[i];
                 uint32_t duration = sound_to_play[i + 1];
 
-                //Serial.printf("Playing sound: %i %i \n", frequency, duration);
+                // Serial.printf("Playing sound: %i %i \n", frequency, duration);
                 if (frequency == 0)
                 {
                     // No sound
@@ -192,7 +192,7 @@ void DACActuatorTask::run(void*)
         }
         else
         {
-            //Serial.println("Nothing to play");
+            // Serial.println("Nothing to play");
             ledcWrite(0, 0);  // Ch:0, Duty: 0/256 (0%)
         }
 #endif

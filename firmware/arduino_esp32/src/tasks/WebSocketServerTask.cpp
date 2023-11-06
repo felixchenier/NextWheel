@@ -444,8 +444,10 @@ void WebSocketServerTask::setupRESTAPI()
                 if (SD_MMC.exists(file))
                 {
                     File file_to_download = SD_MMC.open(file);
-                    //Make sure the receiver treats the file as binary, and gets the correct file size and name
-                    m_webServer.sendHeader("Content-Disposition", String("attachment; filename=") + file_to_download.name());
+                    // Make sure the receiver treats the file as binary, and gets the correct file size and name
+                    m_webServer.sendHeader(
+                        "Content-Disposition",
+                        String("attachment; filename=") + file_to_download.name());
                     m_webServer.sendHeader("Content-Length", String(file_to_download.size()));
                     m_webServer.streamFile(file_to_download, "application/octet-stream");
                     file_to_download.close();

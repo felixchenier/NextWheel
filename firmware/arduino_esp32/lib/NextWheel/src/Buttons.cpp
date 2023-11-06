@@ -13,14 +13,14 @@ void Buttons::setup_buttons_interrupt()
     // No internal pullup or down on those pins
     pinMode(PIN_BUTTON_1, INPUT);
     // Hardware bug on the ESP32, not recommended to use interrupts on GPIN 36 and 39
-    //attachInterrupt(PIN_BUTTON_1, NextWheelInterrupts::button1_interrupt, RISING);
+    // attachInterrupt(PIN_BUTTON_1, NextWheelInterrupts::button1_interrupt, RISING);
     pinMode(PIN_BUTTON_2, INPUT);
-    //attachInterrupt(PIN_BUTTON_2, NextWheelInterrupts::button2_interrupt, RISING);
+    // attachInterrupt(PIN_BUTTON_2, NextWheelInterrupts::button2_interrupt, RISING);
 }
 
 bool Buttons::button1Pressed()
 {
-    //Debouncing
+    // Debouncing
     int count = 0;
     for (int i = 0; i < 10; i++)
     {
@@ -35,7 +35,7 @@ bool Buttons::button1Pressed()
 
 bool Buttons::button2Pressed()
 {
-    //Debouncing
+    // Debouncing
     int count = 0;
     for (int i = 0; i < 10; i++)
     {

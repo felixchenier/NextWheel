@@ -30,8 +30,8 @@ class DACActuatorTask : public Task
     static const uint32_t LOW_BATTERY_SOUND[SOUND_QUEUE_MESSAGE_SIZE];
 
 
-    //dequeue sounds with array reference
-    bool dequeueSound(uint32_t *sound, unsigned long timeout = 10);
+    // dequeue sounds with array reference
+    bool dequeueSound(uint32_t* sound, unsigned long timeout = 10);
 
 public:
     DACActuatorTask(

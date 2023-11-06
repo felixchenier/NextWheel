@@ -2,15 +2,18 @@
 #include "config/GlobalConfig.h"
 
 
-namespace NextWheelInterrupts {
+namespace NextWheelInterrupts
+{
     SemaphoreHandle_t g_adc_semaphore;
-    void IRAM_ATTR adc_sensor_task_timer_interrupt(){
-         xSemaphoreGiveFromISR(NextWheelInterrupts::g_adc_semaphore, NULL);
+    void IRAM_ATTR adc_sensor_task_timer_interrupt()
+    {
+        xSemaphoreGiveFromISR(NextWheelInterrupts::g_adc_semaphore, NULL);
     }
-}// namespace NextWheel
+}  // namespace NextWheel
 
-ADCSensorTask::ADCSensorTask() : SensorTask("ADCSensorTask") {
-    NextWheelInterrupts::g_adc_semaphore = xSemaphoreCreateCounting(1,0);
+ADCSensorTask::ADCSensorTask() : SensorTask("ADCSensorTask")
+{
+    NextWheelInterrupts::g_adc_semaphore = xSemaphoreCreateCounting(1, 0);
 }
 
 
@@ -23,18 +26,21 @@ void ADCSensorTask::run(void* app)
     m_adc.begin();
     ADCDataFrame frame;
 
-    auto adc_timer = timerBegin(0, 80, true); //count up. 80 prescaler = 1us resolution
-    timerAttachInterrupt(adc_timer, &NextWheelInterrupts::adc_sensor_task_timer_interrupt, false); // Attach interrupt function
-    timerAlarmWrite(adc_timer, 1000000 / GlobalConfig::instance().get_adc_sample_rate(), true); // us timer calculation
+    auto adc_timer = timerBegin(0, 80, true);  // count up. 80 prescaler = 1us resolution
+    timerAttachInterrupt(
+        adc_timer,
+        &NextWheelInterrupts::adc_sensor_task_timer_interrupt,
+        false);  // Attach interrupt function
+    timerAlarmWrite(adc_timer, 1000000 / GlobalConfig::instance().get_adc_sample_rate(), true);  // us timer calculation
     timerAlarmEnable(adc_timer);
 
     while (1)
     {
-        //First empty the command queue (timeout=0, not waiting)
-        //Loop while we have BASE_TASK_COMMAND_NONE --> 0
-        while(Task::BaseTaskCommand command = dequeueBaseCommand(0))
+        // First empty the command queue (timeout=0, not waiting)
+        // Loop while we have BASE_TASK_COMMAND_NONE --> 0
+        while (Task::BaseTaskCommand command = dequeueBaseCommand(0))
         {
-            switch(command)
+            switch (command)
             {
                 case Task::BASE_TASK_COMMAND_NONE:
                     Serial.println("ADCSensorTask::run: BASE_TASK_COMMAND_NONE");
@@ -43,15 +49,18 @@ void ADCSensorTask::run(void* app)
                     Serial.println("ADCSensorTask::run: BASE_TASK_CONFIG_UPDATED");
                     Serial.print("ADCSensorTask::run Updating ADC sample rate to : ");
                     Serial.println(GlobalConfig::instance().get_adc_sample_rate());
-                    //Update configuration
+                    // Update configuration
                     timerAlarmDisable(adc_timer);
-                    timerAlarmWrite(adc_timer, 1000000 / GlobalConfig::instance().get_adc_sample_rate(), true); // us timer calculation
+                    timerAlarmWrite(
+                        adc_timer,
+                        1000000 / GlobalConfig::instance().get_adc_sample_rate(),
+                        true);  // us timer calculation
                     timerAlarmEnable(adc_timer);
                     break;
                 default:
                     Serial.print("ADCSensorTask::run: Unknown command: ");
                     Serial.println(command);
-                break;
+                    break;
             }
         }
 

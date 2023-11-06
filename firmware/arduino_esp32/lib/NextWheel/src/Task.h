@@ -32,56 +32,53 @@
  *
  * implemented.
  */
-class Task {
+class Task
+{
 public:
+    /**
+     * @brief The commands that every base task should handle. Default behavior would be to ignore.
+     *
+     */
+    enum BaseTaskCommand
+    {
+        BASE_TASK_COMMAND_NONE = 0,
+        BASE_TASK_CONFIG_UPDATED = 1
+    };
 
+    Task(std::string taskName = "Task", uint16_t stackSize = 10000, uint8_t priority = 5);
+    virtual ~Task();
+    void setStackSize(uint16_t stackSize);
+    void setPriority(uint8_t priority);
+    void setName(std::string name);
+    void setCore(BaseType_t coreId);
+    void start(void* taskData = nullptr);
+    void stop();
+    /**
+     * @brief Body of the task to execute.
+     *
+     * This function must be implemented in the subclass that represents the actual task to run.
+     * When a task is started by calling start(), this is the code that is executed in the
+     * newly created task.
+     *
+     * @param [in] data The data passed in to the newly started task.
+     */
+    virtual void run(void* data) = 0;  // Make run pure virtual
+    static void delay(int ms);
 
-	/**
-	 * @brief The commands that every base task should handle. Default behavior would be to ignore.
-	 *
-	 */
-	enum BaseTaskCommand
-	{
-		BASE_TASK_COMMAND_NONE = 0,
-		BASE_TASK_CONFIG_UPDATED = 1
-	};
-
-	Task(std::string taskName = "Task", uint16_t stackSize = 10000, uint8_t priority = 5);
-	virtual ~Task();
-	void setStackSize(uint16_t stackSize);
-	void setPriority(uint8_t priority);
-	void setName(std::string name);
-	void setCore(BaseType_t coreId);
-	void start(void* taskData = nullptr);
-	void stop();
-	/**
-	 * @brief Body of the task to execute.
-	 *
-	 * This function must be implemented in the subclass that represents the actual task to run.
-	 * When a task is started by calling start(), this is the code that is executed in the
-	 * newly created task.
-	 *
-	 * @param [in] data The data passed in to the newly started task.
-	 */
-	virtual void run(void* data) = 0; // Make run pure virtual
-	static void delay(int ms);
-
-	bool sendBaseCommandEvent(BaseTaskCommand command, bool from_isr = false);
+    bool sendBaseCommandEvent(BaseTaskCommand command, bool from_isr = false);
 
 protected:
-
-	BaseTaskCommand dequeueBaseCommand(unsigned long timeout);
+    BaseTaskCommand dequeueBaseCommand(unsigned long timeout);
 
 private:
-	xTaskHandle m_handle;
-	void*       m_taskData;
-	static void runTask(void* data);
-	std::string m_taskName;
-	uint16_t    m_stackSize;
-	uint8_t     m_priority;
-	BaseType_t  m_coreId;
-	QueueHandle_t m_baseCommandQueue;
-
+    xTaskHandle m_handle;
+    void* m_taskData;
+    static void runTask(void* data);
+    std::string m_taskName;
+    uint16_t m_stackSize;
+    uint8_t m_priority;
+    BaseType_t m_coreId;
+    QueueHandle_t m_baseCommandQueue;
 };
 
 #endif /* COMPONENTS_CPP_UTILS_TASK_H_ */

@@ -47,16 +47,16 @@ void SDCardWorkerTask::run(void* app)
 
     TickType_t lastGeneration = xTaskGetTickCount();
 
-    //Init SD CARD
+    // Init SD CARD
     m_sdCard.begin();
 
     while (1)
     {
-        //First empty the command queue (timeout=0, not waiting)
-        //Loop while we have BASE_TASK_COMMAND_NONE --> 0
-        while(Task::BaseTaskCommand command = dequeueBaseCommand(0))
+        // First empty the command queue (timeout=0, not waiting)
+        // Loop while we have BASE_TASK_COMMAND_NONE --> 0
+        while (Task::BaseTaskCommand command = dequeueBaseCommand(0))
         {
-            switch(command)
+            switch (command)
             {
                 case Task::BASE_TASK_COMMAND_NONE:
                     Serial.println("SDCardWorkerTask::run: BASE_TASK_COMMAND_NONE");
@@ -81,7 +81,7 @@ void SDCardWorkerTask::run(void* app)
                 default:
                     Serial.print("SDCardWorkerTask::run: Unknown command: ");
                     Serial.println(command);
-                break;
+                    break;
             }
         }
 
@@ -175,7 +175,7 @@ void SDCardWorkerTask::run(void* app)
         // 50 ms task
         vTaskDelayUntil(&lastGeneration, 50 / portTICK_RATE_MS);
 
-    } // while(1)
+    }  // while(1)
 }
 
 SDCardWorkerTask::SDCardWorkerTaskCommand SDCardWorkerTask::dequeueCommand(unsigned long timeout)

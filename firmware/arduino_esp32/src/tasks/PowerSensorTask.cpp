@@ -14,11 +14,11 @@ void PowerSensorTask::run(void* app)
 
     while (1)
     {
-        //First empty the command queue (timeout=0, not waiting)
-        //Loop while we have BASE_TASK_COMMAND_NONE --> 0
-        while(Task::BaseTaskCommand command = dequeueBaseCommand(0))
+        // First empty the command queue (timeout=0, not waiting)
+        // Loop while we have BASE_TASK_COMMAND_NONE --> 0
+        while (Task::BaseTaskCommand command = dequeueBaseCommand(0))
         {
-            switch(command)
+            switch (command)
             {
                 case Task::BASE_TASK_COMMAND_NONE:
                     Serial.println("PowerSensorTask::run: BASE_TASK_COMMAND_NONE");
@@ -29,7 +29,7 @@ void PowerSensorTask::run(void* app)
                 default:
                     Serial.print("PowerSensorTask::run: Unknown command: ");
                     Serial.println(command);
-                break;
+                    break;
             }
         }
 

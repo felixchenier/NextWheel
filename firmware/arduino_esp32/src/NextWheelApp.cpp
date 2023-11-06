@@ -203,8 +203,8 @@ void NextWheelApp::playLowBatterySound(bool from_isr)
 
 void NextWheelApp::sendConfigUpdateEvent(bool from_isr)
 {
-    //Each task should receive the config update event
-    // Actuators
+    // Each task should receive the config update event
+    //  Actuators
     m_dacTask.sendBaseCommandEvent(Task::BASE_TASK_CONFIG_UPDATED, from_isr);
     // Sensors
     m_adcTask.sendBaseCommandEvent(Task::BASE_TASK_CONFIG_UPDATED, from_isr);
