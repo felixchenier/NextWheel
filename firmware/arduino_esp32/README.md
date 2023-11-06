@@ -197,5 +197,5 @@ Values are already converted on device. Size optimization of the binary stream w
 /start_recording | GET | None | 200, "OK", 400, "Already recording." | Start recording on SDCard. File name will be automatically generated with current time.
 /stop_recording | GET | None | 200, "0K", 400, "Not recording." | Stop recording to SD Card.
 /file_list | GET | None | 200, JSON Dict containing {"files": [{"name": file_size(string), "size": file_size(int)}, ...], "download_url": url_for_file_download(string), "delete_url": url_for_file_delete(string)} | Get all the file information stored in the SD Card.
-/file_delete | GET | name (string) The name of the file | 200 (OK), 400 (Bad Parameter) | Delete the file from the SD CARD.
-/file_download/{filename} | GET | None | The file in binary format or 404 not found. | The file is is transfered from the SDCARD.
+/file_delete | GET | file (string) The name of the file | 200 (OK), 400 (Bad Parameter) | Delete the file from the SD CARD.
+/file_download | GET | file (string) The name of the file | The file in binary format or 404 not found. | The file is is transfered from the SDCARD.
