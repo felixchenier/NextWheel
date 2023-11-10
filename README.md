@@ -1,4 +1,4 @@
-# NextWheel
+# NextWheel - Open design of next-generation instrumented wheelchair wheels
 
 This is a development repository for the [NextWheel](https://felixchenier.uqam.ca/nextwheel-a-new-electronic-system-for-instrumented-wheelchair-wheels/) project.
 
