@@ -124,7 +124,7 @@ class GlobalConfig:
         except KeyError:
             raise ValueError("Invalid accel range")
 
-    def convert_gyro_value(self, values: np.ndarray) -> np.ndarray:
+    def convert_gyro_values(self, values: np.ndarray) -> np.ndarray:
         """
         Convert gyro values from integers to deg/s.
 
@@ -152,7 +152,7 @@ class GlobalConfig:
         except KeyError:
             raise ValueError("Invalid gyro range")
 
-    def convert_mag_value(self, values: np.ndarray) -> np.ndarray:
+    def convert_mag_values(self, values: np.ndarray) -> np.ndarray:
         """
         Convert magnetometer integers to ??.
 
@@ -252,7 +252,7 @@ class NextWheel:
                     (
                         time,
                         self._config.convert_adc_values(
-                            struct.unpack_from("<8H", message)
+                            np.array(struct.unpack_from("<8H", message))
                         ),
                     )
                 )
@@ -264,13 +264,13 @@ class NextWheel:
             if len(message) == 18:
                 # Converting to m/s^2, deg/s and uT
                 acc_values = self._config.convert_accel_values(
-                    struct.unpack_from("<3h", message[:6])
+                    np.array(struct.unpack_from("<3h", message[:6]))
                 )
                 gyro_values = self._config.convert_gyro_values(
-                    struct.unpack_from("<3h", message[6:12])
+                    np.array(struct.unpack_from("<3h", message[6:12]))
                 )
                 mag_values = self._config.convert_mag_values(
-                    struct.unpack_from("<3h", message[12:18])
+                    np.array(struct.unpack_from("<3h", message[12:18]))
                 )
 
                 # NOTE + will concat the tuples
@@ -284,7 +284,7 @@ class NextWheel:
         elif frame_type == FrameType.POWER:  # frame type of the POWER
             if len(message) == 13:
                 self._power_values.append(
-                    (time, struct.unpack_from("<3fB", message))
+                    (time, np.array(struct.unpack_from("<3fB", message)))
                 )
 
                 if len(self._power_values) > self.max_power_samples:
@@ -293,7 +293,7 @@ class NextWheel:
         elif frame_type == FrameType.ENCODER:  # frame type of the ENCODER
             if len(message) == 8:
                 self._encoder_values.append(
-                    (time, struct.unpack_from("<q", message))
+                    (time, np.array(struct.unpack_from("<q", message)))
                 )
 
                 if len(self._encoder_values) > self.max_encoder_samples:
@@ -404,8 +404,8 @@ class NextWheel:
 
     def __on_error(self, ws, error):
         """Reaction of the WebSocketApp when there is an error."""
+        print(self.ws, error)
         self.close()
-        raise RuntimeError(self.ws, error)
 
     def __on_close(self, ws, close_status_code, close_msg):
         """Reaction of the WebSocketApp when the connection is close."""
