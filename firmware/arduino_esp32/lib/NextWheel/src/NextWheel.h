@@ -40,8 +40,8 @@
 
 
 // BUTTONS
-#define PIN_BUTTON_1 36 // VP, START
-#define PIN_BUTTON_2 39 // VN, STOP
+#define PIN_BUTTON_1 36  // VP, START
+#define PIN_BUTTON_2 39  // VN, STOP
 
 // LEDS
 #define PIN_LED_1 17
@@ -49,7 +49,7 @@
 
 // ENCODERS
 #define PIN_QUAD_ENCODER_A 35
-#define PIN_QUAD_ENCODER_B 34 // WARNING - patch on prototype PCB v2, was on 0 initially
+#define PIN_QUAD_ENCODER_B 34  // WARNING - patch on prototype PCB v2, was on 0 initially
 
 // I2S
 #define PIN_I2S_SDATA    33

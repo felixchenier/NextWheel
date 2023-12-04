@@ -7,11 +7,11 @@ COPY THIS FILE AS WiFiConfig.h AND CHANGE THE FOLLOWING OPTIONS TO MATCH YOUR NE
 
 // WIFI
 #ifndef WIFI_DEFAULT_SSID
-    #define WIFI_DEFAULT_SSID "wifi_ssid"
+#define WIFI_DEFAULT_SSID "wifi_ssid"
 #endif
 
 #ifndef WIFI_DEFAULT_PASSWORD
-    #define WIFI_DEFAULT_PASSWORD "wifi_password"
+#define WIFI_DEFAULT_PASSWORD "wifi_password"
 #endif
 
-#endif // _WIFI_CONFIG_H_
+#endif  // _WIFI_CONFIG_H_

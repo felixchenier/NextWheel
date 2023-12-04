@@ -1,4 +1,5 @@
 #include "PowerSensorTask.h"
+#include "NextWheelApp.h"
 
 PowerSensorTask::PowerSensorTask() : SensorTask("PowerSensorTask") {}
 
@@ -9,14 +10,15 @@ void PowerSensorTask::run(void* app)
     m_power.begin();
     TickType_t lastGeneration = xTaskGetTickCount();
     PowerDataFrame frame;
+    uint32_t low_battery_counter = 0;
 
     while (1)
     {
-        //First empty the command queue (timeout=0, not waiting)
-        //Loop while we have BASE_TASK_COMMAND_NONE --> 0
-        while(Task::BaseTaskCommand command = dequeueBaseCommand(0))
+        // First empty the command queue (timeout=0, not waiting)
+        // Loop while we have BASE_TASK_COMMAND_NONE --> 0
+        while (Task::BaseTaskCommand command = dequeueBaseCommand(0))
         {
-            switch(command)
+            switch (command)
             {
                 case Task::BASE_TASK_COMMAND_NONE:
                     Serial.println("PowerSensorTask::run: BASE_TASK_COMMAND_NONE");
@@ -27,7 +29,7 @@ void PowerSensorTask::run(void* app)
                 default:
                     Serial.print("PowerSensorTask::run: Unknown command: ");
                     Serial.println(command);
-                break;
+                    break;
             }
         }
 
@@ -36,6 +38,15 @@ void PowerSensorTask::run(void* app)
 
         // Update values
         m_power.update(frame);
+
+        // TODO Verify low battery threshold, will beep every 60 seconds
+        // Low battery free running counter, increments every second
+        if (m_power.isLowPower() && (low_battery_counter++ % 60 == 0))
+        {
+            Serial.printf("PowerSensorTask::run: Low battery. Voltage: %f\n", frame.getVoltage());
+            // Play low battery sound
+            NextWheelApp::instance()->playLowBatterySound();
+        }
 
         // Send data to registered queues
         sendData(frame);

@@ -82,11 +82,13 @@ RTC& NextWheelApp::getRTC()
 
 bool NextWheelApp::startRecording(bool from_isr)
 {
+    m_dacTask.playStartRecordingSound(from_isr);
     return m_sdCardWorkerTask.sendCommandEvent(SDCardWorkerTask::SDCARD_WORKER_TASK_COMMAND_START_RECORDING, from_isr);
 }
 
 bool NextWheelApp::stopRecording(bool from_isr)
 {
+    m_dacTask.playStopRecordingSound(from_isr);
     return m_sdCardWorkerTask.sendCommandEvent(SDCardWorkerTask::SDCARD_WORKER_TASK_COMMAND_STOP_RECORDING, from_isr);
 }
 
@@ -174,10 +176,35 @@ bool NextWheelApp::button2Pressed()
     return m_buttons.button2Pressed();
 }
 
+void NextWheelApp::playStartRecordingSound(bool from_isr)
+{
+    m_dacTask.playStartRecordingSound(from_isr);
+}
+
+void NextWheelApp::playStopRecordingSound(bool from_isr)
+{
+    m_dacTask.playStopRecordingSound(from_isr);
+}
+
+void NextWheelApp::playStartStreamingSound(bool from_isr)
+{
+    m_dacTask.playStartStreamingSound(from_isr);
+}
+
+void NextWheelApp::playStopStreamingSound(bool from_isr)
+{
+    m_dacTask.playStopStreamingSound(from_isr);
+}
+
+void NextWheelApp::playLowBatterySound(bool from_isr)
+{
+    m_dacTask.playLowBatterySound(from_isr);
+}
+
 void NextWheelApp::sendConfigUpdateEvent(bool from_isr)
 {
-    //Each task should receive the config update event
-    // Actuators
+    // Each task should receive the config update event
+    //  Actuators
     m_dacTask.sendBaseCommandEvent(Task::BASE_TASK_CONFIG_UPDATED, from_isr);
     // Sensors
     m_adcTask.sendBaseCommandEvent(Task::BASE_TASK_CONFIG_UPDATED, from_isr);

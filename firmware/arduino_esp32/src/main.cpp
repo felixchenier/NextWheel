@@ -53,9 +53,12 @@ void signal_start_of_digit_with_led_1(TickType_t& lastGeneration)
 void signal_digit_value_with_led_2(TickType_t& lastGeneration, uint8_t val)
 {
     // Serial.print("Signaling: "); Serial.println(val);
-    if (val == 0) {
+    if (val == 0)
+    {
         vTaskDelayUntil(&lastGeneration, 300 / portTICK_RATE_MS);
-    } else {
+    }
+    else
+    {
         for (auto j = 0; j < val; j++)
         {
             // Signal changing Digit
@@ -176,7 +179,7 @@ void loop()
         }
 
 
-        //CPU Usage (approximation)
+        // CPU Usage (approximation)
 
         // IDLE loop.
         // 250 ms task

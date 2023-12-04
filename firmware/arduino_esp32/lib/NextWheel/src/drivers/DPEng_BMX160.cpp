@@ -34,9 +34,9 @@
  *
  */
 #if ARDUINO >= 100
- #include "Arduino.h"
+#include "Arduino.h"
 #else
- #include "WProgram.h"
+#include "WProgram.h"
 #endif
 
 #include <Wire.h>
@@ -44,7 +44,8 @@
 
 #include "DPEng_BMX160.h"
 
-namespace DPEng {
+namespace DPEng
+{
     /***************************************************************************
     PRIVATE FUNCTIONS
     ***************************************************************************/
@@ -58,15 +59,15 @@ namespace DPEng {
     /**************************************************************************/
     void DPEng_BMX160::write8(byte reg, byte value)
     {
-    Wire.beginTransmission(BMX160_ADDRESS);
-    #if ARDUINO >= 100
+        Wire.beginTransmission(BMX160_ADDRESS);
+#if ARDUINO >= 100
         Wire.write((uint8_t)reg);
         Wire.write((uint8_t)value);
-    #else
+#else
         Wire.send(reg);
         Wire.send(value);
-    #endif
-    Wire.endTransmission();
+#endif
+        Wire.endTransmission();
     }
 
     /**************************************************************************/
@@ -77,23 +78,24 @@ namespace DPEng {
     /**************************************************************************/
     byte DPEng_BMX160::read8(byte reg)
     {
-    byte value;
+        byte value;
 
-    Wire.beginTransmission((byte)BMX160_ADDRESS);
-    #if ARDUINO >= 100
+        Wire.beginTransmission((byte)BMX160_ADDRESS);
+#if ARDUINO >= 100
         Wire.write((uint8_t)reg);
-    #else
+#else
         Wire.send(reg);
-    #endif
-    if (Wire.endTransmission(false) != 0) return 0;
-    Wire.requestFrom((byte)BMX160_ADDRESS, (byte)1);
-    #if ARDUINO >= 100
+#endif
+        if (Wire.endTransmission(false) != 0)
+            return 0;
+        Wire.requestFrom((byte)BMX160_ADDRESS, (byte)1);
+#if ARDUINO >= 100
         value = Wire.read();
-    #else
+#else
         value = Wire.receive();
-    #endif
+#endif
 
-    return value;
+        return value;
     }
 
     /***************************************************************************
@@ -112,9 +114,9 @@ namespace DPEng {
     /**************************************************************************/
     DPEng_BMX160::DPEng_BMX160(int32_t accelSensorID, int32_t gyroSensorID, int32_t magSensorID)
     {
-    _accelSensorID = accelSensorID;
-    _gyroSensorID = gyroSensorID;
-    _magSensorID = magSensorID;
+        _accelSensorID = accelSensorID;
+        _gyroSensorID = gyroSensorID;
+        _magSensorID = magSensorID;
     }
 
     /***************************************************************************
@@ -137,65 +139,66 @@ namespace DPEng {
     /**************************************************************************/
     bool DPEng_BMX160::begin(bmx160AccelRange_t rngAccel, bmx160GyroRange_t rngGyro)
     {
-    /* Enable I2C */
-    //Wire.begin();
+        /* Enable I2C */
+        // Wire.begin();
 
-    /* Set the range the an appropriate value */
-    _rangeAccel = rngAccel;
-    _rangeGyro = rngGyro;
+        /* Set the range the an appropriate value */
+        _rangeAccel = rngAccel;
+        _rangeGyro = rngGyro;
 
-    /* Clear the raw sensor data */
-    accel_raw.x = 0;
-    accel_raw.y = 0;
-    accel_raw.z = 0;
-    gyro_raw.x = 0;
-    gyro_raw.y = 0;
-    gyro_raw.z = 0;
-    mag_raw.x = 0;
-    mag_raw.y = 0;
-    mag_raw.z = 0;
+        /* Clear the raw sensor data */
+        accel_raw.x = 0;
+        accel_raw.y = 0;
+        accel_raw.z = 0;
+        gyro_raw.x = 0;
+        gyro_raw.y = 0;
+        gyro_raw.z = 0;
+        mag_raw.x = 0;
+        mag_raw.y = 0;
+        mag_raw.z = 0;
 
-    /* Make sure we have the correct chip ID since this checks
-        for correct address and that the IC is properly connected */
-    uint8_t id = read8(CHIP_ID);
-    if (id != BMX160_ID)
-    {
-        return false;
-    }
+        /* Make sure we have the correct chip ID since this checks
+            for correct address and that the IC is properly connected */
+        uint8_t id = read8(CHIP_ID);
+        if (id != BMX160_ID)
+        {
+            return false;
+        }
 
-    /* Set accel to normal mode */
-    write8(CMD, 0x11);
-    delay(150);
-    /* Set gyro to normal mode */
-    write8(CMD, 0x15);
-    delay(150);
-    /* Set mag to normal mode */
-    write8(CMD, 0x19);
-    delay(200);
+        /* Set accel to normal mode */
+        write8(CMD, 0x11);
+        delay(150);
+        /* Set gyro to normal mode */
+        write8(CMD, 0x15);
+        delay(150);
+        /* Set mag to normal mode */
+        write8(CMD, 0x19);
+        delay(200);
 
-    uint8_t reg1 = read8(ACC_CONF);
-    delay(50);
-    // Write new ACCEL_CONFIG register value
-    write8(ACC_CONF, reg1);
+        uint8_t reg1 = read8(ACC_CONF);
+        delay(50);
+        // Write new ACCEL_CONFIG register value
+        write8(ACC_CONF, reg1);
 
-    /* Configure the accelerometer range */
-    uint8_t accel_range = 0x03;
-    switch (_rangeAccel) {
-        case (BMX160_ACCELRANGE_2G):
-            accel_range = BMX160_ACCELRANGE_2G; // Set full scale range for the accelerometer
-        break;
-        case (BMX160_ACCELRANGE_4G):
-            accel_range = BMX160_ACCELRANGE_4G; // Set full scale range for the accelerometer
-        break;
-        case (BMX160_ACCELRANGE_8G):
-            accel_range = BMX160_ACCELRANGE_8G; // Set full scale range for the accelerometer
-        break;
-        case (BMX160_ACCELRANGE_16G):
-            accel_range = BMX160_ACCELRANGE_16G; // Set full scale range for the accelerometer
-        break;
-    }
+        /* Configure the accelerometer range */
+        uint8_t accel_range = 0x03;
+        switch (_rangeAccel)
+        {
+            case (BMX160_ACCELRANGE_2G):
+                accel_range = BMX160_ACCELRANGE_2G;  // Set full scale range for the accelerometer
+                break;
+            case (BMX160_ACCELRANGE_4G):
+                accel_range = BMX160_ACCELRANGE_4G;  // Set full scale range for the accelerometer
+                break;
+            case (BMX160_ACCELRANGE_8G):
+                accel_range = BMX160_ACCELRANGE_8G;  // Set full scale range for the accelerometer
+                break;
+            case (BMX160_ACCELRANGE_16G):
+                accel_range = BMX160_ACCELRANGE_16G;  // Set full scale range for the accelerometer
+                break;
+        }
 
-    write8(ACC_RANGE, accel_range);
+        write8(ACC_RANGE, accel_range);
 
         /* Set ACCEL_CONFIG (0x14)
     ====================================================================
@@ -215,76 +218,76 @@ namespace DPEng {
         0  READY     Standby(0)/Ready(1)                                 0
     */
 
-    /* Set CTRL_REG0 (0x0D)  Default value 0x00
-    =====================================================================
-    BIT  Symbol     Description                                   Default
-    7:6  BW         cut-off frequency of low-pass filter               00
-        5  SPIW       SPI interface mode selection                        0
-    4:3  SEL        High-pass filter cutoff frequency selection        00
-        2  HPF_EN     High-pass filter enable                             0
-    1:0  FS         Full-scale range selection
-                    00 = +-2000 dps
-                    01 = +-1000 dps
-                    10 = +-500 dps
-                    11 = +-250 dps
-    The bit fields in CTRL_REG0 should be changed only in Standby or Ready modes.
-    */
+        /* Set CTRL_REG0 (0x0D)  Default value 0x00
+        =====================================================================
+        BIT  Symbol     Description                                   Default
+        7:6  BW         cut-off frequency of low-pass filter               00
+            5  SPIW       SPI interface mode selection                        0
+        4:3  SEL        High-pass filter cutoff frequency selection        00
+            2  HPF_EN     High-pass filter enable                             0
+        1:0  FS         Full-scale range selection
+                        00 = +-2000 dps
+                        01 = +-1000 dps
+                        10 = +-500 dps
+                        11 = +-250 dps
+        The bit fields in CTRL_REG0 should be changed only in Standby or Ready modes.
+        */
 
 
-    /* Reset then switch to active mode with 100Hz output */
-    uint8_t ctrlReg0 = 0x03;
-    /* Configure the gyroscope */
-    switch(_rangeGyro)
-    {
-        case GYRO_RANGE_125DPS:
-        ctrlReg0 = 0x04;
-        break;
-        case GYRO_RANGE_250DPS:
-        ctrlReg0 = 0x03;
-        break;
-        case GYRO_RANGE_500DPS:
-        ctrlReg0 = 0x02;
-        break;
-        case GYRO_RANGE_1000DPS:
-        ctrlReg0 = 0x01;
-        break;
-        case GYRO_RANGE_2000DPS:
-        ctrlReg0 = 0x00;
-        break;
-    }
+        /* Reset then switch to active mode with 100Hz output */
+        uint8_t ctrlReg0 = 0x03;
+        /* Configure the gyroscope */
+        switch (_rangeGyro)
+        {
+            case GYRO_RANGE_125DPS:
+                ctrlReg0 = 0x04;
+                break;
+            case GYRO_RANGE_250DPS:
+                ctrlReg0 = 0x03;
+                break;
+            case GYRO_RANGE_500DPS:
+                ctrlReg0 = 0x02;
+                break;
+            case GYRO_RANGE_1000DPS:
+                ctrlReg0 = 0x01;
+                break;
+            case GYRO_RANGE_2000DPS:
+                ctrlReg0 = 0x00;
+                break;
+        }
 
-    write8(GYR_RANGE, ctrlReg0); // Set sensitivity
-    delay(100); // 60 ms + 1/ODR
-    write8(GYR_CONF, 0x28); // Set sensitivity
-    delay(100);
-    /* Configure the magnetometer */
-    write8(MAG_IF_0, 0x80);
-    delay(50);
-    // Sleep mode
-    write8(MAG_IF_3, 0x01);
-    write8(MAG_IF_2, 0x4B);
-    // REPXY regular preset
-    write8(MAG_IF_3, 0x04);
-    write8(MAG_IF_2, 0x51);
-    // REPZ regular preset
-    write8(MAG_IF_3, 0x0E);
-    write8(MAG_IF_2, 0x52);
+        write8(GYR_RANGE, ctrlReg0);  // Set sensitivity
+        delay(100);  // 60 ms + 1/ODR
+        write8(GYR_CONF, 0x28);  // Set sensitivity
+        delay(100);
+        /* Configure the magnetometer */
+        write8(MAG_IF_0, 0x80);
+        delay(50);
+        // Sleep mode
+        write8(MAG_IF_3, 0x01);
+        write8(MAG_IF_2, 0x4B);
+        // REPXY regular preset
+        write8(MAG_IF_3, 0x04);
+        write8(MAG_IF_2, 0x51);
+        // REPZ regular preset
+        write8(MAG_IF_3, 0x0E);
+        write8(MAG_IF_2, 0x52);
 
-    write8(MAG_IF_3, 0x02);
-    write8(MAG_IF_2, 0x4C);
-    write8(MAG_IF_1, 0x42);
-    write8(MAG_CONF, 0x08);
-    write8(MAG_IF_0, 0x03);
-    delay(50);
-    /* Hybrid Mode, Over Sampling Rate = 16 */
+        write8(MAG_IF_3, 0x02);
+        write8(MAG_IF_2, 0x4C);
+        write8(MAG_IF_1, 0x42);
+        write8(MAG_CONF, 0x08);
+        write8(MAG_IF_0, 0x03);
+        delay(50);
+        /* Hybrid Mode, Over Sampling Rate = 16 */
 
 
-    uint8_t reg2 = read8(MAG_CONF);
-    delay(50);
-    // Write new MAG_CONF register value
-    write8(MAG_CONF, reg1);
+        uint8_t reg2 = read8(MAG_CONF);
+        delay(50);
+        // Write new MAG_CONF register value
+        write8(MAG_CONF, reg1);
 
-    return true;
+        return true;
     }
 
     /**************************************************************************/
@@ -312,45 +315,45 @@ namespace DPEng {
     /**************************************************************************/
     bool DPEng_BMX160::getEvent(sensors_event_t* accelEvent, sensors_event_t* gyroEvent, sensors_event_t* magEvent)
     {
-    /* Clear the event */
-    memset(accelEvent, 0, sizeof(sensors_event_t));
-    memset(gyroEvent, 0, sizeof(sensors_event_t));
-    memset(magEvent, 0, sizeof(sensors_event_t));
+        /* Clear the event */
+        memset(accelEvent, 0, sizeof(sensors_event_t));
+        memset(gyroEvent, 0, sizeof(sensors_event_t));
+        memset(magEvent, 0, sizeof(sensors_event_t));
 
-    /* Clear the raw data placeholder */
-    accel_raw.x = 0;
-    accel_raw.y = 0;
-    accel_raw.z = 0;
-    gyro_raw.x = 0;
-    gyro_raw.y = 0;
-    gyro_raw.z = 0;
-    mag_raw.x = 0;
-    mag_raw.y = 0;
-    mag_raw.z = 0;
+        /* Clear the raw data placeholder */
+        accel_raw.x = 0;
+        accel_raw.y = 0;
+        accel_raw.z = 0;
+        gyro_raw.x = 0;
+        gyro_raw.y = 0;
+        gyro_raw.z = 0;
+        mag_raw.x = 0;
+        mag_raw.y = 0;
+        mag_raw.z = 0;
 
-    /* Set the static metadata */
-    accelEvent->version   = sizeof(sensors_event_t);
-    accelEvent->sensor_id = _accelSensorID;
-    accelEvent->type      = SENSOR_TYPE_ACCELEROMETER;
+        /* Set the static metadata */
+        accelEvent->version = sizeof(sensors_event_t);
+        accelEvent->sensor_id = _accelSensorID;
+        accelEvent->type = SENSOR_TYPE_ACCELEROMETER;
 
-    gyroEvent->version   = sizeof(sensors_event_t);
-    gyroEvent->sensor_id = _gyroSensorID;
-    gyroEvent->type      = SENSOR_TYPE_GYROSCOPE;
+        gyroEvent->version = sizeof(sensors_event_t);
+        gyroEvent->sensor_id = _gyroSensorID;
+        gyroEvent->type = SENSOR_TYPE_GYROSCOPE;
 
-    magEvent->version   = sizeof(sensors_event_t);
-    magEvent->sensor_id = _magSensorID;
-    magEvent->type      = SENSOR_TYPE_MAGNETIC_FIELD;
+        magEvent->version = sizeof(sensors_event_t);
+        magEvent->sensor_id = _magSensorID;
+        magEvent->type = SENSOR_TYPE_MAGNETIC_FIELD;
 
-    /* Read 12 bytes from the bmx160 sensor */
-    Wire.beginTransmission((byte)BMX160_ADDRESS);
-    #if ARDUINO >= 100
+        /* Read 12 bytes from the bmx160 sensor */
+        Wire.beginTransmission((byte)BMX160_ADDRESS);
+#if ARDUINO >= 100
         Wire.write(DATA_0);
-    #else
+#else
         Wire.send(DATA_0);
-    #endif
-    Wire.endTransmission();
-    Wire.requestFrom((byte)BMX160_ADDRESS, (byte)23);
-    #if ARDUINO >= 100
+#endif
+        Wire.endTransmission();
+        Wire.requestFrom((byte)BMX160_ADDRESS, (byte)23);
+#if ARDUINO >= 100
         uint8_t mxlo = Wire.read();
         uint8_t mxhi = Wire.read();
         uint8_t mylo = Wire.read();
@@ -374,7 +377,7 @@ namespace DPEng {
         uint8_t stlo = Wire.read();
         uint8_t stmi = Wire.read();
         uint8_t sthi = Wire.read();
-    #else
+#else
         uint8_t mxlo = Wire.receive();
         uint8_t mxhi = Wire.receive();
         uint8_t mylo = Wire.receive();
@@ -398,98 +401,98 @@ namespace DPEng {
         uint8_t stlo = Wire.receive();
         uint8_t stmi = Wire.receive();
         uint8_t sthi = Wire.receive();
-    #endif
+#endif
 
 
+        /* Set the timestamps */
+        accelEvent->timestamp = millis();
+        gyroEvent->timestamp = accelEvent->timestamp;
+        magEvent->timestamp = ((int32_t)((sthi << 16) | (stmi << 8) | stlo) * 0.039);
 
-    /* Set the timestamps */
-    accelEvent->timestamp = millis();
-    gyroEvent->timestamp = accelEvent->timestamp;
-    magEvent->timestamp = ((int32_t)((sthi << 16) | (stmi << 8) | stlo) * 0.039) ;
+        /* Shift values to create properly formed integers */
+        /* Note, accel data is 14-bit and left-aligned, so we shift two bit right */
+        accelEvent->acceleration.x = (int16_t)((axhi << 8) | axlo);
+        accelEvent->acceleration.y = (int16_t)((ayhi << 8) | aylo);
+        accelEvent->acceleration.z = (int16_t)((azhi << 8) | azlo);
+        gyroEvent->gyro.x = (int16_t)((gxhi << 8) | gxlo);
+        gyroEvent->gyro.y = (int16_t)((gyhi << 8) | gylo);
+        gyroEvent->gyro.z = (int16_t)((gzhi << 8) | gzlo);
+        magEvent->magnetic.x = (int16_t)((mxhi << 8) | mxlo);
+        magEvent->magnetic.y = (int16_t)((myhi << 8) | mylo);
+        magEvent->magnetic.z = (int16_t)((mzhi << 8) | mzlo);
 
-    /* Shift values to create properly formed integers */
-    /* Note, accel data is 14-bit and left-aligned, so we shift two bit right */
-    accelEvent->acceleration.x = (int16_t)((axhi << 8) | axlo);
-    accelEvent->acceleration.y = (int16_t)((ayhi << 8) | aylo);
-    accelEvent->acceleration.z = (int16_t)((azhi << 8) | azlo);
-    gyroEvent->gyro.x = (int16_t)((gxhi << 8) | gxlo);
-    gyroEvent->gyro.y = (int16_t)((gyhi << 8) | gylo);
-    gyroEvent->gyro.z = (int16_t)((gzhi << 8) | gzlo);
-    magEvent->magnetic.x = (int16_t)((mxhi << 8) | mxlo);
-    magEvent->magnetic.y = (int16_t)((myhi << 8) | mylo);
-    magEvent->magnetic.z = (int16_t)((mzhi << 8) | mzlo);
+        /* Assign raw values in case someone needs them */
+        accel_raw.x = accelEvent->acceleration.x;
+        accel_raw.y = accelEvent->acceleration.y;
+        accel_raw.z = accelEvent->acceleration.z;
+        gyro_raw.x = gyroEvent->gyro.x;
+        gyro_raw.y = gyroEvent->gyro.y;
+        gyro_raw.z = gyroEvent->gyro.z;
+        mag_raw.x = magEvent->magnetic.x;
+        mag_raw.y = magEvent->magnetic.y;
+        mag_raw.z = magEvent->magnetic.z;
 
-    /* Assign raw values in case someone needs them */
-    accel_raw.x = accelEvent->acceleration.x;
-    accel_raw.y = accelEvent->acceleration.y;
-    accel_raw.z = accelEvent->acceleration.z;
-    gyro_raw.x = gyroEvent->gyro.x;
-    gyro_raw.y = gyroEvent->gyro.y;
-    gyro_raw.z = gyroEvent->gyro.z;
-    mag_raw.x = magEvent->magnetic.x;
-    mag_raw.y = magEvent->magnetic.y;
-    mag_raw.z = magEvent->magnetic.z;
+        /* Convert accel values to m/s^2 */
+        switch (_rangeAccel)
+        {
+            case (BMX160_ACCELRANGE_2G):
+                accelEvent->acceleration.x *= ACCEL_MG_LSB_2G * SENSORS_GRAVITY_STANDARD;
+                accelEvent->acceleration.y *= ACCEL_MG_LSB_2G * SENSORS_GRAVITY_STANDARD;
+                accelEvent->acceleration.z *= ACCEL_MG_LSB_2G * SENSORS_GRAVITY_STANDARD;
+                break;
+            case (BMX160_ACCELRANGE_4G):
+                accelEvent->acceleration.x *= ACCEL_MG_LSB_4G * SENSORS_GRAVITY_STANDARD;
+                accelEvent->acceleration.y *= ACCEL_MG_LSB_4G * SENSORS_GRAVITY_STANDARD;
+                accelEvent->acceleration.z *= ACCEL_MG_LSB_4G * SENSORS_GRAVITY_STANDARD;
+                break;
+            case (BMX160_ACCELRANGE_8G):
+                accelEvent->acceleration.x *= ACCEL_MG_LSB_8G * SENSORS_GRAVITY_STANDARD;
+                accelEvent->acceleration.y *= ACCEL_MG_LSB_8G * SENSORS_GRAVITY_STANDARD;
+                accelEvent->acceleration.z *= ACCEL_MG_LSB_8G * SENSORS_GRAVITY_STANDARD;
+                break;
+            case (BMX160_ACCELRANGE_16G):
+                accelEvent->acceleration.x *= ACCEL_MG_LSB_16G * SENSORS_GRAVITY_STANDARD;
+                accelEvent->acceleration.y *= ACCEL_MG_LSB_16G * SENSORS_GRAVITY_STANDARD;
+                accelEvent->acceleration.z *= ACCEL_MG_LSB_16G * SENSORS_GRAVITY_STANDARD;
+                break;
+        }
 
-    /* Convert accel values to m/s^2 */
-    switch (_rangeAccel) {
-        case (BMX160_ACCELRANGE_2G):
-            accelEvent->acceleration.x *= ACCEL_MG_LSB_2G * SENSORS_GRAVITY_STANDARD;
-            accelEvent->acceleration.y *= ACCEL_MG_LSB_2G * SENSORS_GRAVITY_STANDARD;
-            accelEvent->acceleration.z *= ACCEL_MG_LSB_2G * SENSORS_GRAVITY_STANDARD;
-        break;
-        case (BMX160_ACCELRANGE_4G):
-            accelEvent->acceleration.x *= ACCEL_MG_LSB_4G * SENSORS_GRAVITY_STANDARD;
-            accelEvent->acceleration.y *= ACCEL_MG_LSB_4G * SENSORS_GRAVITY_STANDARD;
-            accelEvent->acceleration.z *= ACCEL_MG_LSB_4G * SENSORS_GRAVITY_STANDARD;
-        break;
-        case (BMX160_ACCELRANGE_8G):
-            accelEvent->acceleration.x *= ACCEL_MG_LSB_8G * SENSORS_GRAVITY_STANDARD;
-            accelEvent->acceleration.y *= ACCEL_MG_LSB_8G * SENSORS_GRAVITY_STANDARD;
-            accelEvent->acceleration.z *= ACCEL_MG_LSB_8G * SENSORS_GRAVITY_STANDARD;
-        break;
-        case (BMX160_ACCELRANGE_16G):
-            accelEvent->acceleration.x *= ACCEL_MG_LSB_16G * SENSORS_GRAVITY_STANDARD;
-            accelEvent->acceleration.y *= ACCEL_MG_LSB_16G * SENSORS_GRAVITY_STANDARD;
-            accelEvent->acceleration.z *= ACCEL_MG_LSB_16G * SENSORS_GRAVITY_STANDARD;
-        break;
-    }
+        /* Compensate values depending on the resolution */
+        switch (_rangeGyro)
+        {
+            case GYRO_RANGE_125DPS:
+                gyroEvent->gyro.x *= GYRO_SENSITIVITY_125DPS;
+                gyroEvent->gyro.y *= GYRO_SENSITIVITY_125DPS;
+                gyroEvent->gyro.z *= GYRO_SENSITIVITY_125DPS;
+                break;
+            case GYRO_RANGE_250DPS:
+                gyroEvent->gyro.x *= GYRO_SENSITIVITY_250DPS;
+                gyroEvent->gyro.y *= GYRO_SENSITIVITY_250DPS;
+                gyroEvent->gyro.z *= GYRO_SENSITIVITY_250DPS;
+                break;
+            case GYRO_RANGE_500DPS:
+                gyroEvent->gyro.x *= GYRO_SENSITIVITY_500DPS;
+                gyroEvent->gyro.y *= GYRO_SENSITIVITY_500DPS;
+                gyroEvent->gyro.z *= GYRO_SENSITIVITY_500DPS;
+                break;
+            case GYRO_RANGE_1000DPS:
+                gyroEvent->gyro.x *= GYRO_SENSITIVITY_1000DPS;
+                gyroEvent->gyro.y *= GYRO_SENSITIVITY_1000DPS;
+                gyroEvent->gyro.z *= GYRO_SENSITIVITY_1000DPS;
+                break;
+            case GYRO_RANGE_2000DPS:
+                gyroEvent->gyro.x *= GYRO_SENSITIVITY_2000DPS;
+                gyroEvent->gyro.y *= GYRO_SENSITIVITY_2000DPS;
+                gyroEvent->gyro.z *= GYRO_SENSITIVITY_2000DPS;
+                break;
+        }
 
-    /* Compensate values depending on the resolution */
-    switch(_rangeGyro)
-    {
-        case GYRO_RANGE_125DPS:
-        gyroEvent->gyro.x *= GYRO_SENSITIVITY_125DPS;
-        gyroEvent->gyro.y *= GYRO_SENSITIVITY_125DPS;
-        gyroEvent->gyro.z *= GYRO_SENSITIVITY_125DPS;
-        break;
-        case GYRO_RANGE_250DPS:
-        gyroEvent->gyro.x *= GYRO_SENSITIVITY_250DPS;
-        gyroEvent->gyro.y *= GYRO_SENSITIVITY_250DPS;
-        gyroEvent->gyro.z *= GYRO_SENSITIVITY_250DPS;
-        break;
-        case GYRO_RANGE_500DPS:
-        gyroEvent->gyro.x *= GYRO_SENSITIVITY_500DPS;
-        gyroEvent->gyro.y *= GYRO_SENSITIVITY_500DPS;
-        gyroEvent->gyro.z *= GYRO_SENSITIVITY_500DPS;
-        break;
-        case GYRO_RANGE_1000DPS:
-        gyroEvent->gyro.x *= GYRO_SENSITIVITY_1000DPS;
-        gyroEvent->gyro.y *= GYRO_SENSITIVITY_1000DPS;
-        gyroEvent->gyro.z *= GYRO_SENSITIVITY_1000DPS;
-        break;
-        case GYRO_RANGE_2000DPS:
-        gyroEvent->gyro.x *= GYRO_SENSITIVITY_2000DPS;
-        gyroEvent->gyro.y *= GYRO_SENSITIVITY_2000DPS;
-        gyroEvent->gyro.z *= GYRO_SENSITIVITY_2000DPS;
-        break;
-    }
+        /* Convert mag values to uTesla */
+        magEvent->magnetic.x *= MAG_UT_LSB;
+        magEvent->magnetic.y *= MAG_UT_LSB;
+        magEvent->magnetic.z *= MAG_UT_LSB;
 
-    /* Convert mag values to uTesla */
-    magEvent->magnetic.x *= MAG_UT_LSB;
-    magEvent->magnetic.y *= MAG_UT_LSB;
-    magEvent->magnetic.z *= MAG_UT_LSB;
-
-    return true;
+        return true;
     }
 
     /**************************************************************************/
@@ -507,89 +510,90 @@ namespace DPEng {
                 magnetometer sensor info should be written.
     */
     /**************************************************************************/
-    void  DPEng_BMX160::getSensor(sensor_t* accelSensor, sensor_t* gyroSensor, sensor_t* magSensor)
+    void DPEng_BMX160::getSensor(sensor_t* accelSensor, sensor_t* gyroSensor, sensor_t* magSensor)
     {
-    /* Clear the sensor_t object */
-    memset(accelSensor, 0, sizeof(sensor_t));
-    memset(gyroSensor, 0, sizeof(sensor_t));
-    memset(magSensor, 0, sizeof(sensor_t));
+        /* Clear the sensor_t object */
+        memset(accelSensor, 0, sizeof(sensor_t));
+        memset(gyroSensor, 0, sizeof(sensor_t));
+        memset(magSensor, 0, sizeof(sensor_t));
 
-    /* Insert the sensor name in the fixed length char array */
-    strncpy (accelSensor->name, "BMX160", sizeof(accelSensor->name) - 1);
-    accelSensor->name[sizeof(accelSensor->name) - 1] = 0;
-    accelSensor->version     = 1;
-    accelSensor->sensor_id   = _accelSensorID;
-    accelSensor->type        = SENSOR_TYPE_ACCELEROMETER;
-    accelSensor->min_delay   = 0.01F; // 100Hz
-    switch (_rangeAccel) {
-        case (BMX160_ACCELRANGE_2G):
-            accelSensor->max_value   = 2.0F * SENSORS_GRAVITY_STANDARD;
-            accelSensor->min_value   = -1.999F * SENSORS_GRAVITY_STANDARD;
-            accelSensor->resolution  = ACCEL_MG_LSB_2G * SENSORS_GRAVITY_STANDARD;
-        break;
-        case (BMX160_ACCELRANGE_4G):
-            accelSensor->max_value   = 4.0F * SENSORS_GRAVITY_STANDARD;
-            accelSensor->min_value   = -3.998F * SENSORS_GRAVITY_STANDARD;
-            accelSensor->resolution  = ACCEL_MG_LSB_4G * SENSORS_GRAVITY_STANDARD;
-        break;
-        case (BMX160_ACCELRANGE_8G):
-            accelSensor->max_value   = 8.0F * SENSORS_GRAVITY_STANDARD;
-            accelSensor->min_value   = -7.996F * SENSORS_GRAVITY_STANDARD;
-            accelSensor->resolution  = ACCEL_MG_LSB_8G * SENSORS_GRAVITY_STANDARD;
-        break;
-        case (BMX160_ACCELRANGE_16G):
-            accelSensor->max_value   = 16.0F * SENSORS_GRAVITY_STANDARD;
-            accelSensor->min_value   = -15.996F * SENSORS_GRAVITY_STANDARD;
-            accelSensor->resolution  = ACCEL_MG_LSB_16G * SENSORS_GRAVITY_STANDARD;
-        break;
-    }
+        /* Insert the sensor name in the fixed length char array */
+        strncpy(accelSensor->name, "BMX160", sizeof(accelSensor->name) - 1);
+        accelSensor->name[sizeof(accelSensor->name) - 1] = 0;
+        accelSensor->version = 1;
+        accelSensor->sensor_id = _accelSensorID;
+        accelSensor->type = SENSOR_TYPE_ACCELEROMETER;
+        accelSensor->min_delay = 0.01F;  // 100Hz
+        switch (_rangeAccel)
+        {
+            case (BMX160_ACCELRANGE_2G):
+                accelSensor->max_value = 2.0F * SENSORS_GRAVITY_STANDARD;
+                accelSensor->min_value = -1.999F * SENSORS_GRAVITY_STANDARD;
+                accelSensor->resolution = ACCEL_MG_LSB_2G * SENSORS_GRAVITY_STANDARD;
+                break;
+            case (BMX160_ACCELRANGE_4G):
+                accelSensor->max_value = 4.0F * SENSORS_GRAVITY_STANDARD;
+                accelSensor->min_value = -3.998F * SENSORS_GRAVITY_STANDARD;
+                accelSensor->resolution = ACCEL_MG_LSB_4G * SENSORS_GRAVITY_STANDARD;
+                break;
+            case (BMX160_ACCELRANGE_8G):
+                accelSensor->max_value = 8.0F * SENSORS_GRAVITY_STANDARD;
+                accelSensor->min_value = -7.996F * SENSORS_GRAVITY_STANDARD;
+                accelSensor->resolution = ACCEL_MG_LSB_8G * SENSORS_GRAVITY_STANDARD;
+                break;
+            case (BMX160_ACCELRANGE_16G):
+                accelSensor->max_value = 16.0F * SENSORS_GRAVITY_STANDARD;
+                accelSensor->min_value = -15.996F * SENSORS_GRAVITY_STANDARD;
+                accelSensor->resolution = ACCEL_MG_LSB_16G * SENSORS_GRAVITY_STANDARD;
+                break;
+        }
 
-    strncpy (gyroSensor->name, "BMX160", sizeof(gyroSensor->name) - 1);
-    gyroSensor->name[sizeof(gyroSensor->name) - 1] = 0;
-    gyroSensor->version     = 1;
-    gyroSensor->sensor_id   = _gyroSensorID;
-    gyroSensor->type        = SENSOR_TYPE_GYROSCOPE;
-    gyroSensor->min_delay   = 0;
+        strncpy(gyroSensor->name, "BMX160", sizeof(gyroSensor->name) - 1);
+        gyroSensor->name[sizeof(gyroSensor->name) - 1] = 0;
+        gyroSensor->version = 1;
+        gyroSensor->sensor_id = _gyroSensorID;
+        gyroSensor->type = SENSOR_TYPE_GYROSCOPE;
+        gyroSensor->min_delay = 0;
 
 
-    switch(_rangeGyro)
-    {
-        case GYRO_RANGE_125DPS:
-            gyroSensor->max_value   = 125.0F;
-            gyroSensor->min_value   = -124.0F;
-            gyroSensor->resolution  = GYRO_SENSITIVITY_125DPS;
-        break;
-        case GYRO_RANGE_250DPS:
-            gyroSensor->max_value   = 250.0F;
-            gyroSensor->min_value   = -248.0F;
-            gyroSensor->resolution  = GYRO_SENSITIVITY_250DPS;
-        break;
-        case GYRO_RANGE_500DPS:
-            gyroSensor->max_value   = 500.0F;
-            gyroSensor->min_value   = -498.0F;
-            gyroSensor->resolution  = GYRO_SENSITIVITY_500DPS;
-        break;
-        case GYRO_RANGE_1000DPS:
-            gyroSensor->max_value   = 1000.0F;
-            gyroSensor->min_value   = -998.0F;
-            gyroSensor->resolution  = GYRO_SENSITIVITY_1000DPS;
-        break;
-        case GYRO_RANGE_2000DPS:
-            gyroSensor->max_value   = 2000.0F;
-            gyroSensor->min_value   = -1998.0F;
-            gyroSensor->resolution  = GYRO_SENSITIVITY_2000DPS;
-        break;
-    }
+        switch (_rangeGyro)
+        {
+            case GYRO_RANGE_125DPS:
+                gyroSensor->max_value = 125.0F;
+                gyroSensor->min_value = -124.0F;
+                gyroSensor->resolution = GYRO_SENSITIVITY_125DPS;
+                break;
+            case GYRO_RANGE_250DPS:
+                gyroSensor->max_value = 250.0F;
+                gyroSensor->min_value = -248.0F;
+                gyroSensor->resolution = GYRO_SENSITIVITY_250DPS;
+                break;
+            case GYRO_RANGE_500DPS:
+                gyroSensor->max_value = 500.0F;
+                gyroSensor->min_value = -498.0F;
+                gyroSensor->resolution = GYRO_SENSITIVITY_500DPS;
+                break;
+            case GYRO_RANGE_1000DPS:
+                gyroSensor->max_value = 1000.0F;
+                gyroSensor->min_value = -998.0F;
+                gyroSensor->resolution = GYRO_SENSITIVITY_1000DPS;
+                break;
+            case GYRO_RANGE_2000DPS:
+                gyroSensor->max_value = 2000.0F;
+                gyroSensor->min_value = -1998.0F;
+                gyroSensor->resolution = GYRO_SENSITIVITY_2000DPS;
+                break;
+        }
 
-    strncpy (magSensor->name, "BMX160", sizeof(magSensor->name) - 1);
-    magSensor->name[sizeof(magSensor->name)- 1] = 0;
-    magSensor->version     = 1;
-    magSensor->sensor_id   = _magSensorID;
-    magSensor->type        = SENSOR_TYPE_MAGNETIC_FIELD;
-    magSensor->min_delay   = 0.01F;
-    magSensor->max_value   = 2500.0F;
-    magSensor->min_value   = -2500.0F;
-    magSensor->resolution  = MAG_UT_LSB; // TBD
+        strncpy(magSensor->name, "BMX160", sizeof(magSensor->name) - 1);
+        magSensor->name[sizeof(magSensor->name) - 1] = 0;
+        magSensor->version = 1;
+        magSensor->sensor_id = _magSensorID;
+        magSensor->type = SENSOR_TYPE_MAGNETIC_FIELD;
+        magSensor->min_delay = 0.01F;
+        magSensor->max_value = 2500.0F;
+        magSensor->min_value = -2500.0F;
+        magSensor->resolution = MAG_UT_LSB;  // TBD
     }
 
     /**************************************************************************/
@@ -633,7 +637,7 @@ namespace DPEng {
                 accelerometer sensor info should be written.
     */
     /**************************************************************************/
-    void  DPEng_BMX160::getSensor(sensor_t* accelSensor)
+    void DPEng_BMX160::getSensor(sensor_t* accelSensor)
     {
         sensor_t accel;
 
@@ -650,36 +654,42 @@ namespace DPEng {
     /**************************************************************************/
     void DPEng_BMX160::standby(boolean standby)
     {
-    uint8_t reg1 = read8(PMU_STATUS);
-    if (standby) {
-        if(reg1 != 0) {
-            /* Set accel to suspend mode */
-            write8(CMD, 0x11);
-            delay(150);
-            /* Set gyro to suspend mode */
-            write8(CMD, 0x14);
-            delay(150);
-            /* Set mag to suspend mode */
-            write8(CMD, 0x18);
-            delay(150);
+        uint8_t reg1 = read8(PMU_STATUS);
+        if (standby)
+        {
+            if (reg1 != 0)
+            {
+                /* Set accel to suspend mode */
+                write8(CMD, 0x11);
+                delay(150);
+                /* Set gyro to suspend mode */
+                write8(CMD, 0x14);
+                delay(150);
+                /* Set mag to suspend mode */
+                write8(CMD, 0x18);
+                delay(150);
+            }
         }
-    } else {
-        if(reg1 == 0) {
-            /* Set accel to normal mode */
-            write8(CMD, 0x10);
-            delay(150);
-            /* Set gyro to normal mode */
-            write8(CMD, 0x15);
-            delay(150);
-            /* Set mag to normal mode */
-            write8(CMD, 0x19);
-            delay(150);
+        else
+        {
+            if (reg1 == 0)
+            {
+                /* Set accel to normal mode */
+                write8(CMD, 0x10);
+                delay(150);
+                /* Set gyro to normal mode */
+                write8(CMD, 0x15);
+                delay(150);
+                /* Set mag to normal mode */
+                write8(CMD, 0x19);
+                delay(150);
+            }
+        }
+
+        if (!standby)
+        {
+            delay(100);
         }
     }
 
-    if (! standby) {
-        delay(100);
-    }
-    }
-
-} // namespace
+}  // namespace

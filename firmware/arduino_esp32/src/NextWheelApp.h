@@ -12,7 +12,7 @@
 #include "tasks/ADCSensorTask.h"
 #include "tasks/IMUSensorTask.h"
 #include "tasks/PowerSensorTask.h"
-#include "tasks/WebSocketServerTask_v2.h"
+#include "tasks/WebSocketServerTask.h"
 #include "tasks/SDCardWorkerTask.h"
 #include "tasks/DACActuatorTask.h"
 #include "tasks/QuadEncoderSensorTask.h"
@@ -52,6 +52,13 @@ public:
     bool button1Pressed();
     bool button2Pressed();
 
+    void playStartRecordingSound(bool from_isr = false);
+    void playStopRecordingSound(bool from_isr = false);
+    void playStartStreamingSound(bool from_isr = false);
+    void playStopStreamingSound(bool from_isr = false);
+    void playLowBatterySound(bool from_isr = false);
+
+
 private:
     NextWheelApp();
 
@@ -76,8 +83,8 @@ private:
 
     // Workers
     SDCardWorkerTask m_sdCardWorkerTask;
-    //WebSocketServerTask m_webSocketServerTask;
-    WebSocketServerTask_v2 m_webSocketServerTask;
+    // WebSocketServerTask m_webSocketServerTask;
+    WebSocketServerTask m_webSocketServerTask;
 
     SemaphoreHandle_t m_queueMutex;
 };

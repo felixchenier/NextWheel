@@ -1,5 +1,5 @@
 #include "DAC.h"
-//#include "I2S.h"
+// #include "I2S.h"
 
 #include "driver/dac.h"
 #include "driver/i2s.h"
@@ -96,14 +96,15 @@ void DAC::setup() {
 }
 #endif
 
- DAC::DAC() {
+DAC::DAC()
+{
     m_sample_rate = 8000;
- }
+}
 
-void DAC::setup() {
-
-    //i2s configuration
-    int i2s_num = 0; // i2s port number
+void DAC::setup()
+{
+    // i2s configuration
+    int i2s_num = 0;  // i2s port number
 
     i2s_config_t i2s_config = {
         .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_DAC_BUILT_IN),
@@ -111,24 +112,25 @@ void DAC::setup() {
         .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT, /* the DAC module will only take the 8bits from MSB */
         .channel_format = I2S_CHANNEL_FMT_ONLY_RIGHT,
         .communication_format = (i2s_comm_format_t)I2S_COMM_FORMAT_STAND_MSB,
-        .intr_alloc_flags = 0, // default interrupt priority
+        .intr_alloc_flags = 0,  // default interrupt priority
         .dma_buf_count = 8,
         .dma_buf_len = 64,
-        .use_apll = 1
-    };
+        .use_apll = 1};
 
-    //initialize i2s with configurations above
-    if (i2s_driver_install((i2s_port_t)i2s_num, &i2s_config, 0, NULL) != ESP_OK) {
+    // initialize i2s with configurations above
+    if (i2s_driver_install((i2s_port_t)i2s_num, &i2s_config, 0, NULL) != ESP_OK)
+    {
         Serial.println("I2S driver install failed");
     }
-    else {
+    else
+    {
         Serial.println("I2S driver install success");
     }
 
 
-
     // Setup DAC
-    if (i2s_set_dac_mode(I2S_DAC_CHANNEL_RIGHT_EN) != ESP_OK) {
+    if (i2s_set_dac_mode(I2S_DAC_CHANNEL_RIGHT_EN) != ESP_OK)
+    {
         Serial.println("I2S set dac mode failed");
     }
     else
@@ -136,36 +138,38 @@ void DAC::setup() {
         Serial.println("I2S set dac mode success");
     }
 
-/*
-    if (i2s_set_pin((i2s_port_t)i2s_num, NULL) != ESP_OK) {
-        Serial.println("I2S set pin failed");
-    }
-    else {
-        Serial.println("I2S set pin success");
-    }
-*/
+    /*
+        if (i2s_set_pin((i2s_port_t)i2s_num, NULL) != ESP_OK) {
+            Serial.println("I2S set pin failed");
+        }
+        else {
+            Serial.println("I2S set pin success");
+        }
+    */
 
-    //set sample rates of i2s to sample rate of wav file
-    if (i2s_set_sample_rates((i2s_port_t)i2s_num, m_sample_rate) != ESP_OK) {
+    // set sample rates of i2s to sample rate of wav file
+    if (i2s_set_sample_rates((i2s_port_t)i2s_num, m_sample_rate) != ESP_OK)
+    {
         Serial.println("I2S set sample rates failed");
     }
-    else {
+    else
+    {
         Serial.println("I2S set sample rates success");
     }
-
 }
 
 void DAC::setVoltage(uint8_t voltage)
 {
-    #if 0
+#if 0
     dac_output_voltage(DAC_CHANNEL_1, voltage); //(VDD * 200 / 255)
-    #endif
+#endif
 }
 
-size_t DAC::writeFrame(const void *samples, uint32_t length)
+size_t DAC::writeFrame(const void* samples, uint32_t length)
 {
     size_t bytesWritten = 0;
-    if (i2s_write(I2S_NUM_0, samples, length, &bytesWritten, portMAX_DELAY) != ESP_OK) {
+    if (i2s_write(I2S_NUM_0, samples, length, &bytesWritten, portMAX_DELAY) != ESP_OK)
+    {
         Serial.println("I2S write failed");
     }
     return bytesWritten;

@@ -19,11 +19,11 @@ void QuadEncoderSensorTask::run(void* app)
 
     while (1)
     {
-        //First empty the command queue (timeout=0, not waiting)
-        //Loop while we have BASE_TASK_COMMAND_NONE --> 0
-        while(Task::BaseTaskCommand command = dequeueBaseCommand(0))
+        // First empty the command queue (timeout=0, not waiting)
+        // Loop while we have BASE_TASK_COMMAND_NONE --> 0
+        while (Task::BaseTaskCommand command = dequeueBaseCommand(0))
         {
-            switch(command)
+            switch (command)
             {
                 case Task::BASE_TASK_COMMAND_NONE:
                     Serial.println("QuadEncoderSensorTask::run: BASE_TASK_COMMAND_NONE");
@@ -34,7 +34,7 @@ void QuadEncoderSensorTask::run(void* app)
                 default:
                     Serial.print("QuadEncoderSensorTask::run: Unknown command: ");
                     Serial.println(command);
-                break;
+                    break;
             }
         }
 
@@ -47,8 +47,8 @@ void QuadEncoderSensorTask::run(void* app)
         // Reset counter
         // m_encoder.clearCount();
 
-        //Serial.print("encoder counts: ");
-        //Serial.println(count);
+        // Serial.print("encoder counts: ");
+        // Serial.println(count);
 
         // Update timestamp and value
         frame.setTimestamp(DataFrame::getCurrentTimeStamp());
