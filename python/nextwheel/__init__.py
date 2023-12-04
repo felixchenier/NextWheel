@@ -24,7 +24,21 @@ import struct
 import threading
 import numpy as np
 from typing import Tuple
+from enum import IntEnum
 import requests
+
+# Constants
+
+GRAVITY = 9.80665
+
+class FrameType(IntEnum):
+    """Identify frame type from websocket message."""
+    CONFIG = 1
+    ADC = 2
+    IMU = 3
+    POWER = 4
+    ENCODER = 7
+    SUPERFRAME = 255
 
 
 class GlobalConfig:
@@ -61,120 +75,104 @@ class GlobalConfig:
         self._gyro_sensitivity_2000dps = 0.0609756
         self._mag_ut_lsb = 0.3
 
-        self._gravity_earth = 9.80665
 
-    def convert_adc_value(self, value: int) -> float:
+    def convert_adc_values(self, values: np.ndarray) -> np.ndarray:
         """
-        Convert an ADC value
+        Convert ADC values from ADC integers to volts.
 
         Parameters
         ----------
-        value
-            ADC output (integer).
+        values
+            ADC outputs (integer).
 
         Returns
         -------
-        float
-            ADC input in volts.
+        np.ndarray
+            ADC inputs in volts.
 
         """
         # This is according to the 86888 datasheet
         return (
-            float(value) * (self._adc_in_max - self._adc_in_min) / 65535.0
+            values * (self._adc_in_max - self._adc_in_min) / 65535
             + self._adc_in_min
         )
 
-    def convert_accel_value(self, value: int) -> float:
+    def convert_accel_values(self, values: np.ndarray) -> np.ndarray:
         """
-        Convert an acceleration integer to m/s2.
+        Convert acceleration values from integers to m/s2.
 
         Parameters
         ----------
         values
-            Integer as reported by the sensor.
+            Integers as reported by the sensor.
 
         Returns
         -------
-        float
+        np.ndarray
             Acceleration in m/s2.
 
         """
-        if self.accel_range == 2:
-            return float(value) * self._accel_mg_lsb_2g * self._gravity_earth
-        elif self.accel_range == 4:
-            return float(value) * self._accel_mg_lsb_4g * self._gravity_earth
-        elif self.accel_range == 8:
-            return float(value) * self._accel_mg_lsb_8g * self._gravity_earth
-        elif self.accel_range == 16:
-            return float(value) * self._accel_mg_lsb_16g * self._gravity_earth
-        else:
-            print("Invalid accel range")
-            return 0
+        factor = {
+            2: self._accel_mg_lsb_2g * GRAVITY,
+            4: self._accel_mg_lsb_4g * GRAVITY,
+            8: self._accel_mg_lsb_8g * GRAVITY,
+            16: self._accel_mg_lsb_16g * GRAVITY,
+        }
+            
+        try:
+            return values * factor[self.accel_range]
+        except KeyError:
+            raise ValueError("Invalid accel range")
 
-    def convert_gyro_value(self, value: int) -> float:
+    def convert_gyro_value(self, values: np.ndarray) -> np.ndarray:
         """
-        Convert a gyro integer to deg/s.
-
-        Parameters
-        ----------
-        value
-            Integer as reported by the sensor.
-
-        Returns
-        -------
-        float
-            Angular velocity in m/s2.
-
-        """
-        if self.gyro_range == 125:
-            return float(value) * self._gyro_sensitivity_125dps
-        elif self.gyro_range == 250:
-            return float(value) * self._gyro_sensitivity_250dps
-        elif self.gyro_range == 500:
-            return float(value) * self._gyro_sensitivity_500dps
-        elif self.gyro_range == 1000:
-            return float(value) * self._gyro_sensitivity_1000dps
-        elif self.gyro_range == 2000:
-            return float(value) * self._gyro_sensitivity_2000dps
-        else:
-            print("Invalid gyro range")
-            return 0
-
-    def convert_mag_value(self, value: int) -> float:
-        """
-        Convert a magnetometer integer to ??.
+        Convert gyro values from integers to deg/s.
 
         Parameters
         ----------
         values
-            Integer as reported by the sensor.
+            Integers as reported by the sensor.
 
         Returns
         -------
-        float
+        np.ndarray
+            Angular velocity in m/s2.
+
+        """
+        factor = {
+            125: self._gyro_sensitivity_125dps,
+            250: self._gyro_sensitivity_250dps,
+            500: self._gyro_sensitivity_500dps,
+            1000: self._gyro_sensitivity_1000dps,
+            2000: self._gyro_sensitivity_2000dps,
+        }
+                
+        try:
+            return values * factor[self.gyro_range]
+        except KeyError:
+            raise ValueError("Invalid gyro range")
+
+    def convert_mag_value(self, values: np.ndarray) -> np.ndarray:
+        """
+        Convert magnetometer integers to ??.
+
+        Parameters
+        ----------
+        values
+            Integers as reported by the sensor.
+
+        Returns
+        -------
+        np.ndarray
             To be determined.
 
         """
         # FIXME what is the output unit?
         if self.mag_range == 2500:
-            return float(value) * self._mag_ut_lsb
+            return values * self._mag_ut_lsb
         else:
-            print("Invalid mag range")
-            return 0
+            raise ValueError("Invalid mag range")
 
-    # Private functions that convert batches of values
-
-    def _convert_adc_values(self, values: Tuple[int]) -> Tuple[float]:
-        return tuple(self.convert_adc_value(value) for value in values)
-
-    def _convert_accel_values(self, values: Tuple[int]) -> Tuple[float]:
-        return tuple(self.convert_accel_value(value) for value in values)
-
-    def _convert_gyro_values(self, values: Tuple[int]) -> Tuple[float]:
-        return tuple(self.convert_gyro_value(value) for value in values)
-
-    def _convert_mag_values(self, values: Tuple[int]) -> Tuple[float]:
-        return tuple(self.convert_mag_value(value) for value in values)
 
 
 class NextWheel:
@@ -201,21 +199,27 @@ class NextWheel:
 
     """
 
-    def __init__(self, IP: str, HEADER_LENGTH: int = 10):
+    def __init__(self, IP: str, *, debug: bool = False):
+        # General configuration
         self.IP = IP
-        self.HEADER_LENGTH = HEADER_LENGTH
+        self.HEADER_LENGTH = 10
         self.TIME_ZERO = 0
         self.max_imu_samples = 0
         self.max_analog_samples = 0
         self.max_encoder_samples = 0
         self.max_power_samples = 0
-        self.ws = None
-        self._adc_values = []
-        self._imu_values = []
-        self._power_values = []
-        self._encoder_values = []
-        self._mutex = threading.Lock()
         self._config = GlobalConfig()
+        self._debug = debug
+
+        # Communication stuff
+        self.ws = None
+        self._mutex = threading.Lock()
+
+        # Data buffers. In these arrays, column 0 is the time
+        self._adc_values = []  # type: list[np.ndarray]
+        self._imu_values = []  # type: list[np.ndarray]
+        self._power_values = []  # type: list[np.ndarray]
+        self._encoder_values = []  # type: list[np.ndarray]
 
     def __extract_values(self, frame_type: int, message: bytes, time: float):
         """
@@ -242,12 +246,12 @@ class NextWheel:
         None.
 
         """
-        if frame_type == 2:  # frame type of the ADC values
+        if frame_type == FrameType.ADC:  # frame type of the ADC values
             if len(message) == 16:
                 self._adc_values.append(
                     (
                         time,
-                        self._config._convert_adc_values(
+                        self._config.convert_adc_values(
                             struct.unpack_from("<8H", message)
                         ),
                     )
@@ -256,16 +260,16 @@ class NextWheel:
                 if len(self._adc_values) > self.max_analog_samples:
                     self._adc_values.pop(0)
 
-        elif frame_type == 3:  # frame type of the IMU
+        elif frame_type == FrameType.IMU:  # frame type of the IMU
             if len(message) == 18:
                 # Converting to m/s^2, deg/s and uT
-                acc_values = self._config._convert_accel_values(
+                acc_values = self._config.convert_accel_values(
                     struct.unpack_from("<3h", message[:6])
                 )
-                gyro_values = self._config._convert_gyro_values(
+                gyro_values = self._config.convert_gyro_values(
                     struct.unpack_from("<3h", message[6:12])
                 )
-                mag_values = self._config._convert_mag_values(
+                mag_values = self._config.convert_mag_values(
                     struct.unpack_from("<3h", message[12:18])
                 )
 
@@ -277,7 +281,7 @@ class NextWheel:
                 if len(self._imu_values) > self.max_imu_samples:
                     self._imu_values.pop(0)
 
-        elif frame_type == 4:  # frame type of the POWER
+        elif frame_type == FrameType.POWER:  # frame type of the POWER
             if len(message) == 13:
                 self._power_values.append(
                     (time, struct.unpack_from("<3fB", message))
@@ -286,7 +290,7 @@ class NextWheel:
                 if len(self._power_values) > self.max_power_samples:
                     self._power_values.pop(0)
 
-        elif frame_type == 7:  # frame type of the ENCODER
+        elif frame_type == FrameType.ENCODER:  # frame type of the ENCODER
             if len(message) == 8:
                 self._encoder_values.append(
                     (time, struct.unpack_from("<q", message))
@@ -367,15 +371,9 @@ class NextWheel:
             )
 
             # Config frame (should always be first)
-            if frame_type == 1:
-                print("ConfigFrame detected")
-                print(
-                    "header: ",
-                    frame_type,
-                    timestamp,
-                    data_size,
-                    len(message[10:]),
-                )
+            if frame_type == FrameType.CONFIG:
+                if self._debug:
+                    print("Configuration frame received.")
                 self.TIME_ZERO = timestamp / 1e6
 
                 if len(message[10:]) == 20:
@@ -394,14 +392,15 @@ class NextWheel:
                     self._config.imu_sampling_rate = imu_sampling_rate
                     self._config.adc_sampling_rate = adc_sampling_rate
 
-            if frame_type == 255:
+            elif frame_type == FrameType.SUPERFRAME:
                 self.__parse_superframe(message[10:], data_size)
 
         self._mutex.release()
 
     def __on_open(self, ws):
         """Reaction of the WebSocketApp when the connection is open."""
-        # print("Opened connection", self.ws)
+        if self._debug:
+            print("Connected: ", self.ws)
 
     def __on_error(self, ws, error):
         """Reaction of the WebSocketApp when there is an error."""
@@ -410,7 +409,8 @@ class NextWheel:
 
     def __on_close(self, ws, close_status_code, close_msg):
         """Reaction of the WebSocketApp when the connection is close."""
-        # print("### closed ###", self.ws, close_status_code, close_msg)
+        if self._debug:
+            print("Closed: ", self.ws, close_status_code, close_msg)
 
     def connect(
         self,
@@ -457,12 +457,12 @@ class NextWheel:
     def overview(self) -> dict[str, int | float | np.ndarray]:
         """
         Get an overview of the whole system. Does not clear the buffer.
-        
+
         This function is mainly for debugging or monitoring purpose, and not
         for data acquisition. It returns a complete state of the system,
         including the latest sampled data for every sensor. To log data,
         use NextWheel.fetch() instead.
-        
+
         Returns
         -------
         data : dict[str, int | np.ndarray]
@@ -475,10 +475,10 @@ class NextWheel:
                 - "Voltage": Battery voltage in Volts
                 - "Current": Load in Amps
                 - "Power": Power consumption in Watts
-        
+
         """
         self._mutex.acquire()
-        
+
         out = {}
         try:
             out["Acc"] = self._imu_values[-1][0:3]
@@ -486,8 +486,7 @@ class NextWheel:
             out["Acc"] = [np.nan, np.nan, np.nan]
 
         self._mutex.release()
-        return out            
-        
+        return out
 
     def fetch(self) -> dict[str, dict[str, np.ndarray]]:
         """
