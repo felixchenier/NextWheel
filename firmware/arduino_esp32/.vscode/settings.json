@@ -15,5 +15,6 @@
         "random": "cpp",
         "initializer_list": "cpp",
         "regex": "cpp"
-    }
+    },
+    "cmake.configureOnOpen": false
 }

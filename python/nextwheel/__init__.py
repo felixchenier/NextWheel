@@ -1,8 +1,22 @@
 # -*- coding: utf-8 -*-
-"""
-The module has a NextWheel class that fetch data from the instrumented wheel.
+#
+# Copyright 2023 NextWheel Developers
 
-It contain the Nextwheel class that communicate with the instrumented wheel.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""
+This Python module provides the NextWheel class that fetches data from an
+intrumented wheel.
 """
 
 import websocket
@@ -15,9 +29,10 @@ import requests
 
 class GlobalConfig:
     """
-    Global configuration of the instrumented wheel. This will be used to store current configuration
-    and calculate conversions from raw data.
+    Global configuration of the instrumented wheel. This is be used to store
+    the current configuration and calculate conversions from raw data.
     """
+
     def __init__(self):
         # IMU CONFIG
         self.accel_range = 16
@@ -35,7 +50,6 @@ class GlobalConfig:
         self._adc_in_min = -1.25 * self._adc_v_ref
 
         # ACCORDING TO BMX160 DATASHEET
-        self._gravity_earth = 9.80665
         self._accel_mg_lsb_2g = 0.000061035
         self._accel_mg_lsb_4g = 0.000122070
         self._accel_mg_lsb_8g = 0.000244141
@@ -47,63 +61,120 @@ class GlobalConfig:
         self._gyro_sensitivity_2000dps = 0.0609756
         self._mag_ut_lsb = 0.3
 
-    def update_config(self, accel_range: int, gyro_range: int, mag_range: int,  imu_rate: int, adc_rate: int):
-        self.accel_range = accel_range
-        self.gyro_range = gyro_range
-        self.mag_range = mag_range
-        self.imu_rate = imu_rate
-        self.adc_rate = adc_rate
-
-    def convert_adc_values(self, values: Tuple[int]) -> Tuple[float]:
-        return tuple(self.convert_adc_value(value) for value in values)
+        self._gravity_earth = 9.80665
 
     def convert_adc_value(self, value: int) -> float:
-        # This is according to the 86888 datasheet
-        return float(value) * (self._adc_in_max - self._adc_in_min) / 65535. + self._adc_in_min
+        """
+        Convert an ADC value
 
-    def convert_accel_values(self, values: Tuple[int]) -> Tuple[float]:
+        Parameters
+        ----------
+        value
+            ADC output (integer).
+
+        Returns
+        -------
+        float
+            ADC input in volts.
+
+        """
+        # This is according to the 86888 datasheet
+        return (
+            float(value) * (self._adc_in_max - self._adc_in_min) / 65535.0
+            + self._adc_in_min
+        )
+
+    def convert_accel_value(self, value: int) -> float:
+        """
+        Convert an acceleration integer to m/s2.
+
+        Parameters
+        ----------
+        values
+            Integer as reported by the sensor.
+
+        Returns
+        -------
+        float
+            Acceleration in m/s2.
+
+        """
+        if self.accel_range == 2:
+            return float(value) * self._accel_mg_lsb_2g * self._gravity_earth
+        elif self.accel_range == 4:
+            return float(value) * self._accel_mg_lsb_4g * self._gravity_earth
+        elif self.accel_range == 8:
+            return float(value) * self._accel_mg_lsb_8g * self._gravity_earth
+        elif self.accel_range == 16:
+            return float(value) * self._accel_mg_lsb_16g * self._gravity_earth
+        else:
+            print("Invalid accel range")
+            return 0
+
+    def convert_gyro_value(self, value: int) -> float:
+        """
+        Convert a gyro integer to deg/s.
+
+        Parameters
+        ----------
+        value
+            Integer as reported by the sensor.
+
+        Returns
+        -------
+        float
+            Angular velocity in m/s2.
+
+        """
+        if self.gyro_range == 125:
+            return float(value) * self._gyro_sensitivity_125dps
+        elif self.gyro_range == 250:
+            return float(value) * self._gyro_sensitivity_250dps
+        elif self.gyro_range == 500:
+            return float(value) * self._gyro_sensitivity_500dps
+        elif self.gyro_range == 1000:
+            return float(value) * self._gyro_sensitivity_1000dps
+        elif self.gyro_range == 2000:
+            return float(value) * self._gyro_sensitivity_2000dps
+        else:
+            print("Invalid gyro range")
+            return 0
+
+    def convert_mag_value(self, value: int) -> float:
+        """
+        Convert a magnetometer integer to ??.
+
+        Parameters
+        ----------
+        values
+            Integer as reported by the sensor.
+
+        Returns
+        -------
+        float
+            To be determined.
+
+        """
+        # FIXME what is the output unit?
+        if self.mag_range == 2500:
+            return float(value) * self._mag_ut_lsb
+        else:
+            print("Invalid mag range")
+            return 0
+
+    # Private functions that convert batches of values
+
+    def _convert_adc_values(self, values: Tuple[int]) -> Tuple[float]:
+        return tuple(self.convert_adc_value(value) for value in values)
+
+    def _convert_accel_values(self, values: Tuple[int]) -> Tuple[float]:
         return tuple(self.convert_accel_value(value) for value in values)
 
-    def convert_accel_value(self, values: int) -> float:
-        if self.accel_range == 2:
-            return float(values) * self._accel_mg_lsb_2g * self._gravity_earth
-        elif self.accel_range == 4:
-            return float(values) * self._accel_mg_lsb_4g * self._gravity_earth
-        elif self.accel_range == 8:
-            return float(values) * self._accel_mg_lsb_8g * self._gravity_earth
-        elif self.accel_range == 16:
-            return float(values) * self._accel_mg_lsb_16g * self._gravity_earth
-        else:
-            print('Invalid accel range')
-            return 0
-
-    def convert_gyro_values(self, values: Tuple[int]) -> Tuple[float]:
+    def _convert_gyro_values(self, values: Tuple[int]) -> Tuple[float]:
         return tuple(self.convert_gyro_value(value) for value in values)
 
-    def convert_gyro_value(self, values: int) -> float:
-        if self.gyro_range == 125:
-            return float(values) * self._gyro_sensitivity_125dps
-        elif self.gyro_range == 250:
-            return float(values) * self._gyro_sensitivity_250dps
-        elif self.gyro_range == 500:
-            return float(values) * self._gyro_sensitivity_500dps
-        elif self.gyro_range == 1000:
-            return float(values) * self._gyro_sensitivity_1000dps
-        elif self.gyro_range == 2000:
-            return float(values) * self._gyro_sensitivity_2000dps
-        else:
-            print('Invalid gyro range')
-            return 0
-
-    def convert_mag_values(self, values: Tuple[int]) -> Tuple[float]:
+    def _convert_mag_values(self, values: Tuple[int]) -> Tuple[float]:
         return tuple(self.convert_mag_value(value) for value in values)
-
-    def convert_mag_value(self, values: int) -> float:
-        if self.mag_range == 2500:
-            return float(values) * self._mag_ut_lsb
-        else:
-            print('Invalid mag range')
-            return 0
 
 
 class NextWheel:
@@ -174,7 +245,12 @@ class NextWheel:
         if frame_type == 2:  # frame type of the ADC values
             if len(message) == 16:
                 self._adc_values.append(
-                    (time, self._config.convert_adc_values(struct.unpack_from("<8H", message)))
+                    (
+                        time,
+                        self._config._convert_adc_values(
+                            struct.unpack_from("<8H", message)
+                        ),
+                    )
                 )
 
                 if len(self._adc_values) > self.max_analog_samples:
@@ -183,9 +259,15 @@ class NextWheel:
         elif frame_type == 3:  # frame type of the IMU
             if len(message) == 18:
                 # Converting to m/s^2, deg/s and uT
-                acc_values = self._config.convert_accel_values(struct.unpack_from("<3h", message[:6]))
-                gyro_values = self._config.convert_gyro_values(struct.unpack_from("<3h", message[6:12]))
-                mag_values = self._config.convert_mag_values(struct.unpack_from("<3h", message[12:18]))
+                acc_values = self._config._convert_accel_values(
+                    struct.unpack_from("<3h", message[:6])
+                )
+                gyro_values = self._config._convert_gyro_values(
+                    struct.unpack_from("<3h", message[6:12])
+                )
+                mag_values = self._config._convert_mag_values(
+                    struct.unpack_from("<3h", message[12:18])
+                )
 
                 # NOTE + will concat the tuples
                 self._imu_values.append(
@@ -297,10 +379,20 @@ class NextWheel:
                 self.TIME_ZERO = timestamp / 1e6
 
                 if len(message[10:]) == 20:
-                    (accel_range, gyro_range, mag_range, imu_sampling_rate, adc_sampling_rate) = \
-                        struct.unpack_from("<5I", message[10:])
+                    (
+                        accel_range,
+                        gyro_range,
+                        mag_range,
+                        imu_sampling_rate,
+                        adc_sampling_rate,
+                    ) = struct.unpack_from("<5I", message[10:])
 
-                    self._config.update_config(accel_range, gyro_range, mag_range, imu_sampling_rate, adc_sampling_rate)
+                    # Update configuration
+                    self._config.accel_range = accel_range
+                    self._config.gyro_range = gyro_range
+                    self._config.mag_range = mag_range
+                    self._config.imu_sampling_rate = imu_sampling_rate
+                    self._config.adc_sampling_rate = adc_sampling_rate
 
             if frame_type == 255:
                 self.__parse_superframe(message[10:], data_size)
@@ -309,16 +401,16 @@ class NextWheel:
 
     def __on_open(self, ws):
         """Reaction of the WebSocketApp when the connection is open."""
-        print("Opened connection", self.ws)
+        # print("Opened connection", self.ws)
 
     def __on_error(self, ws, error):
         """Reaction of the WebSocketApp when there is an error."""
         self.close()
-        print(self.ws, error)
+        raise RuntimeError(self.ws, error)
 
     def __on_close(self, ws, close_status_code, close_msg):
         """Reaction of the WebSocketApp when the connection is close."""
-        print("### closed ###", self.ws, close_status_code, close_msg)
+        # print("### closed ###", self.ws, close_status_code, close_msg)
 
     def connect(
         self,
@@ -361,6 +453,41 @@ class NextWheel:
 
         t = threading.Thread(target=self.ws.run_forever)
         t.start()
+
+    def overview(self) -> dict[str, int | float | np.ndarray]:
+        """
+        Get an overview of the whole system. Does not clear the buffer.
+        
+        This function is mainly for debugging or monitoring purpose, and not
+        for data acquisition. It returns a complete state of the system,
+        including the latest sampled data for every sensor. To log data,
+        use NextWheel.fetch() instead.
+        
+        Returns
+        -------
+        data : dict[str, int | np.ndarray]
+            A dictionary with the current keys and values:
+                - "Acc": [x, y, z]
+                - "Gyro": [x, y, z]
+                - "Mag": [x, y, z]
+                - "Analogs": [ch1, ch2, ch3, ch4, ch5, ch6, spare]
+                - "Encoder": integer from 0 to 399
+                - "Voltage": Battery voltage in Volts
+                - "Current": Load in Amps
+                - "Power": Power consumption in Watts
+        
+        """
+        self._mutex.acquire()
+        
+        out = {}
+        try:
+            out["Acc"] = self._imu_values[-1][0:3]
+        except IndexError:
+            out["Acc"] = [np.nan, np.nan, np.nan]
+
+        self._mutex.release()
+        return out            
+        
 
     def fetch(self) -> dict[str, dict[str, np.ndarray]]:
         """
@@ -452,11 +579,18 @@ class NextWheel:
         response : requests.Response
 
         """
-        response = requests.post(f"http://{self.IP}/config_set_time", params={"time": unix_time})
+        response = requests.post(
+            f"http://{self.IP}/config_set_time", params={"time": unix_time}
+        )
         return response
 
-    def set_sensors_params(self, adc_sampling_rate: int, imu_sampling_rate: int,
-                          accelerometer_precision: int, gyrometer_precision: int) -> requests.Response:
+    def set_sensors_params(
+        self,
+        adc_sampling_rate: int,
+        imu_sampling_rate: int,
+        accelerometer_precision: int,
+        gyrometer_precision: int,
+    ) -> requests.Response:
         """
         Set the parameters of the instrumented wheel.
         :param adc_sampling_rate: valid values are : [120, 240, 480, 960, 1000, 2000] in Hz
@@ -468,11 +602,15 @@ class NextWheel:
         """
         # TODO Validate params? We assume it is verified in the ESP32 firmware
 
-        response = requests.post(f"http://{self.IP}/config_update",
-                                 params={"adc_sampling_rate": adc_sampling_rate,
-                                         "imu_sampling_rate": imu_sampling_rate,
-                                         "accelerometer_precision": accelerometer_precision,
-                                         "gyrometer_precision": gyrometer_precision})
+        response = requests.post(
+            f"http://{self.IP}/config_update",
+            params={
+                "adc_sampling_rate": adc_sampling_rate,
+                "imu_sampling_rate": imu_sampling_rate,
+                "accelerometer_precision": accelerometer_precision,
+                "gyrometer_precision": gyrometer_precision,
+            },
+        )
         return response
 
     def get_sensors_params(self) -> requests.Response:
@@ -520,7 +658,9 @@ class NextWheel:
         response = requests.get(f"http://{self.IP}/file_list")
         return response
 
-    def file_download(self, filename: str, save_path: str, base_url: str = '/file_download') -> int:
+    def file_download(
+        self, filename: str, save_path: str, base_url: str = "/file_download"
+    ) -> int:
         """
         Download a file from the instrumented wheel.
         :param filename: The filename to download
@@ -529,10 +669,12 @@ class NextWheel:
         :return:
             int: The size of the file
         """
-        param = {'file': filename}
-        response = requests.get(f"http://{self.IP}{base_url}", params=param, stream=True)
+        param = {"file": filename}
+        response = requests.get(
+            f"http://{self.IP}{base_url}", params=param, stream=True
+        )
         if response.status_code == 200:
-            with open(save_path, 'wb') as f:
+            with open(save_path, "wb") as f:
                 f.write(response.content)
                 # Return size...
                 return f.tell()
@@ -547,6 +689,7 @@ class NextWheel:
         :return:
         response: requests.Response
         """
-        response = requests.get(f"http://{self.IP}/file_delete", params={'file': filename})
+        response = requests.get(
+            f"http://{self.IP}/file_delete", params={"file": filename}
+        )
         return response
-

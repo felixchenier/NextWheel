@@ -4,21 +4,6 @@ from matplotlib.animation import FuncAnimation
 from nextwheel import NextWheel
 from datetime import datetime
 
-# ADC_LOG_FILENAME = "log_adc.csv"
-# IMU_LOG_FILENAME = "log_imu.csv"
-
-# fid_adc = open(ADC_LOG_FILENAME, "w")
-# fid_adc.write(
-#     "Y,M,D,h,m,s,us,ch[0],ch[1],ch[2],ch[3],ch[4],ch[5],ch[6],ch[7]\n"
-# )
-# fid_imu = open(IMU_LOG_FILENAME, "w")
-# fid_imu.write(
-#     "Y,M,D,h,m,s,us,"
-#     "acc[0],acc[1],acc[2],"
-#     "gyro[0],gyro[1],gyro[2],"
-#     "mag[0],mag[1],mag[2]\n"
-# )
-
 power_values = []
 voltage_values = []
 current_values = []
@@ -37,11 +22,11 @@ mpl.rcParams["lines.linewidth"] = 1
 # define and adjust figure
 fig = plt.figure(figsize=(12, 8))
 
-adc_plot = plt.subplot(1, 1, 1)  # row, col, index
+adc_plot = plt.subplot(2, 1, 1)  # row, col, index
 adc_plot.set_title("ADC")
 
-# imu_plot = plt.subplot(4, 1, 2)  # row, col, index
-# imu_plot.set_title("IMU")
+imu_plot = plt.subplot(2, 1, 2)  # row, col, index
+imu_plot.set_title("IMU")
 #
 # power_plot = plt.subplot(4, 1, 3)  # row, col, index
 # power_plot.set_title("POWER")
@@ -68,16 +53,18 @@ def update_plots(i):
     adc_plot.plot(data["Analog"]["Time"], data["Analog"]["Force"])
 
     # IMU
-    # imu_plot.cla()
-    # imu_plot.set_title("IMU")
-    # imu_plot.plot(
-    #     data["IMU"]["Time"],
-    #     data["IMU"]["Acc"],
-    #     data["IMU"]["Time"],
-    #     data["IMU"]["Gyro"],
-    #     data["IMU"]["Time"],
-    #     data["IMU"]["Mag"],
-    # )
+    imu_plot.cla()
+    imu_plot.set_title("IMU")
+    imu_plot.plot(
+        #data["IMU"]["Time"],
+        #data["IMU"]["Acc"],
+        data["IMU"]["Time"],
+        data["IMU"]["Gyro"],
+        #data["IMU"]["Time"],
+        #data["IMU"]["Mag"],
+    )
+    axes = imu_plot.axis()
+    imu_plot.axis([axes[0], axes[1], -1000, 1000])
     #
     # # POWER Sample frequency too slow to just use nw.fetch() alone
     # if len(data["Power"]["Time"]) != 0:
@@ -119,7 +106,7 @@ def update_plots(i):
 
 if __name__ == "__main__":
     # websocket.enableTrace(True)  # Uncomment to print all received data
-    nw = NextWheel("10.0.1.2")
+    nw = NextWheel("192.168.1.155")
     nw.connect()
 
     # Set device to current time (unix time)
