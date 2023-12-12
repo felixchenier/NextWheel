@@ -23,16 +23,19 @@ import websocket
 import struct
 import threading
 import numpy as np
-from typing import Tuple
 from enum import IntEnum
 import requests
+import time
+
 
 # Constants
 
 GRAVITY = 9.80665
 
+
 class FrameType(IntEnum):
     """Identify frame type from websocket message."""
+
     CONFIG = 1
     ADC = 2
     IMU = 3
@@ -74,7 +77,6 @@ class GlobalConfig:
         self._gyro_sensitivity_1000dps = 0.0304878
         self._gyro_sensitivity_2000dps = 0.0609756
         self._mag_ut_lsb = 0.3
-
 
     def convert_adc_values(self, values: np.ndarray) -> np.ndarray:
         """
@@ -118,7 +120,7 @@ class GlobalConfig:
             8: self._accel_mg_lsb_8g * GRAVITY,
             16: self._accel_mg_lsb_16g * GRAVITY,
         }
-            
+
         try:
             return values * factor[self.accel_range]
         except KeyError:
@@ -146,7 +148,7 @@ class GlobalConfig:
             1000: self._gyro_sensitivity_1000dps,
             2000: self._gyro_sensitivity_2000dps,
         }
-                
+
         try:
             return values * factor[self.gyro_range]
         except KeyError:
@@ -172,7 +174,6 @@ class GlobalConfig:
             return values * self._mag_ut_lsb
         else:
             raise ValueError("Invalid mag range")
-
 
 
 class NextWheel:
@@ -247,57 +248,65 @@ class NextWheel:
 
         """
         if frame_type == FrameType.ADC:  # frame type of the ADC values
-            if len(message) == 16:
-                self._adc_values.append(
-                    (
-                        time,
-                        self._config.convert_adc_values(
-                            np.array(struct.unpack_from("<8H", message))
-                        ),
-                    )
-                )
+            if len(message) != 16:
+                print(f"Unexpected message length of {len(message)} (ADC)")
+                return
 
-                if len(self._adc_values) > self.max_analog_samples:
-                    self._adc_values.pop(0)
+            self._adc_values.append(
+                np.hstack([[time], struct.unpack_from("<8H", message)])
+            )
+
+            if len(self._adc_values) > self.max_analog_samples:
+                self._adc_values.pop(0)
 
         elif frame_type == FrameType.IMU:  # frame type of the IMU
-            if len(message) == 18:
-                # Converting to m/s^2, deg/s and uT
-                acc_values = self._config.convert_accel_values(
-                    np.array(struct.unpack_from("<3h", message[:6]))
-                )
-                gyro_values = self._config.convert_gyro_values(
-                    np.array(struct.unpack_from("<3h", message[6:12]))
-                )
-                mag_values = self._config.convert_mag_values(
-                    np.array(struct.unpack_from("<3h", message[12:18]))
-                )
+            if len(message) != 18:
+                print(f"Unexpected message length of {len(message)} (IMU)")
+                return
 
-                # NOTE + will concat the tuples
-                self._imu_values.append(
-                    (time, acc_values + gyro_values + mag_values)
+            self._imu_values.append(
+                np.hstack(
+                    [
+                        [time],
+                        self._config.convert_accel_values(
+                            np.array(struct.unpack_from("<3h", message[:6]))
+                        ),
+                        self._config.convert_gyro_values(
+                            np.array(struct.unpack_from("<3h", message[6:12]))
+                        ),
+                        self._config.convert_mag_values(
+                            np.array(struct.unpack_from("<3h", message[12:18]))
+                        ),
+                    ]
                 )
+            )
 
-                if len(self._imu_values) > self.max_imu_samples:
-                    self._imu_values.pop(0)
+            if len(self._imu_values) > self.max_imu_samples:
+                self._imu_values.pop(0)
 
         elif frame_type == FrameType.POWER:  # frame type of the POWER
-            if len(message) == 13:
-                self._power_values.append(
-                    (time, np.array(struct.unpack_from("<3fB", message)))
-                )
+            if len(message) != 13:
+                print(f"Unexpected message length of {len(message)} (POWER)")
+                return
 
-                if len(self._power_values) > self.max_power_samples:
-                    self._power_values.pop(0)
+            self._power_values.append(
+                np.hstack([[time], struct.unpack_from("<3fB", message)])
+            )
+
+            if len(self._power_values) > self.max_power_samples:
+                self._power_values.pop(0)
 
         elif frame_type == FrameType.ENCODER:  # frame type of the ENCODER
-            if len(message) == 8:
-                self._encoder_values.append(
-                    (time, np.array(struct.unpack_from("<q", message)))
-                )
+            if len(message) != 8:
+                print(f"Unexpected message length of {len(message)} (ENCODER)")
+                return
 
-                if len(self._encoder_values) > self.max_encoder_samples:
-                    self._encoder_values.pop(0)
+            self._encoder_values.append(
+                np.hstack([[time], struct.unpack_from("<q", message)])
+            )
+
+            if len(self._encoder_values) > self.max_encoder_samples:
+                self._encoder_values.pop(0)
 
     def __parse_superframe(self, message: bytes, count: int):
         """
@@ -454,39 +463,17 @@ class NextWheel:
         t = threading.Thread(target=self.ws.run_forever)
         t.start()
 
-    def overview(self) -> dict[str, int | float | np.ndarray]:
+    def monitor(self) -> None:
         """
-        Get an overview of the whole system. Does not clear the buffer.
+        Blocking function that monitors the sensors measurements.
 
-        This function is mainly for debugging or monitoring purpose, and not
-        for data acquisition. It returns a complete state of the system,
-        including the latest sampled data for every sensor. To log data,
-        use NextWheel.fetch() instead.
-
-        Returns
-        -------
-        data : dict[str, int | np.ndarray]
-            A dictionary with the current keys and values:
-                - "Acc": [x, y, z]
-                - "Gyro": [x, y, z]
-                - "Mag": [x, y, z]
-                - "Analogs": [ch1, ch2, ch3, ch4, ch5, ch6, spare]
-                - "Encoder": integer from 0 to 399
-                - "Voltage": Battery voltage in Volts
-                - "Current": Load in Amps
-                - "Power": Power consumption in Watts
+        This function shows the current sensor states in a simple GUI for
+        testing and monitoring. To log data, use NextWheel.fetch() instead.
 
         """
-        self._mutex.acquire()
-
-        out = {}
-        try:
-            out["Acc"] = self._imu_values[-1][0:3]
-        except IndexError:
-            out["Acc"] = [np.nan, np.nan, np.nan]
-
-        self._mutex.release()
-        return out
+        # Don't import until needed.
+        import nextwheel.monitor as nwm  # noqa
+        nwm.monitor(self)
 
     def fetch(self) -> dict[str, dict[str, np.ndarray]]:
         """
@@ -498,56 +485,54 @@ class NextWheel:
             A dictionary of multiple dictionaries that contain latest
             informations on:
                 - IMU values
-                - ADC values
+                - Analog values
                 - Encoder values
                 - Power values
         """
 
         self._mutex.acquire()
 
-        n_adc_values = len(self._adc_values)
-        local_adc_values = [
-            self._adc_values.pop(0) for _ in range(n_adc_values)
-        ]
+        # Concatenate all samples in big numpy arrays
+        adc_values = np.array(self._adc_values)
+        imu_values = np.array(self._imu_values)
+        encoder_values = np.array(self._encoder_values)
+        power_values = np.array(self._power_values)
 
-        n_imu_values = len(self._imu_values)
-        local_imu_values = [
-            self._imu_values.pop(0) for _ in range(n_imu_values)
-        ]
-
-        n_encoder_values = len(self._encoder_values)
-        local_encoder_values = [
-            self._encoder_values.pop(0) for _ in range(n_encoder_values)
-        ]
-
-        n_power_values = len(self._power_values)
-        local_power_values = [
-            self._power_values.pop(0) for _ in range(n_power_values)
-        ]
+        # Reset the buffers
+        self._adc_values = []
+        self._imu_values = []
+        self._encoder_values = []
+        self._power_values = []
 
         self._mutex.release()
 
+        has_imu = len(imu_values) > 0
+        has_adc = len(adc_values) > 0
+        has_enc = len(encoder_values) > 0
+        has_pow = len(power_values) > 0
+
+        # Output
         data = {
             "IMU": {
-                "Time": np.array([t[0] for t in local_imu_values]),
-                "Acc": np.array([i[1][:3] for i in local_imu_values]),
-                "Gyro": np.array([i[1][3:6] for i in local_imu_values]),
-                "Mag": np.array([i[1][6:] for i in local_imu_values]),
+                "Time": imu_values[:, 0] if has_imu > 0 else np.array([]),
+                "Acc": imu_values[:, 1:4] if has_imu > 0 else np.array([]),
+                "Gyro": imu_values[:, 4:7] if has_imu > 0 else np.array([]),
+                "Mag": imu_values[:, 7:] if has_imu > 0 else np.array([]),
             },
             "Analog": {
-                "Time": np.array([t[0] for t in local_adc_values]),
-                "Force": np.array([i[1][:6] for i in local_adc_values]),
-                "Spare": np.array([i[1][6:] for i in local_adc_values]),
+                "Time": adc_values[:, 0] if has_adc > 0 else np.array([]),
+                "Force": adc_values[:, 1:7] if has_adc > 0 else np.array([]),
+                "Spare": adc_values[:, 7:] if has_adc > 0 else np.array([]),
             },
             "Encoder": {
-                "Time": np.array([t[0] for t in local_encoder_values]),
-                "Angle": np.array([i[1][0] for i in local_encoder_values]),
+                "Time": encoder_values[:, 0] if has_enc > 0 else np.array([]),
+                "Angle": encoder_values[:, 1] if has_enc > 0 else np.array([]),
             },
             "Power": {
-                "Time": np.array([t[0] for t in local_power_values]),
-                "Voltage": np.array([i[1][0] for i in local_power_values]),
-                "Current": np.array([i[1][1] for i in local_power_values]),
-                "Power": np.array([i[1][2] for i in local_power_values]),
+                "Time": power_values[:, 0] if has_pow > 0 else np.array([]),
+                "Voltage": power_values[:, 1] if has_pow > 0 else np.array([]),
+                "Current": power_values[:, 2] if has_pow > 0 else np.array([]),
+                "Power": power_values[:, 3] if has_pow > 0 else np.array([]),
             },
         }
 
@@ -563,6 +548,13 @@ class NextWheel:
 
         """
         self.ws.close()
+        try:
+            # If something has crashed somewhere, release the mutex for the
+            # next connection.
+            self._mutex.release()
+        except RuntimeError:
+            # No mutex was locked. That's fine.
+            pass
 
     def set_time(self, unix_time: int) -> requests.Response:
         """
@@ -692,3 +684,8 @@ class NextWheel:
             f"http://{self.IP}/file_delete", params={"file": filename}
         )
         return response
+
+
+
+
+    
