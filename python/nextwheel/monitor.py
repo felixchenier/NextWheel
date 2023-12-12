@@ -19,19 +19,24 @@ This Python module provides the GUI for the NextWheel.monitor method.
 """
 
 import multiprocessing as mp
-import queue  # For Empty exception
 import tkinter as tk
 import os
+import json
 
 
-def _gui_app(conn: mp.Pipe, cwd: str):
+def _gui_app(conn, cwd: str):
     """GUI used in NextWheel.monitor."""
     root = tk.Tk()
     root.title("NextWheel")
     root.configure(bg="black")
     # root.geometry("300x500")
     message = tk.Label(
-        root, text="NextWheel Monitor", justify="left", anchor="w", bg="#222", fg="#ddd"
+        root,
+        text="NextWheel Monitor",
+        justify="left",
+        anchor="w",
+        bg="#222",
+        fg="#ddd",
     )
     message.pack()
 
@@ -67,8 +72,31 @@ def monitor(nw):
     mag = None
     encoder = None
     forces = None
+    current_state = None
 
+    i_refresh_state = 65535  # Current system state. Start with a refresh.
     while parent_conn.recv() != "quit":
+        text = f"IP Address: {nw.IP}\n"
+
+        # Get current state
+        i_refresh_state += 1
+        if i_refresh_state > 10:
+            current_state = json.loads(nw.get_system_state().content.decode())
+            i_refresh_state = 0
+
+        if current_state is not None:
+            text += "\nCurrent State\n"
+
+            if current_state["streaming"] == 0:
+                text += "    Not streaming\n"
+            else:
+                text += "    Streaming\n"
+
+            if current_state["recording"] == 0:
+                text += "    Not recording\n"
+            else:
+                text += f"    Recording to {current_state['filename']}\n"
+
         # Get data
         data = nw.fetch()
 
@@ -108,8 +136,6 @@ def monitor(nw):
             pass
 
         # Format data
-        text = f"IP Address: {nw.IP}\n"
-
         if voltage is not None:
             text += (
                 "\nPower\n"
@@ -142,10 +168,7 @@ def monitor(nw):
             )
 
         if encoder is not None:
-            text += (
-                "\nEncoder (deg)\n"
-                f"    {encoder:.2f}\n"
-            )
+            text += "\nEncoder (ticks)\n" f"    {encoder:.2f}\n"
 
         if forces is not None:
             text += "\nForces (uncalibrated unit)\n"

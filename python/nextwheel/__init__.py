@@ -25,8 +25,7 @@ import threading
 import numpy as np
 from enum import IntEnum
 import requests
-import time
-
+import os
 
 # Constants
 
@@ -46,8 +45,11 @@ class FrameType(IntEnum):
 
 class GlobalConfig:
     """
-    Global configuration of the instrumented wheel. This is be used to store
-    the current configuration and calculate conversions from raw data.
+    Global configuration of the instrumented wheel.
+
+    This is be used to store the current configuration and calculate
+    conversions from raw data.
+
     """
 
     def __init__(self):
@@ -351,7 +353,7 @@ class NextWheel:
 
     def __on_message(self, ws, message):
         """
-        Reaction of the WebSocketApp when receiving a message.
+        React to WebSocketApp message received.
 
         The function analyse if the frame type is 1 or 255:
             - If frame_type = 1, this is the configuration frame. The function
@@ -371,7 +373,6 @@ class NextWheel:
         None.
 
         """
-
         self._mutex.acquire()
 
         if type(message) is bytes:
@@ -460,7 +461,7 @@ class NextWheel:
             on_close=self.__on_close,
         )
 
-        t = threading.Thread(target=self.ws.run_forever)
+        t = threading.Thread(target=self.ws.run_forever)  # type: ignore
         t.start()
 
     def monitor(self) -> None:
@@ -473,6 +474,7 @@ class NextWheel:
         """
         # Don't import until needed.
         import nextwheel.monitor as nwm  # noqa
+
         nwm.monitor(self)
 
     def fetch(self) -> dict[str, dict[str, np.ndarray]]:
@@ -489,7 +491,6 @@ class NextWheel:
                 - Encoder values
                 - Power values
         """
-
         self._mutex.acquire()
 
         # Concatenate all samples in big numpy arrays
@@ -567,7 +568,7 @@ class NextWheel:
 
         Returns
         -------
-        response : requests.Response
+        requests.Response
 
         """
         response = requests.post(
@@ -584,12 +585,24 @@ class NextWheel:
     ) -> requests.Response:
         """
         Set the parameters of the instrumented wheel.
-        :param adc_sampling_rate: valid values are : [120, 240, 480, 960, 1000, 2000] in Hz
-        :param imu_sampling_rate: valid values are: [60, 120, 240] in Hz
-        :param accelerometer_precision: valid values are: [2,4,8,16] in g
-        :param gyrometer_precision: valid values are [250, 500, 1000, 2000] dps (degrees per second)
-        :return:
-        response: requests.Response
+
+        Parameters
+        ----------
+        adc_sampling_rate
+            Sampling rate for the forces in Hz. Valid values are 120, 240,
+            480, 960, 1000, 2000
+        imu_sampling_rate
+            Sampling rate for the IMU, in Hz. Valid values are 60, 120, 240.
+        accelerometer_precision
+            Accelerometer range, in g. Value values are 2, 4, 8, 16.
+        gyrometer_precision
+            Gyrometer range, in degrees per second. Valid values are 250, 500,
+            1000, 2000.
+
+        Returns
+        -------
+        requests.Response
+
         """
         # TODO Validate params? We assume it is verified in the ESP32 firmware
 
@@ -607,8 +620,11 @@ class NextWheel:
     def get_sensors_params(self) -> requests.Response:
         """
         Get the parameters of the instrumented wheel sensors.
-        :return:
-        response: requests.Response
+
+        Returns
+        -------
+        requests.Response
+
         """
         response = requests.get(f"http://{self.IP}/config")
         return response
@@ -616,8 +632,11 @@ class NextWheel:
     def get_system_state(self) -> requests.Response:
         """
         Get the system state of the instrumented wheel.
-        :return:
-        response: requests.Response
+
+        Returns
+        -------
+        requests.Response
+
         """
         response = requests.get(f"http://{self.IP}/system_state")
         return response
@@ -625,8 +644,11 @@ class NextWheel:
     def start_recording(self) -> requests.Response:
         """
         Start recording data on the instrumented wheel.
-        :return:
-        response: requests.Response
+
+        Returns
+        -------
+        requests.Response
+
         """
         response = requests.get(f"http://{self.IP}/start_recording")
         return response
@@ -634,8 +656,11 @@ class NextWheel:
     def stop_recording(self) -> requests.Response:
         """
         Stop recording data on the instrumented wheel.
-        :return:
-        response: requests.Response
+
+        Returns
+        -------
+        requests.Response
+
         """
         response = requests.get(f"http://{self.IP}/stop_recording")
         return response
@@ -643,29 +668,39 @@ class NextWheel:
     def file_list(self) -> requests.Response:
         """
         Get the list of files on the instrumented wheel.
-        :return:
-        response: requests.Response
+
+        Returns
+        -------
+        requests.Response
+
         """
         response = requests.get(f"http://{self.IP}/file_list")
         return response
 
-    def file_download(
-        self, filename: str, save_path: str, base_url: str = "/file_download"
-    ) -> int:
+    def file_download(self, filename: str, save_path: str = ".") -> int:
         """
         Download a file from the instrumented wheel.
-        :param filename: The filename to download
-        :param save_path: Full path to save the file
-        :param base_url: Base url to download the file, default is /file_download
-        :return:
-            int: The size of the file
+
+        Parameters
+        ----------
+        filename
+            The name of the file to download
+        save_folder
+            Optional. Where to save the file. The default is the current
+            folder.
+
+        Returns
+        -------
+        int
+            The size of the file
+
         """
         param = {"file": filename}
         response = requests.get(
-            f"http://{self.IP}{base_url}", params=param, stream=True
+            f"http://{self.IP}/file_download", params=param, stream=True
         )
         if response.status_code == 200:
-            with open(save_path, "wb") as f:
+            with open(os.path.join(save_path, filename), "wb") as f:
                 f.write(response.content)
                 # Return size...
                 return f.tell()
@@ -676,16 +711,18 @@ class NextWheel:
     def file_delete(self, filename: str) -> requests.Response:
         """
         Delete a file from the instrumented wheel.
-        :param filename: The filename to delete
-        :return:
-        response: requests.Response
+
+        Parameters
+        ----------
+        filename
+            The name of the file to delete
+
+        Returns
+        -------
+        requests.Response
+
         """
         response = requests.get(
             f"http://{self.IP}/file_delete", params={"file": filename}
         )
         return response
-
-
-
-
-    
