@@ -68,7 +68,7 @@ void QuadEncoderSensorTask::run(void* app)
             }
         }
 
-        // IMU update will be triggered by timer interrupt
+        // Encoder update will be triggered by timer interrupt
         xSemaphoreTake(NextWheelInterrupts::g_quad_encoder_semaphore, portMAX_DELAY);
 
         // Save encoder value
