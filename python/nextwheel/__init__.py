@@ -57,10 +57,13 @@ class GlobalConfig:
         self.accel_range = 16
         self.gyro_range = 2000
         self.mag_range = 2500
-        self.imu_rate = 1000
+        self.imu_rate = 240
 
         # ADC CONFIG
-        self.adc_rate = 1000
+        self.adc_rate = 240
+
+        # ENCODER CONFIG
+        self.encoder_rate = 240
 
         # ACCORDING TO ADS8688 DATASHEET
         self._adc_v_ref = 4.096
@@ -386,14 +389,15 @@ class NextWheel:
                     print("Configuration frame received.")
                 self.TIME_ZERO = timestamp / 1e6
 
-                if len(message[10:]) == 20:
+                if len(message[10:]) == 24:
                     (
                         accel_range,
                         gyro_range,
                         mag_range,
                         imu_sampling_rate,
                         adc_sampling_rate,
-                    ) = struct.unpack_from("<5I", message[10:])
+                        encoder_sampling_rate
+                    ) = struct.unpack_from("<6I", message[10:])
 
                     # Update configuration
                     self._config.accel_range = accel_range
@@ -401,6 +405,7 @@ class NextWheel:
                     self._config.mag_range = mag_range
                     self._config.imu_sampling_rate = imu_sampling_rate
                     self._config.adc_sampling_rate = adc_sampling_rate
+                    self._config.encoder_sampling_rate = encoder_sampling_rate
 
             elif frame_type == FrameType.SUPERFRAME:
                 self.__parse_superframe(message[10:], data_size)
