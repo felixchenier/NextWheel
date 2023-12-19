@@ -242,12 +242,14 @@ void WebSocketServerTask::setupRESTAPI()
             Serial.println("post: /config_update");
 
             if (m_webServer.hasArg("accelerometer_precision") && m_webServer.hasArg("gyrometer_precision") &&
-                m_webServer.hasArg("imu_sampling_rate") && m_webServer.hasArg("adc_sampling_rate"))
+                m_webServer.hasArg("imu_sampling_rate") && m_webServer.hasArg("adc_sampling_rate") &&
+                m_webServer.hasArg("encoder_sampling_rate"))
             {
                 GlobalConfig::instance().set_accel_range(m_webServer.arg("accelerometer_precision").toInt());
                 GlobalConfig::instance().set_gyro_range(m_webServer.arg("gyrometer_precision").toInt());
                 GlobalConfig::instance().set_imu_sample_rate(m_webServer.arg("imu_sampling_rate").toInt());
                 GlobalConfig::instance().set_adc_sample_rate(m_webServer.arg("adc_sampling_rate").toInt());
+                GlobalConfig::instance().set_encoder_sample_rate(m_webServer.arg("encoder_sampling_rate").toInt());
 
                 // Print current config
                 Serial.println("Current config:");
@@ -255,6 +257,7 @@ void WebSocketServerTask::setupRESTAPI()
                 Serial.printf("Gyrometer precision: %d\n", GlobalConfig::instance().get_gyro_range());
                 Serial.printf("IMU sampling rate: %d\n", GlobalConfig::instance().get_imu_sample_rate());
                 Serial.printf("ADC sampling rate: %d\n", GlobalConfig::instance().get_adc_sample_rate());
+                Serial.printf("Encoder sampling rate: %d\n", GlobalConfig::instance().get_encoder_sample_rate());
 
                 m_webServer.send(200, "text/plain", "OK");
             }
@@ -264,7 +267,7 @@ void WebSocketServerTask::setupRESTAPI()
                     400,
                     "text/plain",
                     "Missing arguments (accelerometer_precision, gyrometer_precision, imu_sampling_rate, "
-                    "adc_sampling_rate)");
+                    "adc_sampling_rate, encoder_sampling_rate)");
             }
         });
 
@@ -281,6 +284,7 @@ void WebSocketServerTask::setupRESTAPI()
             cJSON_AddNumberToObject(root, "gyrometer_precision", GlobalConfig::instance().get_gyro_range());
             cJSON_AddNumberToObject(root, "imu_sampling_rate", GlobalConfig::instance().get_imu_sample_rate());
             cJSON_AddNumberToObject(root, "adc_sampling_rate", GlobalConfig::instance().get_adc_sample_rate());
+            cJSON_AddNumberToObject(root, "encoder_sampling_rate", GlobalConfig::instance().get_encoder_sample_rate());
             String json(cJSON_Print(root));
 
             // Free memory

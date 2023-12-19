@@ -32,7 +32,7 @@ void IMUSensorTask::run(void* app)
 
     IMUDataFrame frame;
 
-    auto imu_timer = timerBegin(1, 80, true);  // count up. 80 prescaler = 1us resolution
+    auto imu_timer = timerBegin(2, 80, true);  // count up. 80 prescaler = 1us resolution
     timerAttachInterrupt(
         imu_timer,
         &NextWheelInterrupts::imu_sensor_task_timer_interrupt,

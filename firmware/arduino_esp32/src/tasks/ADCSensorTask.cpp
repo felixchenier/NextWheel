@@ -26,7 +26,7 @@ void ADCSensorTask::run(void* app)
     m_adc.begin();
     ADCDataFrame frame;
 
-    auto adc_timer = timerBegin(0, 80, true);  // count up. 80 prescaler = 1us resolution
+    auto adc_timer = timerBegin(3, 80, true);  // count up. 80 prescaler = 1us resolution
     timerAttachInterrupt(
         adc_timer,
         &NextWheelInterrupts::adc_sensor_task_timer_interrupt,

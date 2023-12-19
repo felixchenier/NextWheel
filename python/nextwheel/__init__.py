@@ -585,6 +585,7 @@ class NextWheel:
         self,
         adc_sampling_rate: int,
         imu_sampling_rate: int,
+        encoder_sampling_rate: int,
         accelerometer_precision: int,
         gyrometer_precision: int,
     ) -> requests.Response:
@@ -598,6 +599,8 @@ class NextWheel:
             480, 960, 1000, 2000
         imu_sampling_rate
             Sampling rate for the IMU, in Hz. Valid values are 60, 120, 240.
+        encoder_sampling_rate
+            Sampling rate for the encoder, in Hz. Valid values are 60, 120, 240.
         accelerometer_precision
             Accelerometer range, in g. Value values are 2, 4, 8, 16.
         gyrometer_precision
@@ -616,6 +619,7 @@ class NextWheel:
             params={
                 "adc_sampling_rate": adc_sampling_rate,
                 "imu_sampling_rate": imu_sampling_rate,
+                "encoder_sampling_rate": encoder_sampling_rate,
                 "accelerometer_precision": accelerometer_precision,
                 "gyrometer_precision": gyrometer_precision,
             },
