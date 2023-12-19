@@ -17,6 +17,7 @@ public:
         uint32_t mag_range;
         uint32_t imu_sample_rate;
         uint32_t adc_sample_rate;
+        uint32_t encoder_sample_rate;
     } ConfigData;
 
 
@@ -54,6 +55,10 @@ public:
 
     uint32_t get_adc_sample_rate() const;
 
+    void set_encoder_sample_rate(unsigned int rate);
+
+    uint32_t get_encoder_sample_rate() const;
+
     void setDefault();
 
     // Singleton instance
@@ -70,6 +75,7 @@ private:
     static const std::vector<uint32_t> m_mag_ranges;
     static const std::vector<uint32_t> m_imu_sampling_rate_ranges;
     static const std::vector<uint32_t> m_adc_sampling_rate_ranges;
+    static const std::vector<uint32_t> m_encoder_sampling_rate_ranges;
 };
 
 #endif  // _GLOBAL_CONFIG_H_
