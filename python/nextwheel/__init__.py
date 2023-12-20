@@ -26,6 +26,7 @@ import numpy as np
 from enum import IntEnum
 import requests
 import os
+import json
 
 # Constants
 
@@ -396,7 +397,7 @@ class NextWheel:
                         mag_range,
                         imu_sampling_rate,
                         adc_sampling_rate,
-                        encoder_sampling_rate
+                        encoder_sampling_rate,
                     ) = struct.unpack_from("<6I", message[10:])
 
                     # Update configuration
@@ -420,14 +421,14 @@ class NextWheel:
     def __on_error(self, ws, error):
         """Reaction of the WebSocketApp when there is an error."""
         print(self.ws, error)
-        self.close()
+        self.stop_streaming()
 
     def __on_close(self, ws, close_status_code, close_msg):
         """Reaction of the WebSocketApp when the connection is close."""
         if self._debug:
             print("Closed: ", self.ws, close_status_code, close_msg)
 
-    def connect(
+    def start_streaming(
         self,
         max_imu_samples: int = 1000,
         max_analog_samples: int = 1000,
@@ -435,7 +436,7 @@ class NextWheel:
         max_power_samples: int = 10,
     ):
         """
-        Connect to the instrumented wheel via the WebSocketApp.
+        Start streaming.
 
         Parameters
         ----------
@@ -469,6 +470,24 @@ class NextWheel:
         t = threading.Thread(target=self.ws.run_forever)  # type: ignore
         t.start()
 
+    def stop_streaming(self):
+        """
+        Stop streaming via websocket.
+
+        Returns
+        -------
+        None.
+
+        """
+        self.ws.close()
+        try:
+            # If something has crashed somewhere, release the mutex for the
+            # next connection.
+            self._mutex.release()
+        except RuntimeError:
+            # No mutex was locked. That's fine.
+            pass
+
     def monitor(self) -> None:
         """
         Blocking function that monitors the sensors measurements.
@@ -480,7 +499,9 @@ class NextWheel:
         # Don't import until needed.
         import nextwheel.monitor as nwm  # noqa
 
+        self.start_streaming()
         nwm.monitor(self)
+        self.stop_streaming()
 
     def fetch(self) -> dict[str, dict[str, np.ndarray]]:
         """
@@ -543,24 +564,6 @@ class NextWheel:
         }
 
         return data
-
-    def close(self):
-        """
-        Close the connection with the instrumented wheel.
-
-        Returns
-        -------
-        None.
-
-        """
-        self.ws.close()
-        try:
-            # If something has crashed somewhere, release the mutex for the
-            # next connection.
-            self._mutex.release()
-        except RuntimeError:
-            # No mutex was locked. That's fine.
-            pass
 
     def set_time(self, unix_time: int) -> requests.Response:
         """
@@ -626,29 +629,31 @@ class NextWheel:
         )
         return response
 
-    def get_sensors_params(self) -> requests.Response:
+    def get_sensors_params(self) -> dict:
         """
         Get the parameters of the instrumented wheel sensors.
 
         Returns
         -------
-        requests.Response
+        dict
+            A dictionary in the form parameter:value.
 
         """
         response = requests.get(f"http://{self.IP}/config")
-        return response
+        return json.loads(response.content)
 
-    def get_system_state(self) -> requests.Response:
+    def get_system_state(self) -> dict:
         """
         Get the system state of the instrumented wheel.
 
         Returns
         -------
-        requests.Response
+        dict
+            A dictionary in the form parameter:value
 
         """
         response = requests.get(f"http://{self.IP}/system_state")
-        return response
+        return json.loads(response.content)
 
     def start_recording(self) -> requests.Response:
         """

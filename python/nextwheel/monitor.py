@@ -49,7 +49,7 @@ def _gui_app(conn, cwd: str):
         if conn.poll(1.0):  # Timeout after 1 second
             text = conn.recv()
             message.config(text=text)
-        root.after(100, update)
+        root.after(10, update)
 
     root.protocol("WM_DELETE_WINDOW", on_closing)
     root.after(100, update)
@@ -81,7 +81,7 @@ def monitor(nw):
         # Get current state
         i_refresh_state += 1
         if i_refresh_state > 10:
-            current_state = json.loads(nw.get_system_state().content.decode())
+            current_state = nw.get_system_state()
             i_refresh_state = 0
 
         if current_state is not None:
