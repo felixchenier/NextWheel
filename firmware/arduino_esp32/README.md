@@ -97,10 +97,13 @@ class GlobalConfig:
         self.accel_range = 16
         self.gyro_range = 2000
         self.mag_range = 2500
-        self.imu_rate = 1000
+        self.imu_rate = 240
 
         # ADC CONFIG
         self.adc_rate = 1000
+
+        # ENCODER CONFIG
+        self.encoder_rate = 240
 
         # ACCORDING TO ADS8688 DATASHEET
         self._adc_v_ref = 4.096
@@ -121,12 +124,13 @@ class GlobalConfig:
         self._gyro_sensitivity_2000dps = 0.0609756
         self._mag_ut_lsb = 0.3
 
-    def update_config(self, accel_range: int, gyro_range: int, mag_range: int,  imu_rate: int, adc_rate: int):
+    def update_config(self, accel_range: int, gyro_range: int, mag_range: int,  imu_rate: int, adc_rate: int, encoder_rate: int):
         self.accel_range = accel_range
         self.gyro_range = gyro_range
         self.mag_range = mag_range
         self.imu_rate = imu_rate
         self.adc_rate = adc_rate
+        self.encoder_rate = encoder_rate
 
     def convert_adc_values(self, values: Tuple[int]) -> Tuple[float]:
         return tuple(self.convert_adc_value(value) for value in values)
@@ -191,8 +195,8 @@ Values are already converted on device. Size optimization of the binary stream w
 |**Url**   | **HTTP Method** |  **Param(s)**   | **Return** | **Description**   |
 |-----|-----------|----|-----------|---|
 /config_set_time | POST | *time* (int) = unix timestamp | 200 (OK) |Set system time from unix timestamp
-/config_update | POST | accelerometer_precision (int)[], gyrometer_precision (int) [], imu_sampling_rate(int) [], adc_sampling_rate (int)[]| 200 (OK), 400 (Unknown parameter)| Set the sensor configuration
-/config | GET | None | 200, JSON={"accelerometer_precision": value, "gyrometer_precision": value, "imu_sampling_rate": value, "adc_sampling_rate": value} | Get the current sensor configuration.
+/config_update | POST | accelerometer_precision (int)[], gyrometer_precision (int) [], imu_sampling_rate(int) [], adc_sampling_rate (int)[], encoder_sampling_rate (int)[]| 200 (OK), 400 (Unknown parameter)| Set the sensor configuration
+/config | GET | None | 200, JSON={"accelerometer_precision": value, "gyrometer_precision": value, "imu_sampling_rate": value, "adc_sampling_rate": value, "encoder_sampling_rate": value} | Get the current sensor configuration.
 /system_state | GET | None | 200, JSON = {"recording": (bool) recording_flag, "streaming": (bool) streaming_flag, "filename": (string) recording_filename } | Return the current state of the system.
 /start_recording | GET | None | 200, "OK", 400, "Already recording." | Start recording on SDCard. File name will be automatically generated with current time.
 /stop_recording | GET | None | 200, "0K", 400, "Not recording." | Stop recording to SD Card.
