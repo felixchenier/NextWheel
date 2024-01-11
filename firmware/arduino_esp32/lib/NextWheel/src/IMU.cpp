@@ -104,9 +104,16 @@ void IMU::update(IMUDataFrame& frame)
 
     /* Get a new sensor event */
     m_dpeng_bmx160.getEvent(&aevent, &gevent, &mevent);
-    frame.setAccel(aevent.acceleration.x, aevent.acceleration.y, aevent.acceleration.z);
-    frame.setGyro(gevent.gyro.x, gevent.gyro.y, gevent.gyro.z);
-    frame.setMag(mevent.magnetic.x, mevent.magnetic.y, mevent.magnetic.z);
+
+    // Raw data is stored in the m_dpeng_bmx160 object
+    frame.setAccel(m_dpeng_bmx160.accel_raw.x, m_dpeng_bmx160.accel_raw.y, m_dpeng_bmx160.accel_raw.z);
+    frame.setGyro(m_dpeng_bmx160.gyro_raw.x, m_dpeng_bmx160.gyro_raw.y, m_dpeng_bmx160.gyro_raw.z);
+    frame.setMag(m_dpeng_bmx160.mag_raw.x, m_dpeng_bmx160.mag_raw.y, m_dpeng_bmx160.mag_raw.z);
+
+    // Converted data is stored in the aevent, gevent, and mevent objects
+    // frame.setAccel(aevent.acceleration.x, aevent.acceleration.y, aevent.acceleration.z);
+    // frame.setGyro(gevent.gyro.x, gevent.gyro.y, gevent.gyro.z);
+    // frame.setMag(mevent.magnetic.x, mevent.magnetic.y, mevent.magnetic.z);
 
     // Update timestamp to now
     frame.setTimestamp(DataFrame::getCurrentTimeStamp());

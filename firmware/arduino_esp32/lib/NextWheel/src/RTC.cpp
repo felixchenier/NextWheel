@@ -15,7 +15,7 @@ void RTC::begin()
     tzset();
 
     DateTime now = m_mcp7940.now();  // get the current time from RTC
-    struct timeval my_time = { (time_t) now.unixtime(), 0 };
+    struct timeval my_time = {(time_t)now.unixtime(), 0};
     settimeofday(&my_time, NULL);
 }
 
@@ -38,9 +38,27 @@ void RTC::update()
     Serial.print(inputBuffer);  // Display the current date/time
 }
 
+void RTC::printTime()
+{
+    char inputBuffer[SPRINTF_BUFFER_SIZE];  // Buffer for sprintf()/sscanf()
+    DateTime now = m_mcp7940.now();  // get the current time
+
+    sprintf(
+        inputBuffer,
+        "%04d-%02d-%02d %02d:%02d:%02d",
+        now.year(),  // Use sprintf() to pretty print
+        now.month(),
+        now.day(),
+        now.hour(),
+        now.minute(),
+        now.second());  // date/time with leading zeros
+    Serial.printf("Current time: %s \n", inputBuffer);  // Display the current date/time
+}
+
 bool RTC::setTime(String time)
 {
-    Serial.print("RTC::setTime : "); Serial.println(time);
+    Serial.print("RTC::setTime : ");
+    Serial.println(time);
     uint32_t unix_time = strtoul(time.c_str(), NULL, 10);
     Serial.println(unix_time);
     m_mcp7940.adjust(DateTime(unix_time));

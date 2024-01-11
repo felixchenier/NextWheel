@@ -13,7 +13,7 @@ const std::vector<uint32_t> GlobalConfig::m_mag_ranges = {IMU::IMU_MAG_RANGE_250
 
 const std::vector<uint32_t> GlobalConfig::m_imu_sampling_rate_ranges = {60, 120, 240};
 const std::vector<uint32_t> GlobalConfig::m_adc_sampling_rate_ranges = {120, 240, 480, 960, 1000, 2000};
-
+const std::vector<uint32_t> GlobalConfig::m_encoder_sampling_rate_ranges = {60, 120, 240};
 
 void GlobalConfig::begin()
 {
@@ -44,6 +44,8 @@ void GlobalConfig::print()
     Serial.println(m_config.imu_sample_rate);
     Serial.print("adc_sample_rate: ");
     Serial.println(m_config.adc_sample_rate);
+    Serial.print("encoder_sample_rate: ");
+    Serial.println(m_config.encoder_sample_rate);
 }
 
 void GlobalConfig::save()
@@ -119,6 +121,17 @@ uint32_t GlobalConfig::get_adc_sample_rate() const
     return m_config.adc_sample_rate;
 }
 
+void GlobalConfig::set_encoder_sample_rate(unsigned int rate)
+{
+    m_config.encoder_sample_rate = rate;
+    save();
+}
+
+uint32_t GlobalConfig::get_encoder_sample_rate() const
+{
+    return m_config.encoder_sample_rate;
+}
+
 void GlobalConfig::setDefault()
 {
     Serial.println("GlobalConfig : Setting default config");
@@ -127,6 +140,7 @@ void GlobalConfig::setDefault()
     m_config.mag_range = m_mag_ranges[0];
     m_config.imu_sample_rate = m_imu_sampling_rate_ranges[0];
     m_config.adc_sample_rate = m_adc_sampling_rate_ranges[0];
+    m_config.encoder_sample_rate = m_encoder_sampling_rate_ranges[0];
     save();
 }
 
@@ -163,6 +177,12 @@ bool GlobalConfig::validate()
 
     if (std::find(m_adc_sampling_rate_ranges.begin(), m_adc_sampling_rate_ranges.end(), m_config.adc_sample_rate) ==
         m_adc_sampling_rate_ranges.end())
+    {
+        return false;
+    }
+
+    if (std::find(m_encoder_sampling_rate_ranges.begin(), m_encoder_sampling_rate_ranges.end(),
+                  m_config.encoder_sample_rate) == m_encoder_sampling_rate_ranges.end())
     {
         return false;
     }

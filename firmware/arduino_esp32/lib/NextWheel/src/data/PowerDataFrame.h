@@ -5,7 +5,7 @@
 
 /**
  * @brief Data frame for power data, units are in Volt, Ampere and Watt.
-*/
+ */
 class PowerDataFrame : public DataFrame
 {
 public:

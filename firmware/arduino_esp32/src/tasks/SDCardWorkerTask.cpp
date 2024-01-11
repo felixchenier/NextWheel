@@ -10,7 +10,7 @@ SDCardWorkerTask::SDCardWorkerTask()
       m_file(nullptr),
       m_bytesWritten(0)
 {
-    m_commandQueue = xQueueCreate(100, sizeof(SDCardWorkerTaskCommand));
+    m_commandQueue = xQueueCreate(10, sizeof(SDCardWorkerTaskCommand));
 }
 
 bool SDCardWorkerTask::sendCommandEvent(SDCardWorkerTaskCommand command, bool from_isr)
@@ -47,32 +47,59 @@ void SDCardWorkerTask::run(void* app)
 
     TickType_t lastGeneration = xTaskGetTickCount();
 
+    // Init SD CARD
+    m_sdCard.begin();
+
     while (1)
     {
-        // 50 ms task
-        vTaskDelayUntil(&lastGeneration, 50 / portTICK_RATE_MS);
+        // First empty the command queue (timeout=0, not waiting)
+        // Loop while we have BASE_TASK_COMMAND_NONE --> 0
+        while (Task::BaseTaskCommand command = dequeueBaseCommand(0))
+        {
+            switch (command)
+            {
+                case Task::BASE_TASK_COMMAND_NONE:
+                    Serial.println("SDCardWorkerTask::run: BASE_TASK_COMMAND_NONE");
+                    break;
+                case Task::BASE_TASK_CONFIG_UPDATED:
+                    Serial.println("SDCardWorkerTask::run: BASE_TASK_CONFIG_UPDATED");
 
-        int count = 0;
+                    // If file is not null means we are recording. We should update the configuration info from now.
+                    if (m_file)
+                    {
+                        ConfigDataFrame configDataFrame(GlobalConfig::instance().get());
+                        m_bytesWritten += m_sdCard.writeToLogFile(m_file, configDataFrame);
+
+                        // Empty the queue (with old config!)
+                        while (DataFramePtr dataPtr = dequeue(0))
+                        {
+                            delete dataPtr;
+                        }
+                    }
+                    break;
+
+                default:
+                    Serial.print("SDCardWorkerTask::run: Unknown command: ");
+                    Serial.println(command);
+                    break;
+            }
+        }
+
         // Dequeue all data values (one shot), no timeout
         while (DataFramePtr dataPtr = dequeue(0))
         {
-            // Writing to log file if it is open
             if (m_file)
             {
                 m_bytesWritten += m_sdCard.writeToLogFile(m_file, *dataPtr);
             }
 
-            count++;
-
-            // Mandatory to delete, otherwise the memory will be leaked
+            // Make sure we delete the data object
             delete dataPtr;
         }
-
-        // Serial.print("SDCardWorkerTask::run() dequeued ");Serial.print(count);Serial.println(" frames");
-
         // Make sure write is complete
         if (m_file)
         {
+            // Make sure we flush the file to SDCard
             m_file.flush();
         }
 
@@ -85,14 +112,11 @@ void SDCardWorkerTask::run(void* app)
                     Serial.println("SDCardWorkerTask::run: SDCARD_WORKER_TASK_COMMAND_NONE");
                     break;
                 case SDCARD_WORKER_TASK_COMMAND_START_RECORDING:
+                    Serial.println("SDCardWorkerTask::run: SDCARD_WORKER_TASK_COMMAND_START_RECORDING");
 
                     // Already recording
                     if (isRecording())
                         continue;
-
-
-                    Serial.println("SDCardWorkerTask::run: SDCARD_WORKER_TASK_COMMAND_START_RECORDING");
-                    m_sdCard.begin();
 
                     // Make sure we close the file if we were already recording
                     resetLog();
@@ -115,18 +139,20 @@ void SDCardWorkerTask::run(void* app)
 
                         // Write config (first data object in the file)
                         ConfigDataFrame configDataFrame(GlobalConfig::instance().get());
-                        m_sdCard.writeToLogFile(m_file, configDataFrame);
+                        m_bytesWritten += m_sdCard.writeToLogFile(m_file, configDataFrame);
 
                         // Allowing messages only if file opened successfully
                         NextWheelApp::instance()->registerSensorTasksToSDCardWorker();
                     }
                     break;
                 case SDCARD_WORKER_TASK_COMMAND_STOP_RECORDING:
+
+                    Serial.println("SDCardWorkerTask::run: SDCARD_WORKER_TASK_COMMAND_STOP_RECORDING");
                     if (!isRecording())
                         continue;
 
                     NextWheelApp::instance()->unregisterSensorTasksFromSDCardWorker();
-                    Serial.println("SDCardWorkerTask::run: SDCARD_WORKER_TASK_COMMAND_STOP_RECORDING");
+
                     if (m_file)
                     {
                         SystemState::instance().getState().recording = false;
@@ -144,7 +170,12 @@ void SDCardWorkerTask::run(void* app)
                     break;
             }
         }  // end while (SDCardWorkerTaskCommand command = dequeueCommand(0))
-    }
+
+
+        // 50 ms task
+        vTaskDelayUntil(&lastGeneration, 50 / portTICK_RATE_MS);
+
+    }  // while(1)
 }
 
 SDCardWorkerTask::SDCardWorkerTaskCommand SDCardWorkerTask::dequeueCommand(unsigned long timeout)

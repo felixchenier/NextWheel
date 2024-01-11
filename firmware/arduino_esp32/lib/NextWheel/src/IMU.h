@@ -10,22 +10,24 @@
 class IMU
 {
 public:
-
-    typedef enum {
+    typedef enum
+    {
         IMU_ACC_RANGE_2G = 2,
         IMU_ACC_RANGE_4G = 4,
         IMU_ACC_RANGE_8G = 8,
         IMU_ACC_RANGE_16G = 16,
     } IMU_ACCEL_RANGE;
 
-    typedef enum {
+    typedef enum
+    {
         IMU_GYR_RANGE_250DPS = 250,
         IMU_GYR_RANGE_500DPS = 500,
         IMU_GYR_RANGE_1000DPS = 1000,
         IMU_GYR_RANGE_2000DPS = 2000,
     } IMU_GYRO_RANGE;
 
-    typedef enum {
+    typedef enum
+    {
         IMU_MAG_RANGE_2500uGAUSS = 2500,
     } IMU_MAG_RANGE;
 
@@ -36,7 +38,7 @@ public:
     void displaySensorDetails();
 
 private:
-    void displaySensorDetails(const sensor_t &sensor);
+    void displaySensorDetails(const sensor_t& sensor);
     DPEng::bmx160AccelRange_t convert_acc_range(IMU_ACCEL_RANGE acc_range);
     DPEng::bmx160GyroRange_t convert_gyr_range(IMU_GYRO_RANGE gyr_range);
     unsigned char m_i2c_address;

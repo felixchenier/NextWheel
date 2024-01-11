@@ -21,6 +21,10 @@ public:
     void begin();
 
     void setup_buttons_interrupt();
+
+    bool button1Pressed();
+
+    bool button2Pressed();
 };
 
 #endif  // _BUTTONS_H_

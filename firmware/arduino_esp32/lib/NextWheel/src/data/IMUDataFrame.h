@@ -7,7 +7,7 @@ class IMUDataFrame : public DataFrame
 {
 public:
     const static size_t IMU_AXIS_COUNT = 9;
-    const static size_t IMU_DATA_FRAME_SIZE = IMU_AXIS_COUNT * sizeof(float);
+    const static size_t IMU_DATA_FRAME_SIZE = IMU_AXIS_COUNT * sizeof(int16_t);
 
     IMUDataFrame(uint64_t timestamp = DataFrame::getCurrentTimeStamp());
 
@@ -17,22 +17,22 @@ public:
 
     virtual DataFrame* clone() const override;
 
-    void setAccel(float x, float y, float z);
+    void setAccel(int16_t x, int16_t y, int16_t z);
 
-    void setGyro(float x, float y, float z);
+    void setGyro(int16_t x, int16_t y, int16_t z);
 
-    void setMag(float x, float y, float z);
+    void setMag(int16_t x, int16_t y, int16_t z);
 
 private:
     // Pre allocated memory for IMU data
     union
     {
-        float m_data[IMU_AXIS_COUNT];
+        int16_t m_data[IMU_AXIS_COUNT];
         struct
         {
-            float m_accel[3];
-            float m_gyro[3];
-            float m_mag[3];
+            int16_t m_accel[3];
+            int16_t m_gyro[3];
+            int16_t m_mag[3];
         };
     };
 };

@@ -21,7 +21,7 @@
 #define PIN_SPI_MISO 19
 #define PIN_SPI_CLK  18
 #define PIN_SPI_CS1  5
-#define PIN_SPI_CS2  25  // WARNING - patch on prototype PCB
+#define PIN_SPI_CS2  25  // WARNING - patch on prototype PCB v1
 
 // SD Card 4 bits not on all default pins, SDMMC (SLOT1)
 // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/sdmmc_host.html
@@ -40,8 +40,8 @@
 
 
 // BUTTONS
-#define PIN_BUTTON_1 36
-#define PIN_BUTTON_2 39
+#define PIN_BUTTON_1 36  // VP, START
+#define PIN_BUTTON_2 39  // VN, STOP
 
 // LEDS
 #define PIN_LED_1 17
@@ -49,15 +49,12 @@
 
 // ENCODERS
 #define PIN_QUAD_ENCODER_A 35
-#define PIN_QUAD_ENCODER_B 0
+#define PIN_QUAD_ENCODER_B 34  // WARNING - patch on prototype PCB v2, was on 0 initially
 
 // I2S
 #define PIN_I2S_SDATA    33
 #define PIN_I2S_SCLK     26
 #define PIN_I2S_LRCLK_WS 27
-
-// EMERGENCY STOP / LOW POWER
-#define PIN_EMERGENCY_STOP_LOW_POWER_N 34
 
 // ENABLE SENSORS POWER
 #define PIN_ENABLE_SENSOR_POWER 32
@@ -72,7 +69,7 @@
 #define TASK_PRIORITY_HIGHEST 5
 
 #define TASK_PRIORITY_DEFAULT   TASK_PRIORITY_MEDIUM
-#define TASK_STACK_SIZE_DEFAULT 2048
+#define TASK_STACK_SIZE_DEFAULT 2000
 
 
 #endif
