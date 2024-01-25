@@ -565,7 +565,7 @@ class NextWheel:
 
         return data
 
-    def set_time(self, unix_time: int) -> requests.Response:
+    def set_time(self, unix_time: int) -> dict:
         """
         Set the time of the instrumented wheel.
 
@@ -582,7 +582,7 @@ class NextWheel:
         response = requests.post(
             f"http://{self.IP}/config_set_time", params={"time": unix_time}
         )
-        return response
+        return json.loads(response.content)
 
     def set_sensors_params(
         self,
@@ -655,41 +655,41 @@ class NextWheel:
         response = requests.get(f"http://{self.IP}/system_state")
         return json.loads(response.content)
 
-    def start_recording(self) -> requests.Response:
+    def start_recording(self) -> dict:
         """
         Start recording data on the instrumented wheel.
 
         Returns
         -------
-        requests.Response
+        dict
 
         """
         response = requests.get(f"http://{self.IP}/start_recording")
-        return response
+        return json.loads(response.content)
 
-    def stop_recording(self) -> requests.Response:
+    def stop_recording(self) -> dict:
         """
         Stop recording data on the instrumented wheel.
 
         Returns
         -------
-        requests.Response
+        dict
 
         """
         response = requests.get(f"http://{self.IP}/stop_recording")
-        return response
+        return json.loads(response.content)
 
-    def file_list(self) -> requests.Response:
+    def file_list(self) -> dict:
         """
         Get the list of files on the instrumented wheel.
 
         Returns
         -------
-        requests.Response
+        dict
 
         """
         response = requests.get(f"http://{self.IP}/file_list")
-        return response
+        return json.loads(response.content)
 
     def file_download(self, filename: str, save_path: str = ".") -> int:
         """
@@ -722,7 +722,7 @@ class NextWheel:
         # filed download
         return 0
 
-    def file_delete(self, filename: str) -> requests.Response:
+    def file_delete(self, filename: str) -> dict:
         """
         Delete a file from the instrumented wheel.
 
@@ -733,10 +733,10 @@ class NextWheel:
 
         Returns
         -------
-        requests.Response
+        dict
 
         """
         response = requests.get(
             f"http://{self.IP}/file_delete", params={"file": filename}
         )
-        return response
+        return json.loads(response.content)
