@@ -582,16 +582,25 @@ class NextWheel:
             encoder_values = np.array(self._encoder_values) % 4000
             self._mutex.release()
 
-            for i in range(6):
-                adc_lines[i].set_data(range(self.max_analog_samples), adc_values[:, i+1])
+            try:
+                for i in range(6):
+                    adc_lines[i].set_data(range(self.max_analog_samples), adc_values[:, i+1])
+            except ValueError:
+                pass
             
-            for i in range(3):
-                accel_lines[i].set_data(range(self.max_imu_samples), imu_values[:, i+1])
+            try:
+                for i in range(3):
+                    accel_lines[i].set_data(range(self.max_imu_samples), imu_values[:, i+1])
+    
+                for i in range(3):
+                    gyro_lines[i].set_data(range(self.max_imu_samples), imu_values[:, i+4])
+            except ValueError:
+                pass
 
-            for i in range(3):
-                gyro_lines[i].set_data(range(self.max_imu_samples), imu_values[:, i+4])
-
-            encoder_line.set_data(range(self.max_encoder_samples), encoder_values[:, 1])
+            try:
+                encoder_line.set_data(range(self.max_encoder_samples), encoder_values[:, 1])
+            except ValueError:
+                pass
         
         anim = animation.FuncAnimation(
             fig,
