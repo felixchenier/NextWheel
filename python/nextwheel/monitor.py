@@ -81,7 +81,7 @@ def monitor(nw):
         # Get current state
         i_refresh_state += 1
         if i_refresh_state > 10:
-            current_state = nw.get_system_state()
+            # current_state = nw.get_system_state()
             i_refresh_state = 0
 
         if current_state is not None:

@@ -1,21 +1,17 @@
 #include "DACActuatorTask.h"
 
 
-// 2 fast beeps, [f Hz, duration ms, f Hz, duration ms, ...]
+// [f Hz, duration ms, f Hz, duration ms, ...]
 const uint32_t DACActuatorTask::START_RECORDING_SOUND[SOUND_QUEUE_MESSAGE_SIZE] =
-    {1500, 250, 0, 250, 1500, 250, 0, 250, 0, 0, 0, 0, 0, 0, 0, 0};
-// 2 slower beeps  [f Hz, duration ms, f Hz, duration ms, ...]
+    {750, 150, 1000, 150, 1500, 150, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 const uint32_t DACActuatorTask::STOP_RECORDING_SOUND[SOUND_QUEUE_MESSAGE_SIZE] =
-    {1000, 1000, 0, 1000, 1000, 1000, 0, 1000, 0, 0, 0, 0, 0, 0, 0, 0};
+    {1500, 150, 1000, 150, 750, 150, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-// 2 beeps,  [f Hz, duration ms, f Hz, duration ms, ...]
 const uint32_t DACActuatorTask::START_STREAMING_SOUND[SOUND_QUEUE_MESSAGE_SIZE] =
-    {1500, 250, 0, 250, 1500, 250, 0, 250, 0, 0, 0, 0, 0, 0, 0, 0};
-// 2 slower beeps,  [f Hz, duration ms, f Hz, duration ms, ...]
+    {1000, 150, 1500, 150, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 const uint32_t DACActuatorTask::STOP_STREAMING_SOUND[SOUND_QUEUE_MESSAGE_SIZE] =
-    {1000, 1000, 0, 1000, 1000, 1000, 0, 1000, 0, 0, 0, 0, 0, 0, 0, 0};
+    {1500, 150, 1000, 150, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-// 4 faster beeps,  [f Hz, duration ms, f Hz, duration ms, ...]
 const uint32_t DACActuatorTask::LOW_BATTERY_SOUND[16] =
     {1000, 100, 0, 100, 1000, 100, 0, 100, 1000, 100, 0, 100, 1000, 100, 0, 100};
 
