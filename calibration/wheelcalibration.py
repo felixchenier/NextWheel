@@ -22,8 +22,8 @@ def normalize_vector(ob: np.ndarray) -> np.ndarray:
     normalized_vector : np.ndarray
 
     """
-    normalized_vector = ob / np.tile(
-        np.transpose(np.linalg.norm(ob, axis=1)), (1, 3)
+    normalized_vector = ob / np.transpose(
+        np.tile(np.linalg.norm(ob, axis=1), (3, 1))
     )
     return normalized_vector
 
@@ -45,6 +45,7 @@ def estimate_gyro_bias(omega_static: np.ndarray) -> np.ndarray:
 
     """
     bias = np.median(omega_static, axis=0)
+
     return bias
 
 
@@ -111,10 +112,10 @@ def estimate_acc_bias(  # À modifier pour avoir plus de tâches
     for j in range(m):
         for k in range(j + 1, m):
             delta_grav_matrix[i, :] = acc_statics[j, :] - acc_statics[k, :]
-            delta_norm_square[i, 1] = (norms[j] ** 2 - norms[k] ** 2) / 2
+            delta_norm_square[i, 0] = (norms[j] ** 2 - norms[k] ** 2) / 2
             i += 1
 
-    bias = np.linalg.solve(delta_grav_matrix, delta_norm_square)
+    bias = np.linalg.lstsq(delta_grav_matrix, delta_norm_square)[0]
 
     return bias
 
@@ -148,9 +149,17 @@ def get_z_axis_delsys_on_wheel(
 
     """
     omega_dynamic -= np.tile(gyro_bias, (np.shape(omega_dynamic)[0], 1))
-    z_axis = normalize_vector(
-        np.median(normalize_vector(omega_dynamic), axis=0)
+
+    z_axis = omega_dynamic / np.transpose(
+        np.tile(np.linalg.norm(omega_dynamic, axis=1), (3, 1))
     )
+
+    z_axis = np.median(
+        z_axis,
+        axis=0,
+    )
+    z_axis = z_axis / np.linalg.norm(z_axis)
+
     return z_axis
 
 
@@ -165,8 +174,7 @@ def get_delsys_reference(
     of the gravity with the wheel at different angle. If you subtract one from
     another, we get rid of the bias and the new vector is in the xz-plane. From
     there, we can apply a cross product to find the y and than x or use the
-    Gram–Schmidt process to find x first. The last one is used in this
-    function.
+    Gram–Schmidt process to find x first.
 
     Parameters
     ----------
@@ -186,24 +194,24 @@ def get_delsys_reference(
     grav1 = np.median(acc_static1, axis=0)
     grav2 = np.median(acc_static2, axis=0)
 
-    if np.dot(grav1, z_axis) < 0:
-        z_axis = -z_axis
+    # if np.dot(grav1, z_axis) < 0:
+    #     z_axis = -z_axis
 
-    if np.dot(grav1, z_axis) > np.dot(grav2, z_axis):
+    if np.abs(np.dot(grav1, z_axis)) > np.abs(np.dot(grav2, z_axis)):
         delta_grav = grav2 - grav1
     else:
         delta_grav = grav1 - grav2
 
-    x_axis = normalize_vector(
-        delta_grav - (np.dots(delta_grav, z_axis) * z_axis)
-    )
+    # x_axis = delta_grav - (np.dot(delta_grav, z_axis) * z_axis)
+    # x_axis = x_axis / np.linalg.norm(x_axis)
 
-    y_axis = normalize_vector(np.cross(z_axis, x_axis))
+    y_axis = np.cross(z_axis, delta_grav + z_axis)
+    y_axis = y_axis / np.linalg.norm(y_axis)
 
-    wheel_ref_delsys = np.hstack((x_axis, y_axis, z_axis, np.array([0, 0, 0])))
-    wheel_ref_delsys = np.vstack(
-        (wheel_ref_delsys, np.array([[0], [0], [0], [1]]))
-    )
+    x_axis = np.cross(y_axis, z_axis)
+    x_axis = x_axis / np.linalg.norm(x_axis)
+
+    wheel_ref_delsys = np.vstack((x_axis, y_axis, z_axis))
 
     return wheel_ref_delsys
 
@@ -231,7 +239,7 @@ def calculate_calibration_matrix(FM: np.ndarray, V: np.ndarray) -> np.ndarray:
     Parameters
     ----------
     FM : np.ndarray
-        Forces and moments matrix of all trials. The line three first line
+        Forces and moments matrix of all trials. The three first lines
         must be the force in x, y, z and the last three values are the moments.
     V : np.ndarray
         Voltages measured with the EMG installed in the instrumented wheel for
