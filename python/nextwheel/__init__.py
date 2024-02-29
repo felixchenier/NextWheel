@@ -221,12 +221,14 @@ class NextWheel:
         # Communication stuff
         self.ws = None
         self._mutex = threading.Lock()
+        self._thread_is_running = False
 
         # Data buffers. In these arrays, column 0 is the time
         self._adc_values = []  # type: list[np.ndarray]
         self._imu_values = []  # type: list[np.ndarray]
         self._power_values = []  # type: list[np.ndarray]
         self._encoder_values = []  # type: list[np.ndarray]
+        
 
     def __extract_values(self, frame_type: int, message: bytes, time: float):
         """
@@ -454,6 +456,9 @@ class NextWheel:
         None.
 
         """
+        if self._thread_is_running:
+            return
+        
         self.max_imu_samples = max_imu_samples
         self.max_analog_samples = max_analog_samples
         self.max_encoder_samples = max_encoder_samples
@@ -469,6 +474,7 @@ class NextWheel:
 
         t = threading.Thread(target=self.ws.run_forever)  # type: ignore
         t.start()
+        self._thread_is_running = True
 
     def stop_streaming(self):
         """
@@ -480,6 +486,7 @@ class NextWheel:
 
         """
         self.ws.close()
+        self._thread_is_running = False
         try:
             # If something has crashed somewhere, release the mutex for the
             # next connection.
@@ -502,6 +509,103 @@ class NextWheel:
         self.start_streaming()
         nwm.monitor(self)
         self.stop_streaming()
+        
+    def graphical_monitor(self) -> None:
+        """
+        Blocking function that monitors using Matplotlib.
+        
+        Under development.
+
+        """
+        import matplotlib as mpl  # noqa
+        import matplotlib.pyplot as plt  # noqa
+        from matplotlib import animation  # noqa
+        
+        is_running = [True]
+        def on_close(_):
+            is_running[0] = False
+        
+        self.start_streaming()
+
+        # Matplotlib defaults        
+        mpl.rcParams["axes.prop_cycle"] = mpl.cycler(
+            color=["r", "g", "b", "c", "m", "y", "k", "tab:orange"]
+        )
+        mpl.rcParams["figure.figsize"] = [10, 5]
+        mpl.rcParams["figure.dpi"] = 75
+        mpl.rcParams["lines.linewidth"] = 1
+        
+        # Create figure and plots
+        fig = plt.figure(figsize=(12, 8))    
+        fig.canvas.mpl_connect('close_event', on_close)
+        
+        adc_plot = plt.subplot(4, 1, 1)
+        adc_plot.set_title("ADC")
+        adc_lines = []
+        for i in range(6):
+            adc_lines.append(adc_plot.plot([])[0])
+        adc_plot.set_xlim(0, self.max_analog_samples)
+        adc_plot.set_ylim(0, 65536)
+        adc_plot.set_ylabel("Sampled value")
+
+        accel_plot = plt.subplot(4, 1, 2)
+        accel_plot.set_title("Accelerometers")
+        accel_lines = []
+        for i in range(3):
+            accel_lines.append(accel_plot.plot([])[0])
+        accel_plot.set_xlim(0, self.max_imu_samples)
+        accel_plot.set_ylim(-20, 20)
+        accel_plot.set_ylabel("m/s2")
+            
+        gyro_plot = plt.subplot(4, 1, 3)
+        gyro_plot.set_title("Gyrometers")
+        gyro_lines = []
+        for i in range(3):
+            gyro_lines.append(gyro_plot.plot([])[0])
+        gyro_plot.set_xlim(0, self.max_imu_samples)
+        gyro_plot.set_ylim(-1000, 1000)
+        gyro_plot.set_ylabel("Unit to be defined")
+
+        encoder_plot = plt.subplot(4, 1, 4)
+        encoder_plot.set_title("Encoder")
+        encoder_line = encoder_plot.plot([])[0]
+        encoder_plot.set_xlim(0, self.max_encoder_samples)
+        encoder_plot.set_ylim(0, 4000)
+        encoder_plot.set_ylabel("Unit to be defined")
+
+        plt.tight_layout()
+        
+        def on_timer(_):
+            self._mutex.acquire()            
+            adc_values = np.array(self._adc_values)
+            imu_values = np.array(self._imu_values)
+            encoder_values = np.array(self._encoder_values) % 4000
+            self._mutex.release()
+
+            for i in range(6):
+                adc_lines[i].set_data(range(self.max_analog_samples), adc_values[:, i+1])
+            
+            for i in range(3):
+                accel_lines[i].set_data(range(self.max_imu_samples), imu_values[:, i+1])
+
+            for i in range(3):
+                gyro_lines[i].set_data(range(self.max_imu_samples), imu_values[:, i+4])
+
+            encoder_line.set_data(range(self.max_encoder_samples), encoder_values[:, 1])
+        
+        anim = animation.FuncAnimation(
+            fig,
+            on_timer,  # type: ignore
+            interval=33,
+            cache_frame_data=False,
+        )  # 30 ips
+        
+        while is_running[0]:
+            plt.pause(0.5)
+
+
+        self.stop_streaming()
+        
 
     def fetch(self) -> dict[str, dict[str, np.ndarray]]:
         """
@@ -565,7 +669,7 @@ class NextWheel:
 
         return data
 
-    def set_time(self, unix_time: int) -> requests.Response:
+    def set_time(self, unix_time: int) -> dict:
         """
         Set the time of the instrumented wheel.
 
@@ -582,7 +686,7 @@ class NextWheel:
         response = requests.post(
             f"http://{self.IP}/config_set_time", params={"time": unix_time}
         )
-        return response
+        return json.loads(response.content)
 
     def set_sensors_params(
         self,
@@ -655,41 +759,41 @@ class NextWheel:
         response = requests.get(f"http://{self.IP}/system_state")
         return json.loads(response.content)
 
-    def start_recording(self) -> requests.Response:
+    def start_recording(self) -> dict:
         """
         Start recording data on the instrumented wheel.
 
         Returns
         -------
-        requests.Response
+        dict
 
         """
         response = requests.get(f"http://{self.IP}/start_recording")
-        return response
+        return json.loads(response.content)
 
-    def stop_recording(self) -> requests.Response:
+    def stop_recording(self) -> dict:
         """
         Stop recording data on the instrumented wheel.
 
         Returns
         -------
-        requests.Response
+        dict
 
         """
         response = requests.get(f"http://{self.IP}/stop_recording")
-        return response
+        return json.loads(response.content)
 
-    def file_list(self) -> requests.Response:
+    def file_list(self) -> dict:
         """
         Get the list of files on the instrumented wheel.
 
         Returns
         -------
-        requests.Response
+        dict
 
         """
         response = requests.get(f"http://{self.IP}/file_list")
-        return response
+        return json.loads(response.content)
 
     def file_download(self, filename: str, save_path: str = ".") -> int:
         """
@@ -722,7 +826,7 @@ class NextWheel:
         # filed download
         return 0
 
-    def file_delete(self, filename: str) -> requests.Response:
+    def file_delete(self, filename: str) -> dict:
         """
         Delete a file from the instrumented wheel.
 
@@ -733,10 +837,10 @@ class NextWheel:
 
         Returns
         -------
-        requests.Response
+        dict
 
         """
         response = requests.get(
             f"http://{self.IP}/file_delete", params={"file": filename}
         )
-        return response
+        return json.loads(response.content)

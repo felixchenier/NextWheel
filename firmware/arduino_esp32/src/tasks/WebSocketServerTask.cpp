@@ -142,6 +142,7 @@ void WebSocketServerTask::webSocketEvent(uint8_t num, WStype_t type, uint8_t* pa
     {
         case WStype_DISCONNECTED:
             Serial.printf("[%u] Disconnected!\n", num);
+            SystemState::instance().getState().streaming = false;
             NextWheelApp::instance()->playStopStreamingSound();
             NextWheelApp::instance()->unregisterSensorTasksFromWebSocketServer();
             break;
@@ -149,6 +150,7 @@ void WebSocketServerTask::webSocketEvent(uint8_t num, WStype_t type, uint8_t* pa
         {
             IPAddress ip = m_webSocketServer.remoteIP(num);
             Serial.printf("[%u] Connected from %d.%d.%d.%d url: %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
+            SystemState::instance().getState().streaming = true;
             NextWheelApp::instance()->playStartStreamingSound();
 
             // Send the current configuration
