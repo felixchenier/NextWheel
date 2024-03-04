@@ -5,27 +5,7 @@ The module use the NextWheel module to calibrate the instrumented wheel.
 
 """
 import numpy as np
-
-
-def normalize_vector(ob: np.ndarray) -> np.ndarray:
-    """
-    Normalize all vectors in multiple line array (each line is a vector).
-
-    The function is for clarity.
-
-    Parameters
-    ----------
-    ob : np.ndarray
-
-    Returns
-    -------
-    normalized_vector : np.ndarray
-
-    """
-    normalized_vector = ob / np.transpose(
-        np.tile(np.linalg.norm(ob, axis=1), (3, 1))
-    )
-    return normalized_vector
+import scipy as sp
 
 
 def estimate_gyro_bias(omega_static: np.ndarray) -> np.ndarray:
@@ -115,7 +95,7 @@ def estimate_acc_bias(  # À modifier pour avoir plus de tâches
             delta_norm_square[i, 0] = (norms[j] ** 2 - norms[k] ** 2) / 2
             i += 1
 
-    bias = np.linalg.lstsq(delta_grav_matrix, delta_norm_square)[0]
+    bias = np.linalg.lstsq(delta_grav_matrix, delta_norm_square)
 
     return bias
 
@@ -243,7 +223,7 @@ def calculate_calibration_matrix(FM: np.ndarray, V: np.ndarray) -> np.ndarray:
         must be the force in x, y, z and the last three values are the moments.
     V : np.ndarray
         Voltages measured with the EMG installed in the instrumented wheel for
-        each trials. Must be the same shape of the FM.
+        each trials. Must be the same shape as FM.
 
     Returns
     -------
@@ -251,18 +231,16 @@ def calculate_calibration_matrix(FM: np.ndarray, V: np.ndarray) -> np.ndarray:
         The calibration matrix A.
 
     """
-    AT = np.linalg.lstsq(np.transpose(V), np.transpose(FM))
+    AT = np.linalg.lstsq(np.transpose(V), np.transpose(FM))[0]
 
     return np.transpose(AT)
 
 
 def calculate_forces_moments(  # probably gonna rewrite
-    theta: float,
-    acc_static: np.ndarray,
+    Trial: dict,
     acc_bias: np.ndarray,
     wheel_ref_delsys: np.ndarray,
-    masse: float = 1.0,
-    masse_mc: float = 0.46,
+    mass_mc: float = 0.46,
     D: float = 0.52,
     H: float = 0.05,
 ):
@@ -271,17 +249,13 @@ def calculate_forces_moments(  # probably gonna rewrite
 
     Parameters
     ----------
-    theta : float
-        DESCRIPTION.
-    acc_static : np.ndarray
-        DESCRIPTION.
+    Trial : dict
+        Dictonary of one complete trial including the mass and degree.
     acc_bias : np.ndarray
         DESCRIPTION.
     wheel_ref_delsys : np.ndarray
         DESCRIPTION.
-    masse : float, optional
-        DESCRIPTION. The default is 1.0 kg.
-    masse_mc : float, optional
+    mass_mc : float, optional
         DESCRIPTION. The default is 0.46 kg.
     D : float, optional
         DESCRIPTION. The default is 0.52 m.
@@ -296,30 +270,28 @@ def calculate_forces_moments(  # probably gonna rewrite
         DESCRIPTION.
 
     """
-    force_application_point = np.nadarray((3, 1))
-    force_application_point[0] = 0.5 * D * np.cos(np.pi * theta / 180)
-    force_application_point[1] = 0.5 * D * np.sin(np.pi * theta / 180)
+    force_application_point = np.ndarray((3, 1))
+    force_application_point[0] = (
+        0.5 * D * np.cos(np.pi * Trial["Degree"] / 180)
+    )
+    force_application_point[1] = (
+        0.5 * D * np.sin(np.pi * Trial["Degree"] / 180)
+    )
     force_application_point[2] = H  # H or -H ?
+    force_application_point = np.transpose(force_application_point)
 
-    ref_grav = normalize_vector(np.median(acc_static - acc_bias, axis=0))
+    ref_grav = np.transpose(np.median(Trial["IMU"]["Acc"], axis=0) - acc_bias)
+    ref_grav = ref_grav / np.linalg.norm(ref_grav)
 
-    f1 = (
-        -1
-        * masse
-        * 9.81
-        * np.dot(np.transpose(wheel_ref_delsys[:3, :3]), ref_grav)
-    )
+    f1 = -1 * Trial["Mass"] * 9.81 * np.dot(wheel_ref_delsys[:3, :3], ref_grav)
+    f1 = np.transpose(f1)
 
-    f2 = (
-        -1
-        * masse_mc
-        * 9.81
-        * np.dot(np.transpose(wheel_ref_delsys[:3, :3]), ref_grav)
-    )
+    f2 = -1 * mass_mc * 9.81 * np.dot(wheel_ref_delsys[:3, :3], ref_grav)
+    f2 = np.transpose(f2)
 
     forces = f1 + f2
     moments = np.cross(f1, force_application_point) + np.cross(
-        f2, np.array([[0], [0], [H]])
+        f2, np.array([[0, 0, H]])
     )
 
     return forces, moments
