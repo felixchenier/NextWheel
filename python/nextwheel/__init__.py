@@ -229,60 +229,97 @@ class NextWheel:
         self._power_values = []  # type: list[np.ndarray]
         self._encoder_values = []  # type: list[np.ndarray]
 
-    def _extract_values(self, frame_type: int, message: bytes, time: float):
-        """
-        Extract functional values from the message.
 
-        Utilize the WebSocket Binary Message Format to extract values from
-        the message depending on the frame_type:
-            2 - Frame type of the ADC
-            3 - Frame type of the IMU
-            4 - Frame type of the Power
-            7 - Frame type of the Encoder
+
+    def _parse_message(self, stream:bytes, offset:int=0) -> int:
+        """
+        Parse a series of bytes corresponding to a messages.
+        
+        It only parses the first message from the stream, then returns the
+        position of the next message in the stream. If the received message
+        is a superframe, all messages from the superframe are parsed and
+        processed.
 
         Parameters
         ----------
-        frame_type : int
-            Frame type that determine the information in the message.
-        message : bytes
-            Message received from the instrumented wheel without header.
-        time : float
-            Time when the message has been received.
+        stream
+            The received message or the data stored in the dat file.
+        offset
+            Start processing at this position in the stream.
 
         Returns
         -------
-        None.
+        offset
+            The position of the next message in the stream.
+            
 
         """
-        if frame_type == FrameType.ADC:  # frame type of the ADC values
-            if len(message) != 16:
-                print(f"Unexpected message length of {len(message)} (ADC)")
-                return
+        if type(stream) is not bytes:
+            return
+        
+        if offset >= len(stream):
+            return offset
+        
+        # Extract the type of message
+        (frame_type, timestamp, data_size) = struct.unpack(
+            "<BQB", stream[offset:offset+10]
+        )
+        offset += 10
+        time = timestamp / 1e6 - self.TIME_ZERO
+        
+        # Process the frame
+        if frame_type == FrameType.CONFIG:
+
+            # Config frame (should always be first)
+            data = stream[offset:offset + data_size]
+            offset += data_size
+        
+            self.TIME_ZERO = timestamp / 1e6
+
+            (
+                accel_range,
+                gyro_range,
+                mag_range,
+                imu_sampling_rate,
+                adc_sampling_rate,
+                encoder_sampling_rate,
+            ) = struct.unpack("<6I", data)
+
+            # Update configuration
+            self._config.accel_range = accel_range
+            self._config.gyro_range = gyro_range
+            self._config.mag_range = mag_range
+            self._config.imu_sampling_rate = imu_sampling_rate
+            self._config.adc_sampling_rate = adc_sampling_rate
+            self._config.encoder_sampling_rate = encoder_sampling_rate
+
+        elif frame_type == FrameType.ADC:  # frame type of the ADC values
+            data = stream[offset:offset + data_size]
+            offset += data_size
 
             self._adc_values.append(
-                np.hstack([[time], struct.unpack_from("<8H", message)])
+                np.hstack([[time], struct.unpack("<8H", data)])
             )
 
             if len(self._adc_values) > self.max_analog_samples:
                 self._adc_values.pop(0)
 
         elif frame_type == FrameType.IMU:  # frame type of the IMU
-            if len(message) != 18:
-                print(f"Unexpected message length of {len(message)} (IMU)")
-                return
+            data = stream[offset:offset + data_size]
+            offset += data_size
 
             self._imu_values.append(
                 np.hstack(
                     [
                         [time],
                         self._config.convert_accel_values(
-                            np.array(struct.unpack_from("<3h", message[:6]))
+                            np.array(struct.unpack_from("<3h", data[:6]))
                         ),
                         self._config.convert_gyro_values(
-                            np.array(struct.unpack_from("<3h", message[6:12]))
+                            np.array(struct.unpack_from("<3h", data[6:12]))
                         ),
                         self._config.convert_mag_values(
-                            np.array(struct.unpack_from("<3h", message[12:18]))
+                            np.array(struct.unpack_from("<3h", data[12:18]))
                         ),
                     ]
                 )
@@ -292,140 +329,37 @@ class NextWheel:
                 self._imu_values.pop(0)
 
         elif frame_type == FrameType.POWER:  # frame type of the POWER
-            if len(message) != 13:
-                print(f"Unexpected message length of {len(message)} (POWER)")
-                return
+            data = stream[offset:offset + data_size]
+            offset += data_size
 
             self._power_values.append(
-                np.hstack([[time], struct.unpack_from("<3fB", message)])
+                np.hstack([[time], struct.unpack_from("<3fB", data)])
             )
 
             if len(self._power_values) > self.max_power_samples:
                 self._power_values.pop(0)
 
         elif frame_type == FrameType.ENCODER:  # frame type of the ENCODER
-            if len(message) != 8:
-                print(f"Unexpected message length of {len(message)} (ENCODER)")
-                return
+            data = stream[offset:offset + data_size]
+            offset += data_size
 
             self._encoder_values.append(
-                np.hstack([[time], struct.unpack_from("<q", message)])
+                np.hstack([[time], struct.unpack_from("<q", data)])
             )
 
             if len(self._encoder_values) > self.max_encoder_samples:
                 self._encoder_values.pop(0)
 
-    def _parse_superframe(self, message: bytes, count: int):
-        """
-        Unpack superframe and scan the message.
+        elif frame_type == FrameType.SUPERFRAME:
 
-        The function loop over the message and call the function
-        _extract_values to convert the bytes messages to other type more
-        functional.
+            for sub_count in range(data_size):  # data_size = number of frames
+                offset = self._parse_message(stream, offset)
+                
+        else:
+            raise ValueError(f"Received an unknown frame type: {frame_type}")
+            
+        return offset
 
-        Parameters
-        ----------
-        message : bytes
-            Message received from the instrumented wheel without the first
-            header.
-        count : int
-            Number of data present in the message.
-
-        Returns
-        -------
-        None.
-
-        """
-        offset = 0
-
-        for sub_count in range(count):
-            (frame_type, timestamp, data_size) = struct.unpack_from(
-                "<BQB", message[offset : offset + self.HEADER_LENGTH]
-            )
-
-            self._extract_values(
-                frame_type,
-                message[
-                    offset
-                    + self.HEADER_LENGTH : offset
-                    + self.HEADER_LENGTH
-                    + data_size
-                ],
-                timestamp / 1e6 - self.TIME_ZERO,
-            )
-
-            offset = offset + data_size + self.HEADER_LENGTH
-
-    def _parse_messages(self, ws, messages):
-        """
-        Parse a series of bytes corresponding to a series of messages.
-
-        The function analyse if the frame type is 1 or 255:
-            - If frame_type = 1, this is the configuration frame. The function
-            simply save the data.
-            - If frame_type = 255, this is the superframe type. It calls the
-            _parse_superframe function to read and scan the message.
-
-        Parameters
-        ----------
-        ws : _app.WebSocketApp
-            DESCRIPTION.
-        message : bytes
-            Information containing data in bytes.
-
-        Returns
-        -------
-        None.
-
-        """
-        if type(messages) is not bytes:
-            return
-
-        while len(messages) > 0:
-
-            (frame_type, timestamp, data_size) = struct.unpack_from(
-                "<BQB", messages[0:10]
-            )
-
-            # Config frame (should always be first)
-            if frame_type == FrameType.CONFIG:
-                self.TIME_ZERO = timestamp / 1e6
-
-                (
-                    accel_range,
-                    gyro_range,
-                    mag_range,
-                    imu_sampling_rate,
-                    adc_sampling_rate,
-                    encoder_sampling_rate,
-                ) = struct.unpack_from("<6I", messages[10 : 10 + data_size])
-
-                # Update configuration
-                self._config.accel_range = accel_range
-                self._config.gyro_range = gyro_range
-                self._config.mag_range = mag_range
-                self._config.imu_sampling_rate = imu_sampling_rate
-                self._config.adc_sampling_rate = adc_sampling_rate
-                self._config.encoder_sampling_rate = encoder_sampling_rate
-
-                messages = messages[
-                    10 + data_size :
-                ]  # Continue with the next message
-
-            elif frame_type == FrameType.SUPERFRAME:
-                self._parse_superframe(messages[10:], count=data_size)
-                messages = []  # Superframes are only streamed, not saved. If
-                # we get a superframe, it means there's nothing left after.
-
-            else:
-                self._extract_values(
-                    frame_type,
-                    messages[10 : 10 + data_size :],
-                    timestamp / 1e6 - self.TIME_ZERO,
-                )
-                messages = messages[
-                    10 + data_size :
-                ]  # Continue with the next message
 
     def _on_message(self, ws, message):
         """
@@ -446,7 +380,7 @@ class NextWheel:
 
         """
         self._mutex.acquire()
-        self._parse_messages(ws, message)
+        self._parse_message(message)
         self._mutex.release()
 
     def _on_open(self, ws):
@@ -561,6 +495,7 @@ class NextWheel:
             is_running[0] = False
 
         self.start_streaming()
+        plt.pause(0.5)
 
         # Matplotlib defaults
         mpl.rcParams["axes.prop_cycle"] = mpl.cycler(
@@ -612,9 +547,14 @@ class NextWheel:
 
         def on_timer(_):
             self._mutex.acquire()
-            adc_values = np.array(self._adc_values)
-            imu_values = np.array(self._imu_values)
-            encoder_values = np.array(self._encoder_values) % 4000
+            adc_values = np.zeros((self.max_analog_samples, 9))
+            adc_values[-len(self._adc_values):] = np.array(self._adc_values)
+
+            imu_values = np.zeros((self.max_imu_samples, 10))
+            imu_values[-len(self._imu_values):] = np.array(self._imu_values)
+
+            encoder_values = np.zeros((self.max_encoder_samples, 2))
+            encoder_values[-len(self._encoder_values):] = np.array(self._encoder_values) % 4000
             self._mutex.release()
 
             try:
@@ -918,7 +858,12 @@ def read_dat(filename) -> dict:
     nw.max_imu_samples = np.Inf
     nw.max_power_samples = np.Inf
 
+    offset = 0
     with open(filename, "rb") as fid:
-        nw._parse_messages(None, fid.read())
+        stream = fid.read()
+        
+    while (new_offset := nw._parse_message(stream, offset)) > offset:
+        offset = new_offset
+        
 
     return nw.fetch()

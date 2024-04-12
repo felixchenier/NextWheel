@@ -22,6 +22,7 @@ import multiprocessing as mp
 import tkinter as tk
 import os
 import json
+import nextwheel
 
 
 def _gui_app(conn, cwd: str):
@@ -78,24 +79,24 @@ def monitor(nw):
     while parent_conn.recv() != "quit":
         text = f"IP Address: {nw.IP}\n"
 
-        # Get current state
-        i_refresh_state += 1
-        if i_refresh_state > 10:
-            # current_state = nw.get_system_state()
-            i_refresh_state = 0
+        # # Get current state
+        # i_refresh_state += 1
+        # if i_refresh_state > 10:
+        #     current_state = nw.get_system_state()
+        #     i_refresh_state = 0
 
-        if current_state is not None:
-            text += "\nCurrent State\n"
+        # if current_state is not None:
+        #     text += "\nCurrent State\n"
 
-            if current_state["streaming"] == 0:
-                text += "    Not streaming\n"
-            else:
-                text += "    Streaming\n"
+        #     if current_state["streaming"] == 0:
+        #         text += "    Not streaming\n"
+        #     else:
+        #         text += "    Streaming\n"
 
-            if current_state["recording"] == 0:
-                text += "    Not recording\n"
-            else:
-                text += f"    Recording to {current_state['filename']}\n"
+        #     if current_state["recording"] == 0:
+        #         text += "    Not recording\n"
+        #     else:
+        #         text += f"    Recording to {current_state['filename']}\n"
 
         # Get data
         data = nw.fetch()
