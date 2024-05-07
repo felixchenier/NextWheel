@@ -1,9 +1,4 @@
-"""
-The module permit to calibrate the instrumented wheel.
-
-The module use the NextWheel module to calibrate the instrumented wheel.
-
-"""
+"""Functions to calibrate an instrumented wheelchair wheel."""
 
 import numpy as np
 import math
@@ -11,74 +6,105 @@ import math
 
 def estimate_gyro_bias(omega_static: np.ndarray) -> np.ndarray:
     """
-    Estimate the Gyro bias with a static trial.
+    Estimate the gyro bias using a static trial.
 
     Parameters
     ----------
-    omega_static : np.ndarray
-        Angular speed measure with the IMU (Gyro) - the wheel isn't suppose to
-        move in a static trial, this is the bias.
+    omega_static
+        Angular speed measured with the IMU (gyro) during a static trial, in
+        the form of an Nx3 array. Since the wheel does not move during a static
+        trial, this is the gyro bias.
 
     Returns
     -------
-    bias : np.ndarray
-        Mean of the omega_static argument.
+    array
+        Bias, which is the mean of the omega_static argument.
 
     """
-    bias = np.mean(omega_static, axis=0)
-
-    return bias
+    return np.mean(omega_static, axis=0)
 
 
-def estimate_acc_bias(  # À modifier pour avoir plus de tâches
+def estimate_acc_bias(
     acc_statics: np.ndarray,
 ) -> np.ndarray:
     """
-    Estimate the bias of the accelerometer.
+    Estimate the accelerometer bias using three static trials.
 
     The function needs three different static trials to estimate the bias of
     the accelerometer of the IMU. In short, the accelerometer measures a vector
-    m that contain the measurement in x, y, z. If we observe the norm. we have:
+    m that contain the measurement in x, y, z. If we observe the norm. we
+    have::
 
-        mx^2 + my^2 + mz^2 = (ax + bx)^2 + (ay + by)^2 + (az + bz)^2 = N^2.
+    m_x^2 + m_y^2 + m_z^2 = (a_x + b_x)^2 + (a_y + b_y)^2 + (a_z + b_z)^2 = N^2.
 
-    Where mx, my and mz are measure of the accelerometer, ax, ay and az are
-    the acceleration of the gravity and bx, by and bz are the bias. N is the
+    Where m_x, m_y and m_z are measure of the accelerometer, ax, ay and az are
+    the acceleration of the gravity and b_x, b_y and b_z are the bias. N is the
     norm of the m vector.
 
-    If we develop, we obtain :
+    If we develop, we obtain::
 
-        ax^2 + ay^2 + az^2 + 2(ax*bx + ay*by + az*bz) + bx^2 + by^2 + bz^2 = N^2
-        = ||g||^2 + 2(ax*bx + ay*by + az*bz) + ||bias||^2 = N^2
+    a_x^2 + a_y^2 + a_z^2
+    + 2 * (a_x * b_x + a_y * b_y + a_z * b_z)
+    + b_x^2 + b_y^2 + b_z^2
+    = N^2
+    
+    |g|^2
+    + 2 * (a_x * b_x + a_y * b_y + a_z * bz_)
+    + |b|^2 = N^2
 
-    If we substract two norms square of two m vectors, the constants cancel and
-    we obtain :
+    Using two static trials with two different orientations and subtracting
+    these trials (the second trial has primes ' in the following equations),
+    the constants cancel and we obtain::
 
-        (N^2 - N'^2)/2 = bx*(ax - ax') + by*(ay - ay') + bz*(az - az')
+    (N^2 - N'^2) / 2
+     = b_x * (a_x - a_x') + b_y * (a_y - a_y') + b_z * (a_z - a_z')
+    
+    with::
+        
+    (a_x - a_x') = (m_x - m_x') because the bias cancels out;
+    (a_y - a_y') = (m_y - m_y') because the bias cancels out;
+    (a_z - a_z') = (m_z - m_z') because the bias cancels out.
+    
+    Therefore::
+        
+    (N^2 - N'^2) / 2
+     = b_x * (m_x - m_x') + b_y * (m_y - m_y') + b_z * (m_z - m_z')
 
-    This is the final equation, because (ax - ax') = (mx - mx'), (ay - ay') =
-    (my - my') and (az - az') = (mz - mz'). This is already known. With three
-    static trials, there is three equations and  three unknown, so we can find
-    the bias with a linear system Ax = b. A -> (N,3) et b -> (N,1) avec N >=3.
-
-    Exemple with three static trials :
-
-    [ (ax1 - ax2) (ay1 - ay2) (az1 - az2) ] [ bx ]     [ (N1^2 - N2^2)/2 ]
-    [ (ax1 - ax3) (ay1 - ay3) (az1 - az3) ] [ by ]  =  [ (N1^2 - N3^2)/2 ]
-    [ (ax2 - ax3) (ay2 - ay3) (az2 - az3) ] [ bz ]     [ (N2^2 - N3^2)/2 ]
-
+    With a minimum of three static trials, we can find the bias with a linear
+    system Ax = b::
+    
+    [
+        [(a_x1 - a_x2), (a_y1 - a_y2), (a_z1 - a_z2)],
+        [(a_x1 - a_x3), (a_y1 - a_y3), (a_z1 - a_z3)],        
+        [(a_x2 - a_x3), (a_y2 - a_y3), (a_z2 - a_z3)]
+    ]
+    *
+    [
+        [b_x],
+        [b_y],
+        [b_z]
+    ]
+    =
+    [
+        [(N1^2 - N2^2) / 2],
+        [(N1^2 - N3^2) / 2],
+        [(N2^2 - N3^2) / 2]
+    ]
+    
+    This function uses a least-square estimation to get the bias from any
+    number of static acquisitions higher than 3.
 
     Parameters
     ----------
-    acc_statics : np.ndarray
-        Contain at least three different static measurements of the wheel. Each
-        line must be the median of an different static trial of the
-        accelerometer.
+    acc_statics
+        Contain at least N>=3 different static accelerometer measurements
+        taken in different orientations of the wheel, in the form of an Nx3
+        array.
 
     Returns
     -------
-    bias : np.ndarray
-        Estimated bias.
+    np.ndarray
+        Estimated bias as an array of length 3.
 
     """
     m, n = np.shape(acc_statics)
@@ -99,34 +125,30 @@ def estimate_acc_bias(  # À modifier pour avoir plus de tâches
     bias = np.linalg.lstsq(delta_grav_matrix, delta_norm_square, rcond=None)
 
     return bias[0].T
+    #TODO! Est-ce que le T est nécessaire ? Je ne crois pas si c'est une seule dimension.
 
 
 def get_z_axis(gyro_bias: np.ndarray, omega_dynamic: np.ndarray) -> np.ndarray:
     """
-    Calculate the z-axis with the IMU (Gyroscope).
+    Calculate the z-axis of the wheel in the IMU's reference frame.
 
-    It takes a static and a dynamic trial of the angular speed of the
-    instrumented wheel:
-        - The static trial serve to find the bias of the Gyro
-        - The dynamic trial is what determine the z_axis
+    The z-axis is calculated by rotating the wheel along its rotation axis.
 
     Parameters
     ----------
-    omega_static : np.ndarray
-        Angular speed measure with the IMU (Gyro) - the wheel isn't suppose to
-        move in a static trial, this is the bias.
-    omega_dynamic : np.ndarray
-        Angular speed measure with the IMU (Gyro) - the IMU return the axis
-        it turns around with the angular speed. The axis is the z_axis
-        unnormalize with the bias.
+    gyro_bias
+        Gyro bias as reported by estimate_gyro_bias().
+    omega_dynamic
+        Angular speed measured with the IMU (gyro) as the wheel turns around
+        its rotation axis, as an Nx3 series of angular speeds v_x, v_y, v_z.
 
     Returns
     -------
-    z_axis : np.ndarray
-        This is the mean of the normalized omega_dynamic without bias and
-        re-normalized.
+    np.ndarray
+        The z-axis of the IMU as an array of length 3.
 
     """
+    #TODO! Nicolas, est-ce que mes modifications au doctstring sont conformes à la réalité?
     omega_dynamic -= np.tile(gyro_bias, (np.shape(omega_dynamic)[0], 1))
 
     z_axis = omega_dynamic / np.transpose(
@@ -146,30 +168,32 @@ def get_wheel_reference(
     acc_static1: np.ndarray, acc_static2: np.ndarray, z_axis: np.ndarray
 ) -> np.ndarray:
     """
-    Calculate the x and y axis with two trials and the z axis.
+    Calculate the rotation matrix from the IMU to the wheel's reference frames.
 
     The IMU measure the acceleration with accelerometer and the gravity is
-    measured as well. The static trials measure two accelerations (with bias)
-    of the gravity with the wheel at different angle. If you subtract one from
-    another, we get rid of the bias and the new vector is in the xz-plane. From
-    there, we can apply a cross product to find the y and then x or use the
-    Gram–Schmidt process to find x first.
+    measured as well. The static trials measure two orientations of the gravity
+    (with bias). If both static trials correspond to a unique rotation around
+    the y axis, then by subtracting one from the other, we cancel the bias and
+    the new vector is in the xz-plane. From there, we can apply a cross product
+    to find y and then x or use the Gram–Schmidt process to find x first.
 
     Parameters
     ----------
-    acc_static1 : np.ndarray
-        Gravity measured with the IMU (accelerometer) with a static trial. The
-        trial include the bias of the accelerometer.
-    acc_static2 : np.ndarray
+    acc_static1
+        Gravity measured with the IMU (accelerometer) with a static trial.
+    acc_static2
         Similar to acc_static1 but with a different angle in the xz plane.
-    z_axis : np.ndarray
-        The z-axis find in previous step.
+    z_axis
+        The z-axis as given by get_z_axis().
 
     Returns
     -------
-    wheel_ref : np.ndarray
+    np.ndarray
         The complete wheel reference rotation matrix.
+
     """
+    #TODO! Nicolas, est-ce que le docstring marche encore après mes modifs ?
+    #TODO! Nicolas, est-ce que c'est y then x, ou bien x then y ? Il faudrait spécifier dans le docstring.
     grav1 = np.mean(acc_static1, axis=0)
     grav2 = np.mean(acc_static2, axis=0)
 
@@ -197,10 +221,11 @@ def get_wheel_reference(
 
 def calculate_calibration_matrix(FM: np.ndarray, V: np.ndarray) -> np.ndarray:
     """
-    Resolve the A @ V = FM to find A, the calibration matrix.
+    Calculate the calibration matrix from known kinetics and sensor voltages.
 
-    We rewrite the equation with V^T @ A^T = FM^T. This can be seen as multiple
-    linear equation to resolve. FM and V must have at least 6 columns (trials).
+    We resolve the A @ V = FM to find A, the calibration matrix. Let's rewrite
+    the equation with V^T @ A^T = FM^T. This can be seen as multiple linear
+    equation to resolve. FM and V must have at least 6 columns (6 trials).
 
     Exemple :
 
@@ -230,34 +255,48 @@ def calculate_calibration_matrix(FM: np.ndarray, V: np.ndarray) -> np.ndarray:
         The calibration matrix A.
 
     """
+    #TODO! Inverser l'ordre des dimensions d'entrée: Nx6 plutôt que 6xN.
+    #Pour être cohérent avec les conventions de KTK et donc du labo.
+    #Ça implique de changer le docstring, d'enlever les transpositions, et
+    #de mettre plutôt les transpositions dans le code un niveau plus haut
+    #si nécessaire.    
     AT = np.linalg.lstsq(V.T, FM.T, rcond=None)[0]
-
     return AT.T
 
 
 def make_an_estimation_of_forces_moments(
-    Trial: dict,
+    trial: dict,
     acc_bias: np.ndarray,
     wheel_ref: np.ndarray,
-    D: float = 0.52,
-    H: float = 0.05,
+    d: float = 0.52,
+    h: float = 0.05,
 ):
     """
-    Estimate the forces and moments of one trial.
-
+    Estimate the forces and moments of one static trial with a suspended weight.
+    
+    A static trial is expressed as a dictionary with at least the following
+    keys::        
+    {
+        "Mass": float,    # Mass of the suspended weight
+        "Degree": float,  # Position of the suspended weight on the wheel
+        "IMU": {
+            "Acc": np.array  # Nx3 array of accelerometer measurements
+        }
+    }
+    
     Parameters
     ----------
-    Trial : dict
-        Dictonary of one complete trial including the mass and degree.
-    acc_bias : np.ndarray
+    trial
+        Trial data in the form presented above.
+    acc_bias
         The accelerometer bias.
-    wheel_ref : np.ndarray
+    wheel_ref
         The 3x3 Matrix that link the IMU referential to the wheel referential.
-    D : float, optional
-        The diameter of the pushrim. The default is 0.52 m.
-    H : float, optional
-        The perpendicular distance between the wheel plane and the pushrim.
-        It is the z-distance in cyclindrical coordinates of the wheel.
+    d
+        Optional. The diameter of the pushrim. The default is 0.52 m.
+    h
+        Optional. The perpendicular distance between the wheel plane and the
+        pushrim. It is the z-distance in cyclindrical coordinates of the wheel.
         The default is 0.05 m.
 
     Returns
@@ -268,20 +307,22 @@ def make_an_estimation_of_forces_moments(
         The theorical estimate of the moments applied on the pushrim..
 
     """
+    #TODO! Pourquoi ne pas retourner FM directement plutôt qu'un tuple de arrays ?
+    #Ce serait plus cohérent avec calculate_calibration_matrix().
     force_application_point = np.ndarray((3, 1))
     force_application_point[0] = (
-        0.5 * D * np.cos(np.pi * Trial["Degree"] / 180)
+        0.5 * d * np.cos(np.pi * trial["Degree"] / 180)
     )
     force_application_point[1] = (
-        0.5 * D * np.sin(np.pi * Trial["Degree"] / 180)
+        0.5 * d * np.sin(np.pi * trial["Degree"] / 180)
     )
-    force_application_point[2] = H  # H or -H ?
+    force_application_point[2] = h  #TODO! H or -H ?
     force_application_point = np.transpose(force_application_point)
 
-    ref_grav = np.transpose(np.mean(Trial["IMU"]["Acc"], axis=0) - acc_bias)
+    ref_grav = np.transpose(np.mean(trial["IMU"]["Acc"], axis=0) - acc_bias)
     ref_grav = ref_grav / np.linalg.norm(ref_grav)
 
-    f1 = -1 * Trial["Mass"] * 9.81 * np.dot(wheel_ref[:3, :3], ref_grav)
+    f1 = -1 * trial["Mass"] * 9.81 * np.dot(wheel_ref[:3, :3], ref_grav)
     f1 = np.transpose(f1)
 
     # f2 = -1 * mass_mc * 9.81 * np.dot(wheel_ref_delsys[:3, :3], ref_grav)
@@ -295,3 +336,4 @@ def make_an_estimation_of_forces_moments(
     # - np.cross(f2, np.array([[0, 0, H]]))
 
     return forces, moments
+    #TODO! Enlever le code commenté si ce n'est plus utile.
