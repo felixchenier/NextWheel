@@ -7,40 +7,20 @@ Created on Thu Feb  1 14:11:43 2024
 
 import numpy as np
 import matplotlib.pyplot as plt
+import kineticstoolkit as ktk
 import nextwheel
 import wheelcalibration as wc
 import limitedinteraction as li
 import time
 import os
-import pickle
-import csv
 
 if __name__ == "__main__":
     nw = nextwheel.NextWheel("192.168.1.155")
 
     path = "C:/Users/Nicolas/Documents/NextWheel/calibration/"
+    trials_dir = "Trials/"
 
-    if not os.path.isfile(f"{path}DelsysRef.csv"):
-        with open(
-            f"{path}DelsysRef.csv",
-            "w",
-        ) as my_file:
-            my_file.write("Trial, x, y, z")
-
-    if not os.path.isfile(f"{path}Calibration.csv"):
-        with open(
-            f"{path}Calibration.csv",
-            "w",
-        ) as my_file:
-            my_file.write(
-                "Trial number, Acceleration x, Acceleration y, Acceleration z,"
-            )
-            my_file.write(
-                "Channel 1, Channel 2, Channel 3, Channel 4, Channel 5, Channel 6,"
-            )
-            my_file.write("Mass, Degree")
-
-# %% Partie 1 - Mesure du gyro pour l'axe z
+# %% Part 1 - Z-axis calculated from gyroscope
 
 if __name__ == "__main__":
     ########################## INTERFACE #########################################
@@ -60,34 +40,26 @@ if __name__ == "__main__":
 
     nw.fetch()
 
-    time.sleep(3)
+    time.sleep(5)
 
     static_trial = nw.fetch()
+    nw.stop_streaming()
     ##############################################################################
-    static_trial["Mass"] = 0.0
-    static_trial["Degree"] = 0.0
 
     n_trial = 0
-    while os.path.isfile(f"Trials/StaticTrial{n_trial}.pkl"):
+    while os.path.isfile(f"{path}{trials_dir}GyroBiasMeasure{n_trial}"):
         n_trial += 1
-
-    with open(f"{path}Trials/StaticTrial{n_trial}.pkl", "wb") as file:
-        pickle.dump(static_trial, file)
+    ktk.save(f"{path}{trials_dir}GyroBiasMeasure{n_trial}", static_trial)
 
     omega_static = static_trial["IMU"]["Gyro"]
 
-    gyro_bias = wc.estimate_gyro_bias(omega_static)
-
-    with open(f"{path}DelsysRef.csv", "a") as file:
-        file.write("\nGyro Bias")
-        for bias in gyro_bias:
-            file.write(f",{bias}")
+    gyro_bias = wc.estimate_gyro_bias(omega_static)  # gyro bias calculation
 
     li.message("")
 
     ########################## INTERFACE #########################################
     li.button_dialog(
-        "Spin the wheel fast anticlockwise around the desired z-axis and click OK",
+        "Spin the wheel anticlockwise around the desired z-axis and click OK",
         choices=["OK"],
         title="z-axis calibration - Dynamic trial",
         icon="light",
@@ -98,33 +70,26 @@ if __name__ == "__main__":
     )
     ##############################################################################
     ########################## MEASURE ###########################################
+    nw.start_streaming()
     nw.fetch()
 
-    time.sleep(3)
+    time.sleep(5)
 
     dynamic_trial = nw.fetch()
+    nw.stop_streaming()
     ##############################################################################
-    n_trial = 0
-    while os.path.isfile(f"Trials/DynamicTrial{n_trial}.pkl"):
-        n_trial += 1
 
-    with open(f"{path}Trials/DynamicTrial{n_trial}.pkl", "wb") as file:
-        pickle.dump(dynamic_trial, file)
+    while os.path.isfile(f"{path}{trials_dir}GyroMeasureForZAxis{n_trial}"):
+        n_trial += 1
+    ktk.save(f"{path}{trials_dir}GyroMeasureForZAxis{n_trial}", dynamic_trial)
 
     omega_dynamic = dynamic_trial["IMU"]["Gyro"]
 
-    z_axis = wc.get_z_axis_delsys_on_wheel(gyro_bias, omega_dynamic)
-
-    with open(f"{path}DelsysRef.csv", "a") as file:
-        file.write("\nZ-Axis")
-        for z in z_axis:
-            file.write(f",{z}")
+    z_axis = wc.get_z_axis(gyro_bias, omega_dynamic)  # z-axis calculation
 
     li.message("")
 
-    nw.stop_streaming()
-
-# %% Partie 2 - Mesure du plan xz and finalise the base_change_matrix
+# %% Part 2 - XZ-Plane determined from acc + base change matrix completion
 
 if __name__ == "__main__":
     ########################## INTERFACE #########################################
@@ -143,26 +108,19 @@ if __name__ == "__main__":
     nw.start_streaming()
     nw.fetch()
 
-    time.sleep(3)
+    time.sleep(5)
 
     static_trial_1 = nw.fetch()
+    nw.stop_streaming()
     ##############################################################################
-    static_trial_1["Mass"] = 0.0
-    static_trial_1["Degree"] = 0.0
 
     n_trial = 0
-    while os.path.isfile(f"Trials/XStaticTrial{n_trial}.pkl"):
+    while os.path.isfile(f"{path}{trials_dir}AccGravMeasure{n_trial}"):
         n_trial += 1
 
-    with open(f"{path}Trials/XStaticTrial{n_trial}.pkl", "wb") as file:
-        pickle.dump(static_trial_1, file)
+    ktk.save(f"{path}{trials_dir}AccGravMeasure{n_trial}", static_trial_1)
 
     acc_static1 = -static_trial_1["IMU"]["Acc"]
-
-    with open("{path}DelsysRef.csv", "a") as file:
-        file.write("\nStatic Acceleration 1")
-        for acc in np.median(acc_static1, axis=0):
-            file.write(f",{acc}")
 
     li.message("")
 
@@ -179,39 +137,54 @@ if __name__ == "__main__":
     )
     ##############################################################################
     ########################## MEASURE ###########################################
+    nw.start_streaming()
     nw.fetch()
 
-    time.sleep(3)
+    time.sleep(5)
 
     static_trial_2 = nw.fetch()
+    nw.stop_streaming()
     ##############################################################################
-    static_trial_2["Mass"] = 0.0
-    static_trial_2["Degree"] = 0.0
 
     n_trial = 0
-    while os.path.isfile(f"Trials/XStaticTrial{n_trial}.pkl"):
+    while os.path.isfile(f"{path}{trials_dir}AccGravMeasure{n_trial}"):
         n_trial += 1
-
-    with open(f"{path}Trials/XStaticTrial{n_trial}.pkl", "wb") as file:
-        pickle.dump(static_trial_2, file)
+    ktk.save(f"{path}{trials_dir}AccGravMeasure{n_trial}", static_trial_2)
 
     acc_static2 = -static_trial_2["IMU"]["Acc"]
 
-    with open("{path}DelsysRef.csv", "a") as file:
-        file.write("\nStatic Acceleration 2")
-        for acc in np.median(acc_static2, axis=0):
-            file.write(f",{acc}")
-
-    base = wc.get_delsys_reference(acc_static1, acc_static2, z_axis)
+    base = wc.get_delsys_reference(
+        acc_static1, acc_static2, z_axis
+    )  # base change calculation
 
     li.message("")
 
-    nw.stop_streaming()
-
-# %% Partie 3 - More static trials for calibration matrix
+# %% Part 3 - More static Force mesures for calibration matrix
 
 if __name__ == "__main__":
     ########################## INTERFACE #########################################
+    li.button_dialog(
+        "Measure the offset of the channel",
+        choices=["OK"],
+        title="Offset",
+        icon="light",
+    )
+
+    li.message(
+        "Please wait a few moments.", title="Measuring...", icon="clock"
+    )
+    ##############################################################################
+    ########################## MEASURE ###########################################
+    nw.start_streaming()
+    nw.fetch()
+
+    time.sleep(5)
+
+    offset_trial = nw.fetch()
+    nw.stop_streaming()
+    ##############################################################################
+
+    offset = np.mean(offset_trial["Analog"]["Force"], axis=0)
 
     mass = float(
         li.input_dialog("What is the mass you add on rim?", icon="question")
@@ -235,77 +208,95 @@ if __name__ == "__main__":
     nw.start_streaming()
     nw.fetch()
 
-    time.sleep(3)
+    time.sleep(5)
 
     static_trial_3 = nw.fetch()
+    nw.stop_streaming()
     ##############################################################################
     static_trial_3["Mass"] = mass
     static_trial_3["Degree"] = degree
 
+    static_trial_3["Analog"]["Force"] -= np.tile(
+        offset, (np.shape(static_trial_3["Analog"]["Force"])[0], 1)
+    )
+
     n_trial = 0
-    while os.path.isfile(f"Trials/StaticTrial{n_trial}.pkl"):
+    while os.path.isfile(f"{path}{trials_dir}ForcesMomentsMeasure{n_trial}"):
         n_trial += 1
 
-    with open(f"{path}Trials/StaticTrial{n_trial}.pkl", "wb") as file:
-        pickle.dump(static_trial_3, file)
+    ktk.save(
+        f"{path}{trials_dir}ForcesMomentsMeasure{n_trial}", static_trial_3
+    )
 
     li.message("")
 
-    nw.stop_streaming()
-
-# %% Partie 4 - Traitement pour matrice de calibration
+# %% Part 4 - Calibration matrix calculation
 
 Trials = {}
-acc_statics = np.array([])
-channels = np.array([])
-for file_name in os.listdir(f"{path}Trials"):
-    with open(f"{path}Trials/{file_name}", "rb") as file:
-        Trials[file_name] = pickle.load(file)
-        acc_statics = np.append(
-            acc_statics, -np.median(Trials[file_name]["IMU"]["Acc"], axis=0)
+grav_measures = np.ndarray((1, 3))
+forces_channels = np.ndarray((1, 6))
+count = 0
+
+for file_name in os.listdir(f"{path}{trials_dir}"):
+    if file_name.startswith("Forces"):
+        Trials[file_name] = ktk.load(f"{path}{trials_dir}{file_name}")
+        grav = -np.mean(Trials[file_name]["IMU"]["Acc"], axis=0)
+        grav_measures = np.vstack(
+            (
+                grav_measures,
+                grav,
+            )
         )
-        channels = np.append(
-            channels, np.median(Trials[file_name]["Analog"]["Force"], axis=0)
+
+        forces = np.mean(Trials[file_name]["Analog"]["Force"], axis=0)
+        forces_channels = np.vstack(
+            (
+                forces_channels,
+                forces,
+            )
         )
 
-acc_statics = np.reshape(acc_statics, (len(Trials), 3))
-channels = np.transpose(np.reshape(channels, (len(Trials), 6)))
+    if file_name.startswith("GyroBias"):
+        Trials[file_name] = ktk.load(f"{path}{trials_dir}{file_name}")
 
-acc_bias = np.transpose(estimate_acc_bias(acc_statics)[0])
+        Trials["GyroBias"] = np.mean(Trials[file_name]["IMU"]["Gyro"], axis=0)
 
-DelsysTrials = {}
-with open(f"{path}DelsysRef.csv") as file:
-    spamreader = csv.reader(file, delimiter=",")
-    for row in spamreader:
-        if row[0] == "Trial":
-            pass
-        else:
-            row[1] = float(row[1])
-            row[2] = float(row[2])
-            row[3] = float(row[3])
-            DelsysTrials[row[0]] = np.array(row[1:])
+    if file_name.startswith("GyroMeasure"):
+        Trials[file_name] = ktk.load(f"{path}{trials_dir}{file_name}")
 
-base = wc.get_delsys_reference(
-    -Trials["XStaticTrial0.pkl"]["IMU"]["Acc"],
-    -Trials["XStaticTrial1.pkl"]["IMU"]["Acc"],
-    DelsysTrials["Z-Axis"],
+    if file_name.startswith("AccGrav"):
+        Trials[file_name] = ktk.load(f"{path}{trials_dir}{file_name}")
+        count += 1
+
+Trials["Z-Axis"] = np.array(
+    [-0.0007454810123062489, 0.0009531282008410795, -0.9999992679020785]
 )
+# Trials["Z-Axis"] = wc.get_z_axis(
+#     Trials["GyroBias"], Trials["GyroMeasureForZAxis"]["IMU"]["Gyro"]
+# ) # uncomment if the trial GyroMeasureForZAxis exist
 
-FMs = np.array([])
+Trials["AccBias"] = wc.estimate_acc_bias(
+    grav_measures
+)  # estimate accelerometer bias
 
-Trials["StaticTrial0.pkl"]["Degree"] = 0.0
+Trials["Base"] = wc.get_wheel_reference(
+    -Trials[f"AccGravMeasure{count-2}"]["IMU"]["Acc"],
+    -Trials[f"AccGravMeasure{count-1}"]["IMU"]["Acc"],
+    Trials["Z-Axis"],
+)  # estimate the base change matrix
+
+FMs = np.ndarray((1, 6))
 for trial in Trials:
-    F, M = calculate_forces_moments(
-        Trials[trial],
-        acc_bias,
-        base,
-    )
+    if trial.startswith("Forces"):
+        F, M = wc.make_an_estimation_of_forces_moments(
+            Trials[trial],
+            Trials["AccBias"],
+            Trials["Base"],
+        )
 
-    FM = np.append(F, M)
+        FM = np.hstack((F, M))
+        FMs = np.vstack((FMs, FM))
 
-    FMs = np.append(FMs, FM, axis=0)
-
-
-FMs = np.transpose(np.reshape(FMs, (len(Trials), 6)))
-
-A = calculate_calibration_matrix(FMs, channels)
+A = wc.calculate_calibration_matrix(
+    FMs.T, forces_channels.T
+)  # estimate the calibration matrix in A*forces_channels.T = FMs.T

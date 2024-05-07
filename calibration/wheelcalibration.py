@@ -4,8 +4,9 @@ The module permit to calibrate the instrumented wheel.
 The module use the NextWheel module to calibrate the instrumented wheel.
 
 """
+
 import numpy as np
-import scipy as sp
+import math
 
 
 def estimate_gyro_bias(omega_static: np.ndarray) -> np.ndarray:
@@ -21,10 +22,10 @@ def estimate_gyro_bias(omega_static: np.ndarray) -> np.ndarray:
     Returns
     -------
     bias : np.ndarray
-        Median of the omega_static argument.
+        Mean of the omega_static argument.
 
     """
-    bias = np.median(omega_static, axis=0)
+    bias = np.mean(omega_static, axis=0)
 
     return bias
 
@@ -83,7 +84,7 @@ def estimate_acc_bias(  # À modifier pour avoir plus de tâches
     m, n = np.shape(acc_statics)
     norms = np.linalg.norm(acc_statics, axis=1)
 
-    m_line_matrix = int(np.math.factorial(m) / (2 * np.math.factorial(m - 2)))
+    m_line_matrix = int(math.factorial(m) / (2 * math.factorial(m - 2)))
 
     delta_grav_matrix = np.zeros((m_line_matrix, 3))
     delta_norm_square = np.zeros((m_line_matrix, 1))
@@ -95,14 +96,12 @@ def estimate_acc_bias(  # À modifier pour avoir plus de tâches
             delta_norm_square[i, 0] = (norms[j] ** 2 - norms[k] ** 2) / 2
             i += 1
 
-    bias = np.linalg.lstsq(delta_grav_matrix, delta_norm_square)
+    bias = np.linalg.lstsq(delta_grav_matrix, delta_norm_square, rcond=None)
 
-    return bias
+    return bias[0].T
 
 
-def get_z_axis_delsys_on_wheel(
-    gyro_bias: np.ndarray, omega_dynamic: np.ndarray
-) -> np.ndarray:
+def get_z_axis(gyro_bias: np.ndarray, omega_dynamic: np.ndarray) -> np.ndarray:
     """
     Calculate the z-axis with the IMU (Gyroscope).
 
@@ -124,7 +123,7 @@ def get_z_axis_delsys_on_wheel(
     Returns
     -------
     z_axis : np.ndarray
-        This is the median of the normalized omega_dynamic without bias and
+        This is the mean of the normalized omega_dynamic without bias and
         re-normalized.
 
     """
@@ -134,7 +133,7 @@ def get_z_axis_delsys_on_wheel(
         np.tile(np.linalg.norm(omega_dynamic, axis=1), (3, 1))
     )
 
-    z_axis = np.median(
+    z_axis = np.mean(
         z_axis,
         axis=0,
     )
@@ -143,17 +142,17 @@ def get_z_axis_delsys_on_wheel(
     return z_axis
 
 
-def get_delsys_reference(
+def get_wheel_reference(
     acc_static1: np.ndarray, acc_static2: np.ndarray, z_axis: np.ndarray
 ) -> np.ndarray:
     """
     Calculate the x and y axis with two trials and the z axis.
 
-    The IMU measure the acceleration with accelerometer, so the gravity is
+    The IMU measure the acceleration with accelerometer and the gravity is
     measured as well. The static trials measure two accelerations (with bias)
     of the gravity with the wheel at different angle. If you subtract one from
     another, we get rid of the bias and the new vector is in the xz-plane. From
-    there, we can apply a cross product to find the y and than x or use the
+    there, we can apply a cross product to find the y and then x or use the
     Gram–Schmidt process to find x first.
 
     Parameters
@@ -168,11 +167,11 @@ def get_delsys_reference(
 
     Returns
     -------
-    wheel_ref_delsys : np.ndarray
-        The complete delsys on wheel reference rotation matrix.
+    wheel_ref : np.ndarray
+        The complete wheel reference rotation matrix.
     """
-    grav1 = np.median(acc_static1, axis=0)
-    grav2 = np.median(acc_static2, axis=0)
+    grav1 = np.mean(acc_static1, axis=0)
+    grav2 = np.mean(acc_static2, axis=0)
 
     # if np.dot(grav1, z_axis) < 0:
     #     z_axis = -z_axis
@@ -191,9 +190,9 @@ def get_delsys_reference(
     x_axis = np.cross(y_axis, z_axis)
     x_axis = x_axis / np.linalg.norm(x_axis)
 
-    wheel_ref_delsys = np.vstack((x_axis, y_axis, z_axis))
+    wheel_ref = np.vstack((x_axis, y_axis, z_axis))
 
-    return wheel_ref_delsys
+    return wheel_ref
 
 
 def calculate_calibration_matrix(FM: np.ndarray, V: np.ndarray) -> np.ndarray:
@@ -231,16 +230,15 @@ def calculate_calibration_matrix(FM: np.ndarray, V: np.ndarray) -> np.ndarray:
         The calibration matrix A.
 
     """
-    AT = np.linalg.lstsq(np.transpose(V), np.transpose(FM))[0]
+    AT = np.linalg.lstsq(V.T, FM.T, rcond=None)[0]
 
-    return np.transpose(AT)
+    return AT.T
 
 
-def calculate_forces_moments(  # probably gonna rewrite
+def make_an_estimation_of_forces_moments(
     Trial: dict,
     acc_bias: np.ndarray,
-    wheel_ref_delsys: np.ndarray,
-    mass_mc: float = 0.46,
+    wheel_ref: np.ndarray,
     D: float = 0.52,
     H: float = 0.05,
 ):
@@ -252,22 +250,22 @@ def calculate_forces_moments(  # probably gonna rewrite
     Trial : dict
         Dictonary of one complete trial including the mass and degree.
     acc_bias : np.ndarray
-        DESCRIPTION.
-    wheel_ref_delsys : np.ndarray
-        DESCRIPTION.
-    mass_mc : float, optional
-        DESCRIPTION. The default is 0.46 kg.
+        The accelerometer bias.
+    wheel_ref : np.ndarray
+        The 3x3 Matrix that link the IMU referential to the wheel referential.
     D : float, optional
-        DESCRIPTION. The default is 0.52 m.
+        The diameter of the pushrim. The default is 0.52 m.
     H : float, optional
-        DESCRIPTION. The default is 0.05 m.
+        The perpendicular distance between the wheel plane and the pushrim.
+        It is the z-distance in cyclindrical coordinates of the wheel.
+        The default is 0.05 m.
 
     Returns
     -------
-    forces : TYPE
-        DESCRIPTION.
-    moments : TYPE
-        DESCRIPTION.
+    forces : np.ndarray
+        The theorical estimate of the forces applied on the pushrim.
+    moments : np.ndarray
+        The theorical estimate of the moments applied on the pushrim..
 
     """
     force_application_point = np.ndarray((3, 1))
@@ -280,18 +278,20 @@ def calculate_forces_moments(  # probably gonna rewrite
     force_application_point[2] = H  # H or -H ?
     force_application_point = np.transpose(force_application_point)
 
-    ref_grav = np.transpose(np.median(Trial["IMU"]["Acc"], axis=0) - acc_bias)
+    ref_grav = np.transpose(np.mean(Trial["IMU"]["Acc"], axis=0) - acc_bias)
     ref_grav = ref_grav / np.linalg.norm(ref_grav)
 
-    f1 = -1 * Trial["Mass"] * 9.81 * np.dot(wheel_ref_delsys[:3, :3], ref_grav)
+    f1 = -1 * Trial["Mass"] * 9.81 * np.dot(wheel_ref[:3, :3], ref_grav)
     f1 = np.transpose(f1)
 
-    f2 = -1 * mass_mc * 9.81 * np.dot(wheel_ref_delsys[:3, :3], ref_grav)
-    f2 = np.transpose(f2)
+    # f2 = -1 * mass_mc * 9.81 * np.dot(wheel_ref_delsys[:3, :3], ref_grav)
+    # f2 = np.transpose(f2)
 
-    forces = f1 + f2
-    moments = np.cross(f1, force_application_point) + np.cross(
-        f2, np.array([[0, 0, H]])
-    )
+    # f2 = [0, 0, 0]
+
+    # forces = f1 + f2
+    forces = f1
+    moments = -np.cross(f1, force_application_point)
+    # - np.cross(f2, np.array([[0, 0, H]]))
 
     return forces, moments
