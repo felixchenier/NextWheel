@@ -47,7 +47,7 @@ def estimate_acc_bias(
     + 2 * (a_x * b_x + a_y * b_y + a_z * b_z)
     + b_x^2 + b_y^2 + b_z^2
     = N^2
-    
+
     |g|^2
     + 2 * (a_x * b_x + a_y * b_y + a_z * bz_)
     + |b|^2 = N^2
@@ -58,24 +58,24 @@ def estimate_acc_bias(
 
     (N^2 - N'^2) / 2
      = b_x * (a_x - a_x') + b_y * (a_y - a_y') + b_z * (a_z - a_z')
-    
+
     with::
-        
+
     (a_x - a_x') = (m_x - m_x') because the bias cancels out;
     (a_y - a_y') = (m_y - m_y') because the bias cancels out;
     (a_z - a_z') = (m_z - m_z') because the bias cancels out.
-    
+
     Therefore::
-        
+
     (N^2 - N'^2) / 2
      = b_x * (m_x - m_x') + b_y * (m_y - m_y') + b_z * (m_z - m_z')
 
     With a minimum of three static trials, we can find the bias with a linear
     system Ax = b::
-    
+
     [
         [(a_x1 - a_x2), (a_y1 - a_y2), (a_z1 - a_z2)],
-        [(a_x1 - a_x3), (a_y1 - a_y3), (a_z1 - a_z3)],        
+        [(a_x1 - a_x3), (a_y1 - a_y3), (a_z1 - a_z3)],
         [(a_x2 - a_x3), (a_y2 - a_y3), (a_z2 - a_z3)]
     ]
     *
@@ -90,7 +90,7 @@ def estimate_acc_bias(
         [(N1^2 - N3^2) / 2],
         [(N2^2 - N3^2) / 2]
     ]
-    
+
     This function uses a least-square estimation to get the bias from any
     number of static acquisitions higher than 3.
 
@@ -124,8 +124,7 @@ def estimate_acc_bias(
 
     bias = np.linalg.lstsq(delta_grav_matrix, delta_norm_square, rcond=None)
 
-    return bias[0].T
-    #TODO! Est-ce que le T est nécessaire ? Je ne crois pas si c'est une seule dimension.
+    return bias[0][:, 0]
 
 
 def get_z_axis(gyro_bias: np.ndarray, omega_dynamic: np.ndarray) -> np.ndarray:
@@ -148,7 +147,6 @@ def get_z_axis(gyro_bias: np.ndarray, omega_dynamic: np.ndarray) -> np.ndarray:
         The z-axis of the IMU as an array of length 3.
 
     """
-    #TODO! Nicolas, est-ce que mes modifications au doctstring sont conformes à la réalité?
     omega_dynamic -= np.tile(gyro_bias, (np.shape(omega_dynamic)[0], 1))
 
     z_axis = omega_dynamic / np.transpose(
@@ -170,12 +168,13 @@ def get_wheel_reference(
     """
     Calculate the rotation matrix from the IMU to the wheel's reference frames.
 
-    The IMU measure the acceleration with accelerometer and the gravity is
+    The IMU measures the acceleration with the accelerometer and the gravity is
     measured as well. The static trials measure two orientations of the gravity
     (with bias). If both static trials correspond to a unique rotation around
-    the y axis, then by subtracting one from the other, we cancel the bias and
-    the new vector is in the xz-plane. From there, we can apply a cross product
-    to find y and then x or use the Gram–Schmidt process to find x first.
+    the y axis and both acceleration are purely in the xz-plane, then by
+    subtracting one from the other, we cancel the bias and the new vector is in
+    the xz-plane. From there, we can apply a cross product to find y and then
+    x.
 
     Parameters
     ----------
@@ -192,21 +191,13 @@ def get_wheel_reference(
         The complete wheel reference rotation matrix.
 
     """
-    #TODO! Nicolas, est-ce que le docstring marche encore après mes modifs ?
-    #TODO! Nicolas, est-ce que c'est y then x, ou bien x then y ? Il faudrait spécifier dans le docstring.
     grav1 = np.mean(acc_static1, axis=0)
     grav2 = np.mean(acc_static2, axis=0)
-
-    # if np.dot(grav1, z_axis) < 0:
-    #     z_axis = -z_axis
 
     if np.abs(np.dot(grav1, z_axis)) > np.abs(np.dot(grav2, z_axis)):
         delta_grav = grav2 - grav1
     else:
         delta_grav = grav1 - grav2
-
-    # x_axis = delta_grav - (np.dot(delta_grav, z_axis) * z_axis)
-    # x_axis = x_axis / np.linalg.norm(x_axis)
 
     y_axis = np.cross(z_axis, delta_grav + z_axis)
     y_axis = y_axis / np.linalg.norm(y_axis)
@@ -223,28 +214,29 @@ def calculate_calibration_matrix(FM: np.ndarray, V: np.ndarray) -> np.ndarray:
     """
     Calculate the calibration matrix from known kinetics and sensor voltages.
 
-    We resolve the A @ V = FM to find A, the calibration matrix. Let's rewrite
-    the equation with V^T @ A^T = FM^T. This can be seen as multiple linear
-    equation to resolve. FM and V must have at least 6 columns (6 trials).
+    We resolve the A @ V^T = FM^T to find A, the calibration matrix. Let's
+    rewrite the equation with V @ A^T = FM. This can be seen as n linear
+    equations to resolve. FM and V must have at least 6 lines (6 trials).
 
     Exemple :
 
-        [(V^T @ a1) (V^T @ a2) (V^T @ a3) ...] = [f1 f2 f3 ...]
+        [(V @ a1) (V @ a2) (V @ a3) ...] = [f1 f2 f3 ...]
 
-    where ak is the kth line of A and fk is the kth line of FM. We have the n
+    where ak is the kth line of A and fk is the kth column of FM. We have the n
     linear equations that follows :
 
-        V^T @ a1 = f1
-        V^T @ a2 = f2
-        V^T @ a3 = f3
+        V @ a1 = f1
+        V @ a2 = f2
+        V @ a3 = f3
             ...
-        V^T @ an = fn
+        V @ an = fn
 
     Parameters
     ----------
     FM : np.ndarray
-        Forces and moments matrix of all trials. The three first lines
-        must be the force in x, y, z and the last three values are the moments.
+        Forces and moments matrix (N,6) of N trials. The three first columns
+        must be the force in x, y, z and the last three values are the moments
+        in x, y, z.
     V : np.ndarray
         Voltages measured with the EMG installed in the instrumented wheel for
         each trials. Must be the same shape as FM.
@@ -255,13 +247,7 @@ def calculate_calibration_matrix(FM: np.ndarray, V: np.ndarray) -> np.ndarray:
         The calibration matrix A.
 
     """
-    #TODO! Inverser l'ordre des dimensions d'entrée: Nx6 plutôt que 6xN.
-    #Pour être cohérent avec les conventions de KTK et donc du labo.
-    #Ça implique de changer le docstring, d'enlever les transpositions, et
-    #de mettre plutôt les transpositions dans le code un niveau plus haut
-    #si nécessaire.    
-    AT = np.linalg.lstsq(V.T, FM.T, rcond=None)[0]
-    return AT.T
+    return np.linalg.lstsq(V, FM, rcond=None)[0].T
 
 
 def make_an_estimation_of_forces_moments(
@@ -273,9 +259,9 @@ def make_an_estimation_of_forces_moments(
 ):
     """
     Estimate the forces and moments of one static trial with a suspended weight.
-    
+
     A static trial is expressed as a dictionary with at least the following
-    keys::        
+    keys::
     {
         "Mass": float,    # Mass of the suspended weight
         "Degree": float,  # Position of the suspended weight on the wheel
@@ -283,7 +269,7 @@ def make_an_estimation_of_forces_moments(
             "Acc": np.array  # Nx3 array of accelerometer measurements
         }
     }
-    
+
     Parameters
     ----------
     trial
@@ -301,39 +287,31 @@ def make_an_estimation_of_forces_moments(
 
     Returns
     -------
-    forces : np.ndarray
-        The theorical estimate of the forces applied on the pushrim.
-    moments : np.ndarray
-        The theorical estimate of the moments applied on the pushrim..
+    FM : np.ndarray
+        The theorical estimate of the forces and moments applied on the
+        pushrim.
 
     """
-    #TODO! Pourquoi ne pas retourner FM directement plutôt qu'un tuple de arrays ?
-    #Ce serait plus cohérent avec calculate_calibration_matrix().
-    force_application_point = np.ndarray((3, 1))
+    force_application_point = np.ndarray((3,))
     force_application_point[0] = (
         0.5 * d * np.cos(np.pi * trial["Degree"] / 180)
     )
     force_application_point[1] = (
         0.5 * d * np.sin(np.pi * trial["Degree"] / 180)
     )
-    force_application_point[2] = h  #TODO! H or -H ?
+    force_application_point[2] = h
     force_application_point = np.transpose(force_application_point)
 
-    ref_grav = np.transpose(np.mean(trial["IMU"]["Acc"], axis=0) - acc_bias)
-    ref_grav = ref_grav / np.linalg.norm(ref_grav)
+    ref_grav = np.transpose(np.mean(trial["IMU"]["Acc"], axis=0))
+
+    ref_grav = (ref_grav - acc_bias) / np.linalg.norm(ref_grav - acc_bias)
 
     f1 = -1 * trial["Mass"] * 9.81 * np.dot(wheel_ref[:3, :3], ref_grav)
     f1 = np.transpose(f1)
 
-    # f2 = -1 * mass_mc * 9.81 * np.dot(wheel_ref_delsys[:3, :3], ref_grav)
-    # f2 = np.transpose(f2)
-
-    # f2 = [0, 0, 0]
-
-    # forces = f1 + f2
     forces = f1
     moments = -np.cross(f1, force_application_point)
-    # - np.cross(f2, np.array([[0, 0, H]]))
 
-    return forces, moments
-    #TODO! Enlever le code commenté si ce n'est plus utile.
+    FM = np.hstack((forces, moments))
+
+    return FM

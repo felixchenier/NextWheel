@@ -259,7 +259,9 @@ for file_name in os.listdir(f"{path}{trials_dir}"):
     if file_name.startswith("GyroBias"):
         Trials[file_name] = ktk.load(f"{path}{trials_dir}{file_name}")
 
-        Trials["GyroBias"] = np.mean(Trials[file_name]["IMU"]["Gyro"], axis=0)
+        Trials["GyroBias"] = wc.estimate_gyro_bias(
+            Trials[file_name]["IMU"]["Gyro"]
+        )
 
     if file_name.startswith("GyroMeasure"):
         Trials[file_name] = ktk.load(f"{path}{trials_dir}{file_name}")
@@ -288,15 +290,14 @@ Trials["Base"] = wc.get_wheel_reference(
 FMs = np.ndarray((1, 6))
 for trial in Trials:
     if trial.startswith("Forces"):
-        F, M = wc.make_an_estimation_of_forces_moments(
+        FM = wc.make_an_estimation_of_forces_moments(
             Trials[trial],
             Trials["AccBias"],
             Trials["Base"],
         )
 
-        FM = np.hstack((F, M))
         FMs = np.vstack((FMs, FM))
 
 A = wc.calculate_calibration_matrix(
-    FMs.T, forces_channels.T
+    FMs, forces_channels
 )  # estimate the calibration matrix in A*forces_channels.T = FMs.T
