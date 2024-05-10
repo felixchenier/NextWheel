@@ -292,6 +292,11 @@ def make_an_estimation_of_forces_moments(
         pushrim.
 
     """
+    # TODO! Pourquoi ne pas retourner FM directement plutôt qu'un tuple de arrays ?
+    # Ce serait plus cohérent avec calculate_calibration_matrix().
+    # Est-ce que tu parles de former directement tout FM pour calculate_calibration_matrix()
+    # ou comme j'ai fait ? Pour l'instant, la fonction traite seulement 1 cas à la fois comme
+    # ça dépendait des noms des mesures
     force_application_point = np.ndarray((3,))
     force_application_point[0] = (
         0.5 * d * np.cos(np.pi * trial["Degree"] / 180)
