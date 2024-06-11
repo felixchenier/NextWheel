@@ -31,7 +31,7 @@ Welcome to NextWheel, the SmartWheel PCB/Firmware replacement for existing Smart
 
 Steps:
 
-1. Copy [lib/NextWheel/src/config/WiFiConfig.h](lib/NextWheel/src/config/WiFiConfig.template.h) as [lib/NextWheel/src/config/WiFiConfig.h](lib/NextWheel/src/config/WiFiConfig.h) and modify it according to your WiFi information.
+1. Copy [lib/NextWheel/src/config/WiFiConfig.template.h](lib/NextWheel/src/config/WiFiConfig.template.h) as [lib/NextWheel/src/config/WiFiConfig.h](lib/NextWheel/src/config/WiFiConfig.h) and modify it according to your WiFi information.
 2. Go to the PlatformIO menu (left toolbar with alien icon)
 3. Click on *General/Build*
 4. Click on *General/Upload*
