@@ -228,62 +228,98 @@ class NextWheel:
         self._imu_values = []  # type: list[np.ndarray]
         self._power_values = []  # type: list[np.ndarray]
         self._encoder_values = []  # type: list[np.ndarray]
-        
 
-    def __extract_values(self, frame_type: int, message: bytes, time: float):
+
+
+    def _parse_message(self, stream:bytes, offset:int=0) -> int:
         """
-        Extract functional values from the message.
-
-        Utilize the WebSocket Binary Message Format to extract values from
-        the message depending on the frame_type:
-            2 - Frame type of the ADC
-            3 - Frame type of the IMU
-            4 - Frame type of the Power
-            7 - Frame type of the Encoder
+        Parse a series of bytes corresponding to a messages.
+        
+        It only parses the first message from the stream, then returns the
+        position of the next message in the stream. If the received message
+        is a superframe, all messages from the superframe are parsed and
+        processed.
 
         Parameters
         ----------
-        frame_type : int
-            Frame type that determine the information in the message.
-        message : bytes
-            Message received from the instrumented wheel without header.
-        time : float
-            Time when the message has been received.
+        stream
+            The received message or the data stored in the dat file.
+        offset
+            Start processing at this position in the stream.
 
         Returns
         -------
-        None.
+        offset
+            The position of the next message in the stream.
+            
 
         """
-        if frame_type == FrameType.ADC:  # frame type of the ADC values
-            if len(message) != 16:
-                print(f"Unexpected message length of {len(message)} (ADC)")
-                return
+        if type(stream) is not bytes:
+            return
+        
+        if offset >= len(stream):
+            return offset
+        
+        # Extract the type of message
+        (frame_type, timestamp, data_size) = struct.unpack(
+            "<BQB", stream[offset:offset+10]
+        )
+        offset += 10
+        time = timestamp / 1e6 - self.TIME_ZERO
+        
+        # Process the frame
+        if frame_type == FrameType.CONFIG:
+
+            # Config frame (should always be first)
+            data = stream[offset:offset + data_size]
+            offset += data_size
+        
+            self.TIME_ZERO = timestamp / 1e6
+
+            (
+                accel_range,
+                gyro_range,
+                mag_range,
+                imu_sampling_rate,
+                adc_sampling_rate,
+                encoder_sampling_rate,
+            ) = struct.unpack("<6I", data)
+
+            # Update configuration
+            self._config.accel_range = accel_range
+            self._config.gyro_range = gyro_range
+            self._config.mag_range = mag_range
+            self._config.imu_sampling_rate = imu_sampling_rate
+            self._config.adc_sampling_rate = adc_sampling_rate
+            self._config.encoder_sampling_rate = encoder_sampling_rate
+
+        elif frame_type == FrameType.ADC:  # frame type of the ADC values
+            data = stream[offset:offset + data_size]
+            offset += data_size
 
             self._adc_values.append(
-                np.hstack([[time], struct.unpack_from("<8H", message)])
+                np.hstack([[time], struct.unpack("<8H", data)])
             )
 
             if len(self._adc_values) > self.max_analog_samples:
                 self._adc_values.pop(0)
 
         elif frame_type == FrameType.IMU:  # frame type of the IMU
-            if len(message) != 18:
-                print(f"Unexpected message length of {len(message)} (IMU)")
-                return
+            data = stream[offset:offset + data_size]
+            offset += data_size
 
             self._imu_values.append(
                 np.hstack(
                     [
                         [time],
                         self._config.convert_accel_values(
-                            np.array(struct.unpack_from("<3h", message[:6]))
+                            np.array(struct.unpack_from("<3h", data[:6]))
                         ),
                         self._config.convert_gyro_values(
-                            np.array(struct.unpack_from("<3h", message[6:12]))
+                            np.array(struct.unpack_from("<3h", data[6:12]))
                         ),
                         self._config.convert_mag_values(
-                            np.array(struct.unpack_from("<3h", message[12:18]))
+                            np.array(struct.unpack_from("<3h", data[12:18]))
                         ),
                     ]
                 )
@@ -293,79 +329,43 @@ class NextWheel:
                 self._imu_values.pop(0)
 
         elif frame_type == FrameType.POWER:  # frame type of the POWER
-            if len(message) != 13:
-                print(f"Unexpected message length of {len(message)} (POWER)")
-                return
+            data = stream[offset:offset + data_size]
+            offset += data_size
 
             self._power_values.append(
-                np.hstack([[time], struct.unpack_from("<3fB", message)])
+                np.hstack([[time], struct.unpack_from("<3fB", data)])
             )
 
             if len(self._power_values) > self.max_power_samples:
                 self._power_values.pop(0)
 
         elif frame_type == FrameType.ENCODER:  # frame type of the ENCODER
-            if len(message) != 8:
-                print(f"Unexpected message length of {len(message)} (ENCODER)")
-                return
+            data = stream[offset:offset + data_size]
+            offset += data_size
 
             self._encoder_values.append(
-                np.hstack([[time], struct.unpack_from("<q", message)])
+                np.hstack([[time], struct.unpack_from("<q", data)])
             )
 
             if len(self._encoder_values) > self.max_encoder_samples:
                 self._encoder_values.pop(0)
 
-    def __parse_superframe(self, message: bytes, count: int):
-        """
-        Unpack superframe and scan the message.
+        elif frame_type == FrameType.SUPERFRAME:
 
-        The function loop over the message and call the function
-        __extract_values to convert the bytes messages to other type more
-        functional.
+            for sub_count in range(data_size):  # data_size = number of frames
+                offset = self._parse_message(stream, offset)
+                
+        else:
+            raise ValueError(f"Received an unknown frame type: {frame_type}")
+            
+        return offset
 
-        Parameters
-        ----------
-        message : bytes
-            Message received from the instrumented wheel without the first
-            header.
-        count : int
-            Number of data present in the message.
 
-        Returns
-        -------
-        None.
-
-        """
-        offset = 0
-
-        for sub_count in range(count):
-            (frame_type, timestamp, data_size) = struct.unpack_from(
-                "<BQB", message[offset : offset + self.HEADER_LENGTH]
-            )
-
-            self.__extract_values(
-                frame_type,
-                message[
-                    offset
-                    + self.HEADER_LENGTH : offset
-                    + self.HEADER_LENGTH
-                    + data_size
-                ],
-                timestamp / 1e6 - self.TIME_ZERO,
-            )
-
-            offset = offset + data_size + self.HEADER_LENGTH
-
-    def __on_message(self, ws, message):
+    def _on_message(self, ws, message):
         """
         React to WebSocketApp message received.
 
-        The function analyse if the frame type is 1 or 255:
-            - If frame_type = 1, this is the configuration frame. The function
-            simply save the data.
-            - If frame_type = 255, this is the superframe type. It calls the
-            __parse_superframe function to read and scan the message.
+        Simply a wrapper to the more generic _parse_messages function.
 
         Parameters
         ----------
@@ -380,52 +380,20 @@ class NextWheel:
 
         """
         self._mutex.acquire()
-
-        if type(message) is bytes:
-            (frame_type, timestamp, data_size) = struct.unpack_from(
-                "<BQB", message[0:10]
-            )
-
-            # Config frame (should always be first)
-            if frame_type == FrameType.CONFIG:
-                if self._debug:
-                    print("Configuration frame received.")
-                self.TIME_ZERO = timestamp / 1e6
-
-                if len(message[10:]) == 24:
-                    (
-                        accel_range,
-                        gyro_range,
-                        mag_range,
-                        imu_sampling_rate,
-                        adc_sampling_rate,
-                        encoder_sampling_rate,
-                    ) = struct.unpack_from("<6I", message[10:])
-
-                    # Update configuration
-                    self._config.accel_range = accel_range
-                    self._config.gyro_range = gyro_range
-                    self._config.mag_range = mag_range
-                    self._config.imu_sampling_rate = imu_sampling_rate
-                    self._config.adc_sampling_rate = adc_sampling_rate
-                    self._config.encoder_sampling_rate = encoder_sampling_rate
-
-            elif frame_type == FrameType.SUPERFRAME:
-                self.__parse_superframe(message[10:], data_size)
-
+        self._parse_message(message)
         self._mutex.release()
 
-    def __on_open(self, ws):
+    def _on_open(self, ws):
         """Reaction of the WebSocketApp when the connection is open."""
         if self._debug:
             print("Connected: ", self.ws)
 
-    def __on_error(self, ws, error):
+    def _on_error(self, ws, error):
         """Reaction of the WebSocketApp when there is an error."""
         print(self.ws, error)
         self.stop_streaming()
 
-    def __on_close(self, ws, close_status_code, close_msg):
+    def _on_close(self, ws, close_status_code, close_msg):
         """Reaction of the WebSocketApp when the connection is close."""
         if self._debug:
             print("Closed: ", self.ws, close_status_code, close_msg)
@@ -458,7 +426,7 @@ class NextWheel:
         """
         if self._thread_is_running:
             return
-        
+
         self.max_imu_samples = max_imu_samples
         self.max_analog_samples = max_analog_samples
         self.max_encoder_samples = max_encoder_samples
@@ -466,10 +434,10 @@ class NextWheel:
 
         self.ws = websocket.WebSocketApp(
             f"ws://{self.IP}:81/",
-            on_open=self.__on_open,
-            on_message=self.__on_message,
-            on_error=self.__on_error,
-            on_close=self.__on_close,
+            on_open=self._on_open,
+            on_message=self._on_message,
+            on_error=self._on_error,
+            on_close=self._on_close,
         )
 
         t = threading.Thread(target=self.ws.run_forever)  # type: ignore
@@ -509,36 +477,38 @@ class NextWheel:
         self.start_streaming()
         nwm.monitor(self)
         self.stop_streaming()
-        
+
     def graphical_monitor(self) -> None:
         """
         Blocking function that monitors using Matplotlib.
-        
+
         Under development.
 
         """
         import matplotlib as mpl  # noqa
         import matplotlib.pyplot as plt  # noqa
         from matplotlib import animation  # noqa
-        
+
         is_running = [True]
+
         def on_close(_):
             is_running[0] = False
-        
-        self.start_streaming()
 
-        # Matplotlib defaults        
+        self.start_streaming()
+        plt.pause(0.5)
+
+        # Matplotlib defaults
         mpl.rcParams["axes.prop_cycle"] = mpl.cycler(
             color=["r", "g", "b", "c", "m", "y", "k", "tab:orange"]
         )
         mpl.rcParams["figure.figsize"] = [10, 5]
         mpl.rcParams["figure.dpi"] = 75
         mpl.rcParams["lines.linewidth"] = 1
-        
+
         # Create figure and plots
-        fig = plt.figure(figsize=(12, 8))    
-        fig.canvas.mpl_connect('close_event', on_close)
-        
+        fig = plt.figure(figsize=(12, 8))
+        fig.canvas.mpl_connect("close_event", on_close)
+
         adc_plot = plt.subplot(4, 1, 1)
         adc_plot.set_title("ADC")
         adc_lines = []
@@ -556,7 +526,7 @@ class NextWheel:
         accel_plot.set_xlim(0, self.max_imu_samples)
         accel_plot.set_ylim(-20, 20)
         accel_plot.set_ylabel("m/s2")
-            
+
         gyro_plot = plt.subplot(4, 1, 3)
         gyro_plot.set_title("Gyrometers")
         gyro_lines = []
@@ -574,38 +544,58 @@ class NextWheel:
         encoder_plot.set_ylabel("Unit to be defined")
 
         plt.tight_layout()
-        
+
         def on_timer(_):
-            self._mutex.acquire()            
-            adc_values = np.array(self._adc_values)
-            imu_values = np.array(self._imu_values)
-            encoder_values = np.array(self._encoder_values) % 4000
+            self._mutex.acquire()
+            adc_values = np.zeros((self.max_analog_samples, 9))
+            adc_values[-len(self._adc_values):] = np.array(self._adc_values)
+
+            imu_values = np.zeros((self.max_imu_samples, 10))
+            imu_values[-len(self._imu_values):] = np.array(self._imu_values)
+
+            encoder_values = np.zeros((self.max_encoder_samples, 2))
+            encoder_values[-len(self._encoder_values):] = np.array(self._encoder_values) % 4000
             self._mutex.release()
 
-            for i in range(6):
-                adc_lines[i].set_data(range(self.max_analog_samples), adc_values[:, i+1])
-            
-            for i in range(3):
-                accel_lines[i].set_data(range(self.max_imu_samples), imu_values[:, i+1])
+            try:
+                for i in range(6):
+                    adc_lines[i].set_data(
+                        range(self.max_analog_samples), adc_values[:, i + 1]
+                    )
+            except ValueError:
+                pass
 
-            for i in range(3):
-                gyro_lines[i].set_data(range(self.max_imu_samples), imu_values[:, i+4])
+            try:
+                for i in range(3):
+                    accel_lines[i].set_data(
+                        range(self.max_imu_samples), imu_values[:, i + 1]
+                    )
 
-            encoder_line.set_data(range(self.max_encoder_samples), encoder_values[:, 1])
-        
+                for i in range(3):
+                    gyro_lines[i].set_data(
+                        range(self.max_imu_samples), imu_values[:, i + 4]
+                    )
+            except ValueError:
+                pass
+
+            try:
+                encoder_line.set_data(
+                    range(self.max_encoder_samples), encoder_values[:, 1]
+                )
+            except ValueError:
+                pass
+
         anim = animation.FuncAnimation(
             fig,
             on_timer,  # type: ignore
             interval=33,
             cache_frame_data=False,
         )  # 30 ips
-        
+
         while is_running[0]:
             plt.pause(0.5)
 
-
         self.stop_streaming()
-        
 
     def fetch(self) -> dict[str, dict[str, np.ndarray]]:
         """
@@ -844,3 +834,36 @@ class NextWheel:
             f"http://{self.IP}/file_delete", params={"file": filename}
         )
         return json.loads(response.content)
+
+
+def read_dat(filename) -> dict:
+    """
+    Read a dat file downloaded from the instrumented wheel.
+
+    Parameters
+    ----------
+    filename
+        The name of the local file to read.
+
+    Returns
+    -------
+    dict
+        A dictionary with the same structure as given by NextWheel.fetch.
+
+    """
+    # Create a dummy wheel to parse the data
+    nw = NextWheel("0.0.0.0")
+    nw.max_analog_samples = np.Inf
+    nw.max_encoder_samples = np.Inf
+    nw.max_imu_samples = np.Inf
+    nw.max_power_samples = np.Inf
+
+    offset = 0
+    with open(filename, "rb") as fid:
+        stream = fid.read()
+        
+    while (new_offset := nw._parse_message(stream, offset)) > offset:
+        offset = new_offset
+        
+
+    return nw.fetch()

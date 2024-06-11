@@ -6,6 +6,12 @@ To install the Python module:
 pip install git+https://github.com/felixchenier/NextWheel.git#subdirectory=python
 ```
 
+To upgrade the Python module:
+
+```
+pip install --upgrade git+https://github.com/felixchenier/NextWheel.git#subdirectory=python
+```
+
 To use the module:
 
 ```python
