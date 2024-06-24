@@ -229,12 +229,23 @@ class NextWheel:
         self._power_values = []  # type: list[np.ndarray]
         self._encoder_values = []  # type: list[np.ndarray]
 
+        # Calibration constants
 
+        try:
+            self.file_download("Calibration.json")
+            with open("Calibration.json", "r") as json_file:
+                self.CALIBRATION = json.load(json_file)
+            self.CALIBRATION_MATRIX = np.array(self.CALIBRATION["Matrix"])
+            self.CALIBRATION_OFFSET = np.array(self.CALIBRATION["Offset"])
+        except:
+            self.CALIBRATION_MATRIX = np.identity(6)
+            self.CALIBRATION_OFFSET = np.zeros((6,))
+            print("No Calibration File Detected")
 
-    def _parse_message(self, stream:bytes, offset:int=0) -> int:
+    def _parse_message(self, stream: bytes, offset: int = 0) -> int:
         """
         Parse a series of bytes corresponding to a messages.
-        
+
         It only parses the first message from the stream, then returns the
         position of the next message in the stream. If the received message
         is a superframe, all messages from the superframe are parsed and
@@ -631,6 +642,12 @@ class NextWheel:
         has_adc = len(adc_values) > 0
         has_enc = len(encoder_values) > 0
         has_pow = len(power_values) > 0
+
+        if len(adc_values) > 0:
+            adc_values[:, 1:7] = (
+                np.dot(self.CALIBRATION_MATRIX, adc_values[:, 1:7].T).T
+                - self.CALIBRATION_OFFSET
+            )
 
         # Output
         data = {

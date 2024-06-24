@@ -122,7 +122,7 @@ def calibrate_part1(nw: nextwheel.NextWheel, path: str):
         "z-axis calibration - Static trial",
     )
     gyro_bias_measured = measure(nw)
-    save_file(gyro_bias_measured, "GyroForBias", path + trials_dir)
+    save_file(gyro_bias_measured, "GyroForBias", path)
 
     # Measure 2 - Z-axis
     interface(
@@ -131,7 +131,7 @@ def calibrate_part1(nw: nextwheel.NextWheel, path: str):
     )
 
     z_axis_measured = measure(nw)
-    save_file(z_axis_measured, "GyroForZAxis", path + trials_dir)
+    save_file(z_axis_measured, "GyroForZAxis", path)
 
 
 def calibrate_part2(nw: nextwheel.NextWheel, path: str):
@@ -159,7 +159,7 @@ def calibrate_part2(nw: nextwheel.NextWheel, path: str):
         "xz-axis calibration - Static trial 1",
     )
     xz_acc_vector_measured1 = measure(nw)
-    save_file(xz_acc_vector_measured1, "AccForXZPlane", path + trials_dir)
+    save_file(xz_acc_vector_measured1, "AccForXZPlane", path)
 
     # Measure 2
     interface(
@@ -168,7 +168,7 @@ def calibrate_part2(nw: nextwheel.NextWheel, path: str):
     )
 
     xz_acc_vector_measured2 = measure(nw)
-    save_file(xz_acc_vector_measured2, "AccForXZPlane", path + trials_dir)
+    save_file(xz_acc_vector_measured2, "AccForXZPlane", path)
 
 
 def calibrate_part3(nw: nextwheel.NextWheel, path: str):
@@ -222,7 +222,7 @@ def calibrate_part3(nw: nextwheel.NextWheel, path: str):
     save_file(
         forces_on_rim_measured,
         "ForcesForCalibrationMatrix",
-        path + trials_dir,
+        path,
     )
 
 
@@ -252,7 +252,6 @@ def estimate_calibration_matrix(path: str) -> np.array:
     """
     Trials = {}
     grav_measured = np.ndarray((1, 3))
-    forces_channels = np.ndarray((1, 6))
     count1 = 0
     count2 = 0
     count3 = 0
@@ -261,18 +260,11 @@ def estimate_calibration_matrix(path: str) -> np.array:
         if file_name.startswith("Forces"):
             Trials[file_name] = ktk.load(f"{path}{file_name}")
             grav = -np.mean(Trials[file_name]["IMU"]["Acc"], axis=0)
+
             grav_measured = np.vstack(
                 (
                     grav_measured,
                     grav,
-                )
-            )
-
-            forces = np.mean(Trials[file_name]["Analog"]["Force"], axis=0)
-            forces_channels = np.vstack(
-                (
-                    forces_channels,
-                    forces,
                 )
             )
 
@@ -295,10 +287,6 @@ def estimate_calibration_matrix(path: str) -> np.array:
 
     # Estimate the z-axis
 
-    # Trials["Z-Axis"] = np.array(
-    #     [-0.0007454810123062489, 0.0009531282008410795, -0.9999992679020785]
-    # ) # uncomment if the trial GyroForZAxis doesn't exist
-
     Trials["Z-Axis"] = wc.get_z_axis(
         Trials["GyroBias"], Trials[f"GyroForZAxis{count2-1}"]["IMU"]["Gyro"]
     )
@@ -311,9 +299,10 @@ def estimate_calibration_matrix(path: str) -> np.array:
     )  # estimate the base change matrix
 
     Trials["AccBias"] = wc.estimate_acc_bias(
-        grav_measured
+        grav_measured[1:, :]
     )  # estimate accelerometer bias
 
+    forces_channels = np.ndarray((1, 6))
     FMs = np.ndarray((1, 6))
     for trial in Trials:
         if trial.startswith("Forces"):
@@ -323,20 +312,30 @@ def estimate_calibration_matrix(path: str) -> np.array:
                 Trials["Base"],
             )
 
+            # forces = np.mean(Trials[trial]["Analog"]["Force"], axis=0)
+            forces = np.median(Trials[trial]["Analog"]["Force"], axis=0)
+            forces_channels = np.vstack(
+                (
+                    forces_channels,
+                    forces,
+                )
+            )
+
             FMs = np.vstack((FMs, FM))
 
     A = wc.calculate_calibration_matrix(
-        FMs, forces_channels
+        FMs[1:, :], forces_channels[1:, :]
     )  # estimate the calibration matrix in A*forces_channels.T = FMs.T
 
-    return A
+    return A, Trials
 
 
 if __name__ == "__main__":
-    nw = nextwheel.NextWheel("192.168.1.155")
+    # nw = nextwheel.NextWheel("192.168.1.155")
+    nw = nextwheel.NextWheel("192.168.1.228")
 
     path = "C:/Users/Nicolas/Documents/NextWheel/calibration/"
-    trials_dir = "Trials/"
+    trials_dir = "Trials_Wheel2/"
 
 # %% Part 1 - Z-axis calculated from gyroscope
 
@@ -351,6 +350,7 @@ if __name__ == "__main__":
 # %% Part 3 - More static Force mesures for calibration matrix
 
 if __name__ == "__main__":
+    calibrate_part3(nw, path + trials_dir)
     while not li.button_dialog(
         "Do you want to do another measure ?",
         choices=["Oui", "Non"],
@@ -360,4 +360,4 @@ if __name__ == "__main__":
         calibrate_part3(nw, path + trials_dir)
 
 # %% Part 4 - Calibration matrix calculation
-A = estimate_calibration_matrix(path + trials_dir)
+A, Trials = estimate_calibration_matrix(path + trials_dir)
