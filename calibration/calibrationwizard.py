@@ -20,9 +20,9 @@ def interface(dialog: str, title: str):
 
     Parameters
     ----------
-    dialog :
+    dialog
         The description of the desired action to accomplish.
-    title :
+    title
         The title of the interface.
 
     Returns
@@ -339,25 +339,22 @@ if __name__ == "__main__":
 
 # %% Part 1 - Z-axis calculated from gyroscope
 
-if __name__ == "__main__":
-    calibrate_part1(nw, path + trials_dir)
+calibrate_part1(nw, path + trials_dir)
 
 # %% Part 2 - XZ-Plane determined from acc + base change matrix completion
 
-if __name__ == "__main__":
-    calibrate_part2(nw, path + trials_dir)
+calibrate_part2(nw, path + trials_dir)
 
 # %% Part 3 - More static Force mesures for calibration matrix
 
-if __name__ == "__main__":
+calibrate_part3(nw, path + trials_dir)
+while not li.button_dialog(
+    "Do you want to do another measure ?",
+    choices=["Oui", "Non"],
+    title="Force Measures for Calibration Matrix",
+    icon="gear",
+):
     calibrate_part3(nw, path + trials_dir)
-    while not li.button_dialog(
-        "Do you want to do another measure ?",
-        choices=["Oui", "Non"],
-        title="Force Measures for Calibration Matrix",
-        icon="gear",
-    ):
-        calibrate_part3(nw, path + trials_dir)
 
 # %% Part 4 - Calibration matrix calculation
 A, Trials = estimate_calibration_matrix(path + trials_dir)
