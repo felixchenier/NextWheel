@@ -18,9 +18,33 @@ To use the module:
 >>> from nextwheel import NextWheel
 
 >>> nw = NextWheel("xx.xx.xx.xx")
->>> nw.connect()
+>>> nw.start_streaming()
 
 >>> print(nw.fetch())
     
->>> nw.close()
+>>> nw.stop_streaming()
+```
+
+To see the list of recorded data files:
+
+```python
+>>> nw.file_list()
+```
+
+To download a file:
+
+```python
+>>> nw.file_download(filename)
+```
+
+To erase a file:
+
+```python
+>>> nw.file_delete(filename)
+```
+
+To read a file:
+
+```python
+>>> data = NextWheel.read_dat(filename)
 ```
