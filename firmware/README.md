@@ -1,16 +1,6 @@
-# NEXT WHEEL v0.1.0
+# Nextwheel firmware
 
-Welcome to NextWheel, the SmartWheel PCB/Firmware replacement for existing Smart Wheels, now discontinued from [Out-Front](https://out-front.com). This project uses the [PlatformIO](https://platformio.org/) extension for Visual Studio Code for compilation.
-
-## Authors
-
-* Dominic Létourneau (Firmware)
-* Antoine Parrinello (PCB)
-* Félix Chenier (Supervision)
-
-## License
-
-* [GPLv3](https://www.gnu.org/licenses/gpl-3.0.txt)
+This project uses the [PlatformIO](https://platformio.org/) extension for Visual Studio Code for compilation.
 
 ## Requirements for building the firmware
 
