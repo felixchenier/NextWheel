@@ -9,30 +9,26 @@ import kineticstoolkit as ktk
 from nextwheel import read_dat
 import pandas as pd
 import numpy as np
-import nextwheel
-import matplotlib.pyplot as plt
+import json
 
-Left_IP = "192.168.0.130"
-Right_IP = "192.168.0.86"
-encoder_variation = 0.08789255623292504  # degree by click
+encoder_variation = 0.087890625  # degree by click
 wheel_diameter = 0.6096  # m
 
-dat_filename = "log_2000-12-31_19-00-32.dat"
-csv_filename = "4th_floor_Right_data.csv"
+path = "C:/Users/Nicolas/Desktop/Test2/"
+dat_filename = "log_2000-12-31_19-00-34.dat"
+csv_filename = "sample_data.csv"
 
-if __name__ == "__main__":
-    nw = nextwheel.NextWheel(Right_IP)
-    A = nw.CALIBRATION_MATRIX
-    b = nw.CALIBRATION_OFFSET
-    nw.file_download(dat_filename)
 
+with open(f"{path}calibration.json", "r") as json_file:
+    CALIBRATION = json.load(json_file)
+
+A = np.array(CALIBRATION["Matrix"])
+b = np.array(CALIBRATION["Offset"])
 
 data = read_dat(dat_filename)
 FMs = np.dot(A, data["Analog"]["Force"].T).T - b
-# FMs = data["Analog"]["Force"]
 
 wheel_angle_position = data["Encoder"]["Angle"] * encoder_variation
-# wheel_angle_position = data["Encoder"]["Angle"]
 
 ts = ktk.TimeSeries()
 ts.time = data["Encoder"]["Time"]
@@ -69,4 +65,4 @@ speed_df = pd.DataFrame(speed_dict)
 df = pd.concat([force_df, speed_df], axis=1)
 
 
-df.to_csv(csv_filename, index=False)
+df.to_csv(f"{path}{csv_filename}", index=False)
