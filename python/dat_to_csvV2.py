@@ -14,18 +14,18 @@ import json
 encoder_variation = 0.087890625  # degree by click
 wheel_diameter = 0.6096  # m
 
-path = "C:/Users/Nicolas/Desktop/Test2/"
-dat_filename = "log_2000-12-31_19-00-34.dat"
-csv_filename = "sample_data.csv"
+path = r"C:\Users\MOSA\Desktop\Pilot test2\L-path\OG\Right"
+dat_filename = "log_2000-12-31_19-02-34.dat"
+csv_filename = "L-path-2nd_right.csv"
 
 
-with open(f"{path}calibration.json", "r") as json_file:
+with open(f"{path}/calibration.json", "r") as json_file:
     CALIBRATION = json.load(json_file)
 
 A = np.array(CALIBRATION["Matrix"])
 b = np.array(CALIBRATION["Offset"])
 
-data = read_dat(dat_filename)
+data = read_dat(f"{path}/{dat_filename}")
 FMs = np.dot(A, data["Analog"]["Force"].T).T - b
 
 wheel_angle_position = data["Encoder"]["Angle"] * encoder_variation
@@ -65,4 +65,4 @@ speed_df = pd.DataFrame(speed_dict)
 df = pd.concat([force_df, speed_df], axis=1)
 
 
-df.to_csv(f"{path}{csv_filename}", index=False)
+df.to_csv(f"{path}\{csv_filename}", index=False)

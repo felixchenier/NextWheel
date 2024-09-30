@@ -59,12 +59,12 @@ def relocate_file(dat_filename: str, path: str, new_path: str):
 
 # %%
 
-path = "C:/Users/Nicolas/"
-new_path = "C:/Users/Nicolas/Desktop/Test2/"
+path = r"C:\Users\MOSA\Documents\NextWheel\python/"
+new_path = r"C:\Users\MOSA\Desktop\Pilot test2\Biofeedback\Right/"
 
 if __name__ == "__main__":
-    # nw = nextwheel.NextWheel("192.168.0.86")
-    nw = nextwheel.NextWheel("192.168.0.130")
+    nw = nextwheel.NextWheel("192.168.0.86")
+    # nw = nextwheel.NextWheel("192.168.0.130")
 
     nw.file_download("calibration.json")
 
