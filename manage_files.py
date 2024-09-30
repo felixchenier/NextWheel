@@ -60,12 +60,21 @@ def relocate_file(dat_filename: str, path: str, new_path: str):
 # %%
 
 path = "C:/Users/Nicolas/"
-new_path = "C:/Users/Nicolas/Desktop/Test/"
+new_path = "C:/Users/Nicolas/Desktop/Test2/"
 
 if __name__ == "__main__":
     # nw = nextwheel.NextWheel("192.168.0.86")
-    # nw = nextwheel.NextWheel("192.168.0.130")
-    nw = nextwheel.NextWheel("192.168.1.167")
+    nw = nextwheel.NextWheel("192.168.0.130")
+
+    nw.file_download("calibration.json")
+
+    if not os.path.exists(new_path):
+        os.makedirs(new_path)
+
+        try:
+            relocate_file("calibration.json", path, new_path)
+        except:
+            print("Calibration file already in folder")
 
     for files in nw.file_list()["files"]:
         dat_filename = files["name"]
@@ -74,8 +83,10 @@ if __name__ == "__main__":
         try:
             relocate_file(dat_filename, path, new_path)
         except:
-            rename_file(dat_filename, new_name, path, new_path)
+            # rename_file(dat_filename, new_name, path, new_path)
+            print("File already in folder")
 
+if __name__ == "__main__":
     for files in nw.file_list()["files"]:
         dat_filename = files["name"]
         nw.file_delete(dat_filename)
