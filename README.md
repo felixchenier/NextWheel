@@ -4,19 +4,20 @@ The only company producing commercial instrumented wheels for standard wheelchai
 
 In the present state of the project, we currently have a complete replacement PCB with modern components, a firmware to flash its microcontroller, and a Python module to communicate with the wheel.
 
-This repository is in heavy development; if you are interested in this project, we recommend to communicate with our team so that we can guide you, build PCBs for you, or start collaborations: [chenier.felix@uqam.ca](mailto:chenier.felix@uqam.ca)
+We also built instrumented wheels for racing wheelchairs, that use the same hardware and firmware as the SmartWheel replacement PCB. We aim to eventually transfer these designs to standard wheelchair wheels.
 
+If you are interested in this project, we recommend to communicate with our team so that we can guide you or start collaborations: [chenier.felix@uqam.ca](mailto:chenier.felix@uqam.ca)
 
-## Repository structure
+## Open science
 
-- [schematics](schematics): The electronics schematics and masks for the replacement PCB.
-- [firmware](firmware): The ESP32 firmware to be compiled and flashed to the microcontroller.
-- [python](python): A python module to control de wheel and get streamed data in real time.
-- [calibration](calibration): A calibration wizard written in Python that calibrates the wheel using a step-by-step procedure including spinning the wheel and applying known weights on the pushrim.
+We strongly adhere to the open science principles. Software is shared under the Apache 2 licence (in the [software](software) folder). Hardware is shared under the CERN Open Hardware Licence Version 2 (in the [hardware](hardware) section).
 
 ## Main contributors
 
 - Félix Chenier: Project leader, Python module
 - Dominic Létourneau: Firmware
 - Antoine Parrinello: PCB
+- Alexandre Dupont: Mechanical wheel design (racing wheel)
 - Nicolas Fleury-Rousseau: Calibration
+
+
