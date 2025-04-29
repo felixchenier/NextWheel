@@ -10,7 +10,7 @@ If you are interested in this project, we recommend to communicate with our team
 
 ## Open science
 
-We strongly adhere to the open science principles. Software is shared under the Apache 2 licence (in the [software](software) folder). Hardware is shared under the CERN Open Hardware Licence Version 2 (in the [hardware](hardware) section).
+We strongly adhere to the open science principles. Software is shared under the Apache 2 licence (in the [software](software) folder). Hardware is shared under the CERN Open Hardware Licence Version 2 - Permissive (in the [hardware](hardware) section).
 
 ## Main contributors
 
