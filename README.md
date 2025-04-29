@@ -8,7 +8,7 @@ We also built instrumented wheels for racing wheelchairs, that use the same hard
 
 If you are interested in this project, we recommend to communicate with our team so that we can guide you or start collaborations: [chenier.felix@uqam.ca](mailto:chenier.felix@uqam.ca)
 
-## Open science
+## Licences
 
 We strongly adhere to the open science principles. Software is shared under the Apache 2 licence (in the [software](software) folder). Hardware is shared under the CERN Open Hardware Licence Version 2 - Permissive (in the [hardware](hardware) section).
 
